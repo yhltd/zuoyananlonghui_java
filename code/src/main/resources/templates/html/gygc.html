@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>成都龙辉机械设备制造有限公司工艺规程</title>
+    <link rel="shortcut icon" href="#"/>
+
+    <script type="text/javascript" src="../js/Jquery.js"></script>
+    <script type="text/javascript" src="../js/jquerysession.js"></script>
+
+    <link rel="stylesheet" href="../bootstrap-4.5.0-dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../bootstrap-4.5.0-dist/icons/bootstrap-icons.css">
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap.min.js"></script>
+
+    <!--bootstrap-table-->
+    <link rel="stylesheet" href="../bootstrap-4.5.0-dist/css/bootstrap-table.css">
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table.js"></script>
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table-zh-CN.min.js"></script>
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/colResizable-1.6.js"></script>
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table-resizable.js"></script>
+
+    <link rel="stylesheet" href="../css/sweetalert.css">
+    <script type="text/javascript" src="../js/sweetalert-dev.js"></script>
+
+    <link rel="stylesheet" href="../css/main.css">
+    <script type="text/javascript" src="../js/main.js"></script>
+    <script type="text/javascript" src="../js/gygc.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: "SimSun", "宋体", serif;
+        }
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+            overflow: auto;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #000;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+            color: #000;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #2c5e9c;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #1e4a7e;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+            table-layout: fixed;
+            border: 2px solid #000;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 6px 8px;
+            text-align: center;
+            font-size: 14px;
+            height: 35px;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .signature-section {
+            width: 100%;
+            margin-top: 0;
+            border: 2px solid #000;
+            border-top: none;
+        }
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        .signature-table td {
+            border: 1px solid #000;
+            padding: 15px 10px;
+            text-align: left;
+            vertical-align: top;
+            height: 80px;
+        }
+        .signature-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .signature-name {
+            margin-bottom: 5px;
+        }
+        .signature-date {
+            text-align: right;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+        .col-1 { width: 10%; }
+        .col-2 { width: 10%; }
+        .col-3 { width: 30%; }
+        .col-4 { width: 10%; }
+        .col-5 { width: 10%; }
+        .col-6 { width: 10%; }
+        .col-7 { width: 10%; }
+        .col-8 { width: 10%; }
+
+        /* 查询弹窗样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            background: #2c5e9c;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .close {
+            font-size: 24px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: calc(80vh - 120px);
+            overflow-y: auto;
+        }
+
+        .search-box {
+            margin-bottom: 15px;
+            display: flex;
+        }
+
+        .search-box input {
+            flex: 1;
+            margin-right: 10px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .results-table th, .results-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        .results-table th {
+            background: #f8f9fa;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .results-table tr:hover {
+            background: #f5f7fa;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+        }
+
+        /* 修复打印样式 */
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+                background-color: white;
+            }
+            .container {
+                box-shadow: none;
+                padding: 10px;
+                max-width: 100%;
+            }
+            .controls, button {
+                display: none;
+            }
+            /* 确保表格边框在打印时可见 */
+            table, th, td {
+                border: 1px solid #000 !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+            th {
+                background-color: #f0f0f0 !important;
+            }
+            /* 确保签名区域边框可见 */
+            .signature-section, .signature-table, .signature-table td {
+                border: 1px solid #000 !important;
+            }
+            /* 隐藏查询弹窗 */
+            .modal {
+                display: none !important;
+            }
+            /* 新增：打印时移除选中行的背景色 */
+            .selected-row, .selected-row td {
+                background-color: white !important;
+                border: 1px solid #000 !important;
+            }
+        }
+
+        .search-fields {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .search-field {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-field label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .search-field input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .search-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-box .btn {
+            align-self: flex-start;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>成都龙辉机械设备制造有限公司工艺规程</h1>
+    </div>
+
+    <div class="controls">
+        <button id="addRow">+ 添加工序行</button>
+        <button id="baocun">+ 保存</button>
+        <button id="queryBtn">🔍 查询</button>
+        <button id="printBtn">🖨️ 打印表格</button>
+    </div>
+
+    <table id="processTable">
+        <thead>
+        <tr>
+            <th>业务单位</th>
+            <th id="business-unit"></th>
+            <th id="">数量</th>
+            <th id="quantity" colspan="3"></th>
+            <th>材质</th>
+            <th id="material" colspan="3"></th>
+
+        </tr>
+        <tr>
+            <th>零件名称</th>
+            <th id="product-name"></th>
+            <th>任务号</th>
+            <th id="task-no" colspan="3"></th>
+            <th>图号</th>
+            <th id="drawing-no" colspan="3"></th>
+
+
+        </tr>
+        <tr>
+            <th class="col-1">序号</th>
+            <th class="col-2">工序名称</th>
+            <th class="col-3" colspan="3">工序内容</th>
+            <th class="col-4">合计工时</th>
+            <th class="col-5">员工签名</th>
+            <th class="col-6">完工时间</th>
+            <th class="col-7">检验盖章</th>
+            <th class="col-8">备注</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td class="col-1">1</td>
+            <td class="col-2" contenteditable="true"></td>
+            <td class="col-3" contenteditable="true" colspan="3"></td>
+            <td class="col-4" contenteditable="true"></td>
+            <td class="col-5" contenteditable="true"></td>
+            <td class="col-6" contenteditable="true"></td>
+            <td class="col-7" contenteditable="true"></td>
+            <td class="col-8" contenteditable="true"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- 独立的签名行表格 -->
+    <div class="signature-section">
+        <table class="signature-table">
+            <tr>
+                <td style="width: 33%;">
+                    <div class="signature-label">工艺员</div>
+                    <div class="signature-name" id="gyy" contenteditable="true"></div>
+                    <div class="signature-date"><input id="gyrq" type="date" class="form-control" placeholder="日期" autocomplete="off"></div>
+                </td>
+                <td style="width: 33%;">
+                    <div class="signature-label">校对员：</div>
+                    <div class="signature-name" id="jdy" contenteditable="true"></div>
+                    <div class="signature-date"> <input id="jdrq" type="date" class="form-control" placeholder="日期" autocomplete="off"></div>
+                </td>
+                <td style="width: 33%;">
+                    <div class="signature-label">批准：</div>
+                    <div class="signature-name" id="pzr" contenteditable="true"></div>
+                    <div class="signature-date"> <input id="pzrq" type="date" class="form-control" placeholder="日期" autocomplete="off"></div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<!-- 查询弹窗 -->
+<div class="modal" id="queryModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">查询结果</div>
+            <div class="close" id="closeModal">&times;</div>
+        </div>
+        <!-- 修改弹窗中的搜索框部分 -->
+        <div class="modal-body">
+            <div class="search-box">
+                <div class="search-fields">
+                    <div class="search-field">
+                        <label>业务单位:</label>
+                        <input type="text" id="searchBusinessUnit" placeholder="输入业务单位...">
+                    </div>
+                    <div class="search-field">
+                        <label>任务号:</label>
+                        <input type="text" id="searchTaskNumber" placeholder="输入任务号...">
+                    </div>
+                    <div class="search-field">
+                        <label>图号:</label>
+                        <input type="text" id="searchDrawingNumber" placeholder="输入图号...">
+                    </div>
+                </div>
+                <button class="btn" id="searchBtn">搜索</button>
+            </div>
+            <div id="resultsContainer">
+                <!-- 表格保持不变 -->
+                <table class="results-table">
+                    <thead>
+                    <tr>
+                        <th>业务单位</th>
+                        <th>任务号</th>
+                        <th>图号</th>
+                    </tr>
+                    </thead>
+                    <tbody id="resultsBody">
+                    <!-- 数据将通过JavaScript填充 -->
+                    </tbody>
+                </table>
+                <div id="noResults" class="no-results" style="display: none;">
+                    没有找到匹配的数据
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+
+</script>
+</body>
+</html>

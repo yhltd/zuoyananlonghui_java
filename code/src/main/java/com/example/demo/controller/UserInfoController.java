@@ -1,7 +1,8 @@
 package com.example.demo.controller;
 
+import com.example.demo.entity.Login;
 import com.example.demo.entity.UserInfo;
-import com.example.demo.service.UserInfoService;
+import com.example.demo.service.LoginService;
 import com.example.demo.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,14 +21,15 @@ import java.util.Map;
 @RestController
 @RequestMapping("/user")
 public class UserInfoController {
+
     @Autowired
-    private UserInfoService userInfoService;
+    private LoginService loginService;
 
     @RequestMapping("/login")
     public ResultInfo login(HttpSession session, String username, String password) {
         try {
             //获取user
-            Map<String, Object> map = userInfoService.login(username, password);
+            Map<String, Object> map = loginService.Login(username, password);
             System.out.println("map");
             System.out.println(map);
 
@@ -51,6 +53,7 @@ public class UserInfoController {
         }
     }
 
+
     /**
      * 查询所有
      *
@@ -58,9 +61,9 @@ public class UserInfoController {
      */
     @RequestMapping("/getList")
     public ResultInfo getList(HttpSession session) {
-        UserInfo userInfo = GsonUtil.toEntity(SessionUtil.getToken(session), UserInfo.class);
+        Login login = GsonUtil.toEntity(SessionUtil.getToken(session), Login.class);
         try {
-            List<UserInfo> getList = userInfoService.getList();
+            List<Login> getList = loginService.getList();
             return ResultInfo.success("获取成功", getList);
         } catch (Exception e) {
             e.printStackTrace();
@@ -76,9 +79,9 @@ public class UserInfoController {
      */
     @RequestMapping("/queryList")
     public ResultInfo queryList(String name, HttpSession session) {
-        UserInfo userInfo = GsonUtil.toEntity(SessionUtil.getToken(session), UserInfo.class);
+        Login login = GsonUtil.toEntity(SessionUtil.getToken(session), Login.class);
         try {
-            List<UserInfo> list = userInfoService.queryList(name);
+            List<Login> list = loginService.queryList(name);
             return ResultInfo.success("获取成功", list);
         } catch (Exception e) {
             e.printStackTrace();
@@ -86,57 +89,70 @@ public class UserInfoController {
             return ResultInfo.error("错误!");
         }
     }
-
-
-
+//
+//
+//
     /**
      * 修改
      */
     @RequestMapping(value = "/update", method = RequestMethod.POST)
     public ResultInfo update(@RequestBody String updateJson, HttpSession session) {
-        UserInfo userInfo = GsonUtil.toEntity(SessionUtil.getToken(session), UserInfo.class);
-//        if(!userInfo.getPower().equals("管理员")){
-//            return ResultInfo.error(401, "无权限");
-//        }
-        UserInfo UserInfo = null;
         try {
-            UserInfo = DecodeUtil.decodeToJson(updateJson, UserInfo.class);
-            if (userInfoService.update(UserInfo)) {
-                return ResultInfo.success("修改成功", UserInfo);
+            System.out.println("接收到的JSON: " + updateJson);
+
+            // 这里应该能正确映射C、D、E、F字段
+            Login login = GsonUtil.toEntity(updateJson, Login.class);
+
+            System.out.println("解析后的Login对象字段:");
+            System.out.println("c: " + login.getC());
+            System.out.println("d: " + login.getD());
+            System.out.println("e: " + login.getE());
+            System.out.println("f: " + login.getF());
+
+            if (loginService.update(login)) {
+                return ResultInfo.success("修改成功", login);
             } else {
-                return ResultInfo.success("修改失败", UserInfo);
+                return ResultInfo.error("修改失败");
             }
         } catch (Exception e) {
             e.printStackTrace();
             log.error("修改失败：{}", e.getMessage());
-            log.error("参数：{}", userInfo);
-            return ResultInfo.error("修改失败");
+            return ResultInfo.error("修改失败: " + e.getMessage());
         }
     }
+
 
     /**
      * 添加
      */
     @RequestMapping("/add")
     public ResultInfo add(@RequestBody HashMap map, HttpSession session) {
-        UserInfo userInfo = GsonUtil.toEntity(SessionUtil.getToken(session), UserInfo.class);
-        GsonUtil gsonUtil = new GsonUtil(GsonUtil.toJson(map));
-//        if(!userInfo.getPower().equals("管理员")){
-//            return ResultInfo.error(401, "无权限");
-//        }
         try {
-            UserInfo UserInfo = GsonUtil.toEntity(gsonUtil.get("addInfo"), UserInfo.class);
-            UserInfo = userInfoService.add(UserInfo);
-            if (StringUtils.isNotNull(UserInfo)) {
-                return ResultInfo.success("添加成功", UserInfo);
+            // 解析前端提交的数据
+            GsonUtil gsonUtil = new GsonUtil(GsonUtil.toJson(map));
+            Login newUser = GsonUtil.toEntity(gsonUtil.get("addInfo"), Login.class);
+
+            // 调试信息
+            System.out.println("前端提交的addInfo: " + gsonUtil.get("addInfo"));
+            System.out.println("要添加的用户数据:");
+            System.out.println("姓名(c): " + newUser.getC());
+            System.out.println("账号(d): " + newUser.getD());
+            System.out.println("密码(e): " + newUser.getE());
+            System.out.println("权限(f): " + newUser.getF());
+
+            // 插入新用户数据
+            boolean result = loginService.add(newUser);
+
+            if (result) {
+                return ResultInfo.success("添加成功", newUser);
             } else {
-                return ResultInfo.success("添加失败", null);
+                return ResultInfo.error("添加失败");
             }
         } catch (Exception e) {
             e.printStackTrace();
             log.error("添加失败：{}", e.getMessage());
             log.error("参数：{}", map);
-            return ResultInfo.error("添加失败");
+            return ResultInfo.error("添加失败: " + e.getMessage());
         }
     }
 
@@ -148,8 +164,8 @@ public class UserInfoController {
      */
     @RequestMapping("/delete")
     public ResultInfo delete(@RequestBody HashMap map,HttpSession session) {
-        UserInfo userInfo = GsonUtil.toEntity(SessionUtil.getToken(session), UserInfo.class);
-        System.out.println(userInfo);
+        Login login = GsonUtil.toEntity(SessionUtil.getToken(session), Login.class);
+        System.out.println(login);
         GsonUtil gsonUtil = new GsonUtil(GsonUtil.toJson(map));
         List<Integer> idList = GsonUtil.toList(gsonUtil.get("idList"), Integer.class);
 //        if(!userInfo.getPower().equals("管理员")){
@@ -158,7 +174,7 @@ public class UserInfoController {
         try {
             for(int i=0; i<idList.size(); i++){
                 int this_id = idList.get(i);
-                userInfoService.delete(Collections.singletonList(this_id));
+                loginService.delete(Collections.singletonList(this_id));
             }
             return ResultInfo.success("删除成功", idList);
         } catch (Exception e) {
@@ -169,17 +185,17 @@ public class UserInfoController {
         }
     }
 
-    @RequestMapping("/getName")
-    public ResultInfo getName(HttpSession session) {
-        UserInfo userInfo = GsonUtil.toEntity(SessionUtil.getToken(session), UserInfo.class);
-        try {
-            return ResultInfo.success("获取成功", userInfo.getName());
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error("获取失败：{}", e.getMessage());
-            return ResultInfo.error("错误!");
-        }
-    }
+//    @RequestMapping("/getName")
+//    public ResultInfo getName(HttpSession session) {
+//        UserInfo userInfo = GsonUtil.toEntity(SessionUtil.getToken(session), UserInfo.class);
+//        try {
+//            return ResultInfo.success("获取成功", userInfo.getName());
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            log.error("获取失败：{}", e.getMessage());
+//            return ResultInfo.error("错误!");
+//        }
+//    }
 
     /**
      * 获取当前账号权限

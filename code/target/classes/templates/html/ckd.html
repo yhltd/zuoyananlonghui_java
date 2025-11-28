@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>出库单</title>
+    <link rel="shortcut icon" href="#"/>
+
+    <script type="text/javascript" src="../js/Jquery.js"></script>
+    <script type="text/javascript" src="../js/jquerysession.js"></script>
+
+    <link rel="stylesheet" href="../bootstrap-4.5.0-dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../bootstrap-4.5.0-dist/icons/bootstrap-icons.css">
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap.min.js"></script>
+
+    <!--bootstrap-table-->
+    <link rel="stylesheet" href="../bootstrap-4.5.0-dist/css/bootstrap-table.css">
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table.js"></script>
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table-zh-CN.min.js"></script>
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/colResizable-1.6.js"></script>
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table-resizable.js"></script>
+
+    <link rel="stylesheet" href="../css/sweetalert.css">
+    <script type="text/javascript" src="../js/sweetalert-dev.js"></script>
+
+    <link rel="stylesheet" href="../css/main.css">
+    <script type="text/javascript" src="../js/main.js"></script>
+    <script type="text/javascript" src="../js/ckd.js"></script>
+</head>
+
+<body class="pt-2">
+<div class="background-image">
+    <img src="../img/时间.png" class="img1">
+    <span style="color: black; font-size: 20px;margin-left: 20px" id="now_time" ></span>
+    <span style="margin-left: 50px;font-size: 20px"><img src="../img/个人.png" style="height: 30px;">  您 好 <b><span id="dlm" style="color: black"></span></b> , 欢 迎 您 登 录 !</span>
+    <img src="../img/重金属.png" class="img1" style="margin-left: 30px">
+    <img src="../img/金属.png" class="img1"style="margin-left: 30px">
+    <img src="../img/钻石.png" class="img1"style="margin-left: 30px">
+    <div class="menu">
+        <button class="btn2"><img src="../img/个人信息.png" class="img1"></button>
+        <div class="content">
+            <div>
+                <img src="../img/img_1.png">
+            </div>
+            <div style="margin-left: 60px">
+                <a href="grxx.html" class="link-dark rounded">个人信息</a>
+            </div>
+            <div style="margin-left: 60px">
+                <a href="http://localhost:9093/index.html" target="_top">退出登录</a>
+            </div>
+        </div>
+    </div>
+    <a href="main.html" target="_top"><img src="../img/首页.png" class="img1"></a>
+    <img src="../img/地球仪.png" class="img1" style="margin-left: 20px;">
+</div>
+
+
+
+<!--<div id="table-toolbar">-->
+<!--    <div class="btn-group" role="group">-->
+<!--        <button id="refresh-btn" class="btn btn-primary" style="border-radius:5px;">-->
+<!--            <i class="bi bi-arrow-clockwise icon"></i>-->
+<!--            刷新-->
+<!--        </button>-->
+<!--        <span style="border-right: 20px solid white"></span>-->
+<!--        <button id="add-btn" class="btn btn-primary" style="border-radius:5px;">-->
+<!--            <i class="bi bi-plus-square icon"></i>-->
+<!--            新增-->
+<!--        </button>-->
+<!--        <span style="border-right: 20px solid white"></span>-->
+<!--        <button id="update-btn" class="btn btn-primary" style="border-radius:5px;">-->
+<!--            <i class="bi bi-pencil-square icon"></i>-->
+<!--            修改-->
+<!--        </button>-->
+<!--        <span style="border-right: 20px solid white"></span>-->
+<!--        <button id="delete-btn" class="btn btn-primary" style="border-radius:5px;background-color: red">-->
+<!--            <i class="bi bi-trash icon"></i>-->
+<!--            删除-->
+<!--        </button>-->
+<!--        <span style="border-right: 20px solid white"></span>-->
+<!--        <a class="btn btn-primary" style="color: white;padding-top: 8px;border-radius:5px;">当前页：商品信息</a>-->
+<!--    </div>-->
+<!--</div>-->
+
+
+
+<!-- 出库单模块 -->
+<div class="border-top mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">出库单</h4>
+        <div>
+            <button id="add-row-btn1" class="btn btn-success btn-sm">
+                <i class="bi bi-plus-circle"></i> 添加行
+            </button>
+            <button id="remove-row-btn1" class="btn btn-danger btn-sm ml-2">
+                <i class="bi bi-dash-circle"></i> 删除行
+            </button>
+            <button id="generate-btn1" class="btn btn-primary btn-sm ml-2">
+                <i class="bi bi-file-earmark-text"></i> 生成出库单
+            </button>
+            <button id="save-return-btn1" class="btn btn-primary btn-sm ml-2" onclick="saveReturnOrder()">
+                <i class="bi bi-file-earmark-text"></i> 保存
+            </button>
+            <button id="print-btn1" class="btn btn-info btn-sm ml-2">
+                <i class="bi bi-printer"></i> 打印
+            </button>
+        </div>
+    </div>
+
+    <!-- 出库单单表单 -->
+    <div class="border p-3 mb-3" style="background-color: #f8f9fa;">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="form-group row">
+                    <label class="col-sm-4 col-form-label"><strong>往来单位：</strong></label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control form-control-sm" id="return-customer1">
+                    </div>
+                </div>
+                <!--                <div class="form-group row">-->
+                <!--                    <label class="col-sm-4 col-form-label"><strong>退货电话：</strong></label>-->
+                <!--                    <div class="col-sm-8">-->
+                <!--                        <input type="text" class="form-control form-control-sm" id="return-phone">-->
+                <!--                    </div>-->
+                <!--                </div>-->
+            </div>
+            <div class="col-md-6">
+                <div class="form-group row">
+                    <label class="col-sm-4 col-form-label"><strong>初库单号：</strong></label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control form-control-sm" id="return-no1" value="202511260001" readonly>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-4 col-form-label"><strong>初库日期：</strong></label>
+                    <div class="col-sm-8">
+                        <input type="date" class="form-control form-control-sm" id="return-date1">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 出库明细表格 -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm" id="return-detail-table1">
+                <thead class="thead-light">
+                <tr>
+                    <th width="30"><input type="checkbox" id="select-all1"></th>
+                    <th width="50">序号</th>
+                    <th width="100">合同号</th>
+                    <th width="100">任务号</th>
+                    <th width="120">加工工序</th>
+                    <th width="120">产品名称</th>
+                    <th width="120">图号</th>
+                    <th width="60">单位</th>
+                    <th width="60">数量</th>
+                    <th width="80">单价</th>
+                    <th width="80">金额</th>
+                    <th width="80">材质</th>
+                    <th width="80">重量</th>
+                    <th width="100">备注</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- 初始一行 -->
+                <tr>
+                    <td><input type="checkbox" class="row-select"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="xuhao"  contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="contractNo"  contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="taskNo"  contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="gongxu"  contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="productName"  contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="drawingNo"  contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="unit"  contenteditable="false"></td>
+                    <td><input type="number" class="form-control form-control-sm" name="quantity"  contenteditable="false"></td>
+                    <td><input type="number" class="form-control form-control-sm" name="unitPrice"  contenteditable="false"></td>
+                    <td><input type="number" class="form-control form-control-sm" name="amount" contenteditable="false" ></td>
+                    <td><input type="text" class="form-control form-control-sm" name="material"  contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="weight"  contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="remark"  contenteditable="false"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 合计金额 -->
+<!--        <div class="row mt-3">-->
+<!--            <div class="col-md-6">-->
+<!--                <div class="form-group">-->
+<!--                    <label><strong>合计(大写)：</strong></label>-->
+<!--                    <span id="total-amount-chinese1">零元整</span>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--            <div class="col-md-6 text-right">-->
+<!--                <div class="form-group">-->
+<!--                    <label><strong>合计金额：</strong></label>-->
+<!--                    <span id="total-amount1">0</span>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+
+        <!-- 底部信息 -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label><strong>制单人：</strong></label>
+                    <input type="text" class="form-control form-control-sm" id="company-address1">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label><strong>审核人：</strong></label>
+                    <input type="text" class="form-control form-control-sm" id="company-phone1">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label><strong>送货人：</strong></label>
+                    <input type="text" class="form-control form-control-sm" id="songhuoren">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label><strong>收货人：</strong></label>
+                    <input type="text" class="form-control form-control-sm" id="shouhuoren">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="table-div border-top">
+    <table id="spmcTable"></table>
+</div>
+
+<div id="add-modal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">录入</div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <form id="add-form" class="needs-validation">
+                    <div class="row justify-content-evenly">
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-mc">商品名称</label>
+                                <input id="add-mc" name="mc" type="text" class="form-control" autocomplete="off">
+                                <div class="invalid-feedback">
+                                    请输入商品名称！
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="border-top" style="padding: 15px;">
+                <button id="add-submit-btn" type="button" class="btn" style="background-color: limegreen;color: white">
+                    <i class="bi bi-arrow-bar-up icon"></i>
+                    提交
+                </button>
+                <button id="add-close-btn" type="button" class="btn left-margin" style="background-color: red;color: white">
+                    <i class="bi bi-x-circle icon"></i>
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="delete-modal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">提示</div>
+            </div>
+            <div id="delete-modal-body" class="modal-body">
+                确定删除吗？
+            </div>
+            <div class="border-top" style="padding: 15px;">
+                <button id="delete-submit-btn" type="button" class="btn">
+                    <i class="bi bi-arrow-bar-up icon"></i>
+                    确定
+                </button>
+                <button id="delete-close-btn" type="button" class="btn left-margin">
+                    <i class="bi bi-x-circle icon"></i>
+                    取消
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

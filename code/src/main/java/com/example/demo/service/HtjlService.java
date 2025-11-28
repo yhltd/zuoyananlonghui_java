@@ -1,0 +1,91 @@
+package com.example.demo.service;
+
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.example.demo.entity.Htjl;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+/**
+ * @author hui
+ * @date 2025/11/25 9:38
+ */
+@Service
+public interface HtjlService extends IService<Htjl> {
+
+//    /**
+//     * 查询所有
+//     */
+//    List<Htjl> getList();
+
+    /**
+     * 查询所有（排除退货记录中已存在的数据）
+     */
+    List<Htjl> getListExcludeThjl();
+
+    /**
+     * 修改
+     */
+    boolean update(Htjl htjl);
+
+    /**
+     * 添加
+     * @return
+     */
+    boolean add(Htjl htjl);
+
+    /**
+     * 删除
+     *
+     * @param idList 根据id集合删除
+     * @return 是否删除成功
+     */
+    boolean delete(List<Integer> idList);
+
+
+    /**
+     * 根据姓名和部门查询c列和f列
+     */
+    List<Htjl> queryList(String name, String department);
+
+
+
+//    退货单
+    boolean save(Htjl htjl);
+    String getddh();
+
+
+
+
+//出库单
+
+    boolean save1(Htjl htjl);
+    String getddh1();
+
+
+
+//    /**
+//     * 根据ID查询单条数据
+//     */
+//    Htjl getById(String id);
+//
+//    /**
+//     * 根据多个ID查询数据
+//     */
+//    List<Htjl> getByIds(List<String> ids);
+
+
+    /**
+     * 根据ID查询合同记录
+     */
+    Htjl getById(String id);
+
+
+    /**
+     * 根据多个ID查询合同记录
+     */
+    List<Htjl> getByIds(List<String> ids);
+
+
+
+}
