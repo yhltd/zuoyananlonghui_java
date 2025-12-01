@@ -25,149 +25,81 @@
     <link rel="stylesheet" href="../css/main.css">
     <script type="text/javascript" src="../js/main.js"></script>
     <script type="text/javascript" src="../js/pzb.js"></script>
+    <link rel="stylesheet" href="../css/new.css">
 </head>
 
-<body class="pt-2">
-<div class="background-image">
-    <img src="../img/时间.png" class="img1">
-    <span style="color: black; font-size: 20px;margin-left: 20px" id="now_time"></span>
-    <span style="margin-left: 50px;font-size: 20px"><img src="../img/个人.png" style="height: 30px;">  您 好 <b><span
-            id="dlm" style="color: black"></span></b> , 欢 迎 您 登 录 !</span>
-    <img src="../img/重金属.png" class="img1" style="margin-left: 30px">
-    <img src="../img/金属.png" class="img1" style="margin-left: 30px">
-    <img src="../img/钻石.png" class="img1" style="margin-left: 30px">
-    <div class="menu">
-        <button class="btn2"><img src="../img/个人信息.png" class="img1"></button>
-        <div class="content">
-            <div>
-                <img src="../img/img_1.png">
-            </div>
-            <div style="margin-left: 60px">
-                <a href="grxx.html" class="link-dark rounded">个人信息</a>
-            </div>
-            <div style="margin-left: 60px">
-                <a href="http://localhost:9093/index.html" target="_top">退出登录</a>
+<body>
+<!-- 顶部导航栏 -->
+<div class="top-header">
+    <div class="header-content">
+        <div class="logo-section">
+            <i class="bi bi-person-badge-fill logo-icon"></i>
+            <span class="system-title">信息管理系统</span>
+        </div>
+
+        <div class="time-display">
+            <i class="bi bi-clock"></i>
+            <span id="now_time"></span>
+        </div>
+
+        <div class="user-info">
+            <i class="bi bi-person-circle"></i>
+            您好 <span class="user-name" id="dlm"></span>，欢迎登录！
+        </div>
+
+        <div class="nav-icons">
+            <div class="nav-icon">
+                <a href="http://localhost:9093/index.html" target="_top" class="dropdown-item-custom">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+
             </div>
         </div>
     </div>
-    <a href="main.html" target="_top"><img src="../img/首页.png" class="img1"></a>
-    <img src="../img/地球仪.png" class="img1" style="margin-left: 20px;">
 </div>
 
+<div class="main-container">
+    <!-- 搜索区域 - 单行布局 -->
+    <div class="search-section">
+        <div class="search-toolbar">
+            <div class="toolbar-buttons">
+                <button id="refresh-btn" class="btn btn-custom btn-primary-custom ">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    刷新
+                </button>
 
-<div id="table-toolbar">
-    <div class="btn-group" role="group">
-        <button id="refresh-btn" class="btn btn-primary" style="border-radius:5px;">
-            <i class="bi bi-arrow-clockwise icon"></i>
-            刷新
+        <button id="add-btn" class="btn btn-custom btn-primary-custom ">
+            <i class="bi bi-plus-square "></i>
+            新增一行
         </button>
-        <span style="border-right: 20px solid white"></span>
-        <button id="add-btn" class="btn btn-primary" style="border-radius:5px;">
-            <i class="bi bi-plus-square icon"></i>
-            新增
-        </button>
-        <span style="border-right: 20px solid white"></span>
-        <button id="delete-btn" class="btn btn-primary" style="border-radius:5px;background-color: red">
-            <i class="bi bi-trash icon"></i>
-            删除
-        </button>
-        <span style="border-right: 20px solid white"></span>
-        <a class="btn btn-primary" style="color: white;padding-top: 8px;border-radius:5px;">当前页：配置表</a>
+
+                <button id="add-btn-modal" class="btn btn-custom btn-primary-custom ">
+                    <i class="bi bi-plus-square "></i>
+                    新增
+                </button>
+
+                <button id="delete-btn" class="btn btn-custom btn-danger-custom">
+                    <i class="bi bi-trash"></i>
+                    删除
+                </button>
+                <!-- 当前页面指示器 -->
+                <div class="page-indicator">
+                    <i class="bi bi-file-earmark-text me-2"></i>
+                    当前页：配置表
+                </div>
+            </div>
     </div>
 </div>
 
-<div class="table-div border-top">
-    <table id="ysyfTable"></table>
-</div>
 
-
-<div id="upn-modal" class="modal fade" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">录入</div>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-
-            <div class="modal-body">
-                <form id="upn-form" class="needs-validation">
-                    <div class="row justify-content-evenly">
-                        <div class="form-group">
-                            <input id="id" name="id" type="hidden">
-                        </div>
-                        <div class="col-6" hidden>
-                            <div class="form-group">
-                                <label for="upn-bh">编号</label>
-                                <input id="upn-bh" name="bh" type="text" class="form-control" autocomplete="off">
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="form-group" >
-                                <label for="upn-fkrq">付款日期</label>
-                                <input id="upn-fkrq" name="fkrq" type="date" class="form-control" autocomplete="off"
-                                       data-required="1">
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="form-group">
-                                <label for="upn-skje">收款金额</label>
-                                <input id="upn-skje" name="skje" type="text" class="form-control" autocomplete="off"
-                                       data-required="1">
-                                <div class="invalid-feedback">
-                                    请输入收款金额！
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="form-group" hidden>
-                                <label for="upn-ysje">应收金额</label>
-                                <input id="upn-ysje" name="ysje" type="text" class="form-control" autocomplete="off"
-                                       readonly data-required="1">
-                            </div>
-                        </div>
-                        <div class="col-6" hidden>
-                            <div class="form-group">
-                                <label for="upn-zys">总应收</label>
-                                <input id="upn-zys" name="zys" type="text" class="form-control" autocomplete="off"
-                                       data-required="1">
-                                <div class="invalid-feedback">
-                                    请输入总应收！
-                                </div>
-                            </div>
-                        </div>
-                        <!--                        <div class="col-6">-->
-                        <!--                            <div class="form-group">-->
-                        <!--                                <label for="upn-yuefen">月份</label>-->
-                        <!--                                <input id="upn-yuefen" name="yuefen" type="text" class="form-control" autocomplete="off"-->
-                        <!--                                       data-required="1">-->
-                        <!--                                <div class="invalid-feedback">-->
-                        <!--                                    请输入月份！-->
-                        <!--                                </div>-->
-                        <!--                            </div>-->
-                        <!--                        </div>-->
-                        <div class="col-6">
-                            <div class="form-group" hidden>
-                                <label for="upn-bz">备注</label>
-                                <input id="upn-bz" name="bz" type="text" class="form-control" autocomplete="off"
-                                       readonly data-required="1">
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="border-top" style="padding: 15px;">
-                <button id="uupn-btn" type="button" class="btn" style="background-color: limegreen;color: white">
-                    <i class="bi bi-arrow-bar-up icon"></i>
-                    提交
-                </button>
-                <button id="cupn-btn" type="button" class="btn left-margin"
-                        style="background-color: red;color: white">
-                    <i class="bi bi-x-circle icon"></i>
-                    关闭
-                </button>
-            </div>
+    <!-- 数据表格 -->
+    <div class="table-container">
+        <div class="table-header">
+            <i class="bi bi-table me-2"></i>
+            配置表
+        </div>
+        <div class="table-responsive">
+            <table id="ysyfTable" class="gradient-table"></table>
         </div>
     </div>
 </div>
@@ -181,7 +113,10 @@
 
 
 
-<div id="add-modal" class="modal fade" tabindex="-1">
+
+
+
+<div id="add-modal" class="modal fade modal-custom" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -196,58 +131,29 @@
                     <div class="row justify-content-evenly">
                         <div class="col-6">
                             <div class="form-group">
-                                <label for="add-bh">编号</label>
-                                <input id="add-bh" name="bh" type="date" class="form-control" autocomplete="off">
+                                <label for="add-gyy">工艺员</label>
+                                <input id="add-gyy" name="bh" type="text" class="form-control" autocomplete="off" data-required="1">
                                 <div class="invalid-feedback">
-                                    请输入编号！
+                                    请输入工艺员！
                                 </div>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="form-group">
-                                <label for="add-fkrq">付款日期</label>
-                                <input id="add-fkrq" name="fkrq" type="text" class="form-control" autocomplete="off"
-                                       data-required="1">
+                                <label for="add-jdy">校对员</label>
+                                <input id="add-jdy" name="fkrq" type="text" class="form-control" autocomplete="off" data-required="1">
                                 <div class="invalid-feedback">
-                                    请输入付款日期！
+                                    请输入校对员！
                                 </div>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="form-group">
-                                <label for="add-skje">收款金额</label>
-                                <input id="add-skje" name="je" type="text" class="form-control" autocomplete="off"
-                                       data-required="1">
+                                <label for="add-pzr">批准</label>
+                                <input id="add-pzr" name="je" type="text" class="form-control" autocomplete="off" data-required="1">
                                 <div class="invalid-feedback">
-                                    请输入收款金额！
+                                    请输入批准人！
                                 </div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="form-group">
-                                <label for="add-zys">总应收</label>
-                                <input id="add-zys" name="zys" type="text" class="form-control" autocomplete="off"
-                                       data-required="1">
-                                <div class="invalid-feedback">
-                                    请输入总应收！
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="form-group">
-                                <label for="add-yuefen">月份</label>
-                                <input id="add-yuefen" name="yuefen" type="text" class="form-control" autocomplete="off"
-                                       data-required="1">
-                                <div class="invalid-feedback">
-                                    请输入月份！
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="form-group">
-                                <label for="add-bz">备注</label>
-                                <input id="add-bz" name="bz" type="text" class="form-control" autocomplete="off"
-                                       readonly data-required="1">
                             </div>
                         </div>
                     </div>
@@ -268,103 +174,7 @@
     </div>
 </div>
 
-<div id="update-modal" class="modal fade" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">编辑</div>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="update-form" class="needs-validation">
-                    <!--                    <div class="form-group">-->
-                    <!--                        <input id="id" name="id" type="hidden">-->
-                    <!--                    </div>-->
 
-                    <!--                    <div class="row justify-content-evenly">-->
-                    <!--                        <div class="col-6">-->
-                    <!--                            <div class="form-group">-->
-                    <!--                                <label for="update-riqi">日期</label>-->
-                    <!--                                <input id="update-riqi" name="riqi" type="date" class="form-control" autocomplete="off">-->
-                    <!--                                <div class="invalid-feedback">-->
-                    <!--                                    请输入日期！-->
-                    <!--                                </div>-->
-                    <!--                            </div>-->
-                    <!--                        </div>-->
-                    <!--                        <div class="col-6">-->
-                    <!--                            <div class="form-group">-->
-                    <!--                                <label for="update-gsm">公司名</label>-->
-                    <!--                                <input id="update-gsm" name="gsm" type="text" class="form-control" autocomplete="off" data-required="1">-->
-                    <!--                                <div class="invalid-feedback">-->
-                    <!--                                    请输入公司名！-->
-                    <!--                                </div>-->
-                    <!--                            </div>-->
-                    <!--                        </div>-->
-                    <!--                        <div class="col-6">-->
-                    <!--                            <div class="form-group">-->
-                    <!--                                <label for="update-pm">品名</label>-->
-                    <!--                                <input id="update-pm" name="pm" type="text" class="form-control" autocomplete="off" data-required="1">-->
-                    <!--                                <div class="invalid-feedback">-->
-                    <!--                                    请输入品名！-->
-                    <!--                                </div>-->
-                    <!--                            </div>-->
-                    <!--                        </div>-->
-                    <!--                        <div class="col-6">-->
-                    <!--                            <div class="form-group">-->
-                    <!--                                <label for="update-zl">重量</label>-->
-                    <!--                                <input id="update-zl" name="zl" type="text" class="form-control" autocomplete="off" data-required="1">-->
-                    <!--                                <div class="invalid-feedback">-->
-                    <!--                                    请输入重量！-->
-                    <!--                                </div>-->
-                    <!--                            </div>-->
-                    <!--                        </div>-->
-                    <!--                        <div class="col-6">-->
-                    <!--                            <div class="form-group">-->
-                    <!--                                <label for="update-dj">单价</label>-->
-                    <!--                                <input id="update-dj" name="dj" type="text" class="form-control" autocomplete="off" data-required="1">-->
-                    <!--                                <div class="invalid-feedback">-->
-                    <!--                                    请输入单价！-->
-                    <!--                                </div>-->
-                    <!--                            </div>-->
-                    <!--                        </div>-->
-                    <!--                        <div class="col-6">-->
-                    <!--                            <div class="form-group">-->
-                    <!--                                <label for="update-je">金额</label>-->
-                    <!--                                <input id="update-je" name="je" type="text" class="form-control" autocomplete="off" readonly data-required="1">-->
-                    <!--                            </div>-->
-                    <!--                        </div>-->
-                    <!--                        <div class="col-6">-->
-                    <!--                            <div class="form-group">-->
-                    <!--                                <label for="update-ysyf">应收应付</label>-->
-                    <!--                                <select id="update-ysyf" name="ysyf" class="form-control" autocomplete="off">-->
-                    <!--                                    <option value="应收">应收</option>-->
-                    <!--                                    <option value="应付">应付</option>-->
-                    <!--                                </select>-->
-                    <!--                                <div class="invalid-feedback">-->
-                    <!--                                    请选择应收应付！-->
-                    <!--                                </div>-->
-                    <!--                            </div>-->
-                    <!--                        </div>-->
-                    <!--                    </div>-->
-                </form>
-            </div>
-            <div class="border-top" style="padding: 15px;">
-                <button id="update-submit-btn" type="button" class="btn"
-                        style="background-color: limegreen;color: white">
-                    <i class="bi bi-arrow-bar-up icon"></i>
-                    提交
-                </button>
-                <button id="update-close-btn" type="button" class="btn left-margin"
-                        style="background-color: red;color: white">
-                    <i class="bi bi-x-circle icon"></i>
-                    关闭
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <div id="delete-modal" class="modal fade" tabindex="-1">
     <div class="modal-dialog">
@@ -417,88 +227,27 @@
 </div>
 
 
-<div id="updateje-modal" class="modal fade" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">编辑</div>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="updateje-form" class="needs-validation">
-                    <div class="col-6">
-                        <div class="form-group">
-                            <label for="update-bh">编号</label>
-                            <input id="update-bh" name="bh" type="text" class="form-control" autocomplete="off" readonly
-                                   data-required="1">
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="form-group">
-                            <label for="update-riqi">账款日期</label>
-                            <input id="update-riqi" name="riqi" type="text" class="form-control" autocomplete="off"
-                                   readonly data-required="1">
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="form-group">
-                            <label for="update-fkriqi">付款日期</label>
-                            <input id="update-fkriqi" name="fkriqi" type="date" class="form-control" autocomplete="off"
-                                   data-required="1">
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="form-group">
-                            <label for="update-gsm">公司名</label>
-                            <input id="update-gsm" name="gsm" type="text" class="form-control" autocomplete="off"
-                                   readonly data-required="1">
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="form-group">
-                            <label for="update-skje">收款金额</label>
-                            <input id="update-skje" name="skje" type="text" class="form-control" autocomplete="off"
-                                   data-required="1">
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="form-group">
-                            <label for="update-ysje">应收金额</label>
-                            <input id="update-ysje" name="ysje" type="text" class="form-control" autocomplete="off"
-                                   readonly data-required="1">
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="form-group">
-                            <label for="update-zys">总应收</label>
-                            <input id="update-zys" name="zys" type="text" class="form-control" autocomplete="off"
-                                   readonly data-required="1">
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="form-group">
-                            <label for="update-bz">备注</label>
-                            <input id="update-bz" name="bz" type="text" class="form-control" autocomplete="off" readonly
-                                   data-required="1">
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="border-top" style="padding: 15px;">
-                <button id="update-skje-btn" type="button" class="btn" style="background-color: limegreen;color: white">
-                    <i class="bi bi-arrow-bar-up icon"></i>
-                    提交
-                </button>
-                <button id="close-skje-btn" type="button" class="btn left-margin"
-                        style="background-color: red;color: white">
-                    <i class="bi bi-x-circle icon"></i>
-                    关闭
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+
 </body>
+<script>
+    // 更新时间显示
+    function updateTime() {
+        const now = new Date();
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        document.getElementById('now_time').textContent = now.toLocaleDateString('zh-CN', options);
+    }
+
+    // 初始更新时间并设置定时器
+    updateTime();
+    setInterval(updateTime, 1000);
+
+</script>
 </html>

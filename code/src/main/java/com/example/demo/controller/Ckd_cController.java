@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -47,7 +48,7 @@ public class Ckd_cController {
             return ResultInfo.error("保存失败: " + e.getMessage());
         }
     }
-}
+
 
 ///**
 // * 统一返回结果类
@@ -84,8 +85,85 @@ public class Ckd_cController {
 //    public Object getData() { return data; }
 //    public void setData(Object data) { this.data = data; }
 
+    /**
+     * 检查单号是否重复
+     */
+    @GetMapping("/checkDuplicateOrder")
+    public ResultInfo checkDuplicateOrder(@RequestParam String chukudanhao) {
+        try {
+            boolean exists = ckd_cService.checkOrderExists(chukudanhao);
+
+            // 创建包含检查结果的Map
+            Map<String, Object> data = new HashMap<>();
+            data.put("exists", exists);
+            data.put("chukudanhao", chukudanhao);
+
+            return ResultInfo.success("检查成功", data); // ✅ 返回包含exists的数据
+        } catch (Exception e) {
+            return ResultInfo.error("检查失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 删除重复单号数据
+     */
+    @PostMapping("/deleteDuplicateOrder")
+    public ResultInfo deleteDuplicateOrder(@RequestBody Map<String, String> params) {
+        try {
+            String chukudanhao = params.get("chukudanhao");
+            ckd_cService.deleteByOrderNo(chukudanhao);
+            return ResultInfo.success("删除重复数据成功");
+        } catch (Exception e) {
+            return ResultInfo.error("删除失败: " + e.getMessage());
+        }
+    }
+
+
+    @PostMapping("/updateContractStatus")
+    public ResultInfo updateContractStatus(@RequestBody Map<String, Object> params) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<String> contractIds = (List<String>) params.get("contractIds");
+            String chukuriqi = (String) params.get("chukuriqi");
+            String chukudanhao = (String) params.get("chukudanhao");
+
+            ckd_cService.updateContractStatus(contractIds, chukuriqi, chukudanhao);
+            return ResultInfo.success("合同状态更新成功");
+        } catch (Exception e) {
+            return ResultInfo.error("合同状态更新失败: " + e.getMessage());
+        }
+    }
 
 
 
+
+    /**
+     * 根据合同号查询合同ID
+     */
+    @PostMapping("/getContractIdsByNumbers")
+    public ResultInfo getContractIdsByNumbers(@RequestBody Map<String, Object> params) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<String> contractNumbers = (List<String>) params.get("contractNumbers");
+
+            List<Map<String, Object>> contractInfo = ckd_cService.getContractInfoByNumbers(contractNumbers);
+
+            // 提取合同ID列表
+            List<String> contractIds = contractInfo.stream()
+                    .map(info -> info.get("id").toString())
+                    .collect(Collectors.toList());
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("contractIds", contractIds);
+            data.put("contractInfo", contractInfo);
+
+            return ResultInfo.success("查询成功", data);
+        } catch (Exception e) {
+            return ResultInfo.error("查询失败: " + e.getMessage());
+        }
+    }
+
+
+}
 
 

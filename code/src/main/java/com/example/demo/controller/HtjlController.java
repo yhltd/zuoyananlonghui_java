@@ -61,72 +61,54 @@ public class HtjlController {
     /**
      * 修改
      */
-    @RequestMapping(value = "/update", method = RequestMethod.POST)
-    public ResultInfo update(@RequestBody String updateJson, HttpSession session) {
+//    @RequestMapping(value = "/update", method = RequestMethod.POST)
+//    public ResultInfo update(@RequestBody String updateJson, HttpSession session) {
+//        try {
+//            System.out.println("接收到的JSON: " + updateJson);
+//
+//            // 这里应该能正确映射C、D、E、F字段
+//            Htjl htjl = GsonUtil.toEntity(updateJson, Htjl.class);
+//
+//            if (htjlService.update(htjl)) {
+//                return ResultInfo.success("修改成功", htjl);
+//            } else {
+//                return ResultInfo.error("修改失败");
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            log.error("修改失败：{}", e.getMessage());
+//            return ResultInfo.error("修改失败: " + e.getMessage());
+//        }
+//    }
+
+    @PostMapping("/updateField")
+    public Result<?> updateField(@RequestBody Map<String, Object> params) {
         try {
-            System.out.println("接收到的JSON: " + updateJson);
+            System.out.println("更新字段请求:" + params);
 
-            // 这里应该能正确映射C、D、E、F字段
-            Htjl htjl = GsonUtil.toEntity(updateJson, Htjl.class);
-
-            System.out.println("c: " + htjl.getC());
-            System.out.println("d: " + htjl.getD());
-            System.out.println("e: " + htjl.getE());
-            System.out.println("f: " + htjl.getF());
-            System.out.println("g: " + htjl.getG());
-            System.out.println("h: " + htjl.getH());
-            System.out.println("i: " + htjl.getI());
-            System.out.println("j: " + htjl.getJ());
-            System.out.println("k: " + htjl.getK());
-            System.out.println("l: " + htjl.getL());
-            System.out.println("m: " + htjl.getM());
-            System.out.println("n: " + htjl.getN());
-            System.out.println("o: " + htjl.getO());
-            System.out.println("p: " + htjl.getP());
-            System.out.println("q: " + htjl.getQ());
-            System.out.println("r: " + htjl.getR());
-            System.out.println("s: " + htjl.getS());
-            System.out.println("t: " + htjl.getT());
-            System.out.println("u: " + htjl.getU());
-            System.out.println("v: " + htjl.getV());
-            System.out.println("w: " + htjl.getW());
-            System.out.println("x: " + htjl.getX());
-            System.out.println("y: " + htjl.getY());
-            System.out.println("z: " + htjl.getZ());
-            System.out.println("aa: " + htjl.getAa());
-            System.out.println("ab: " + htjl.getAb());
-            System.out.println("ac: " + htjl.getAc());
-            System.out.println("ad: " + htjl.getAd());
-            System.out.println("ae: " + htjl.getAe());
-            System.out.println("af: " + htjl.getAf());
-            System.out.println("ag: " + htjl.getAg());
-            System.out.println("ah: " + htjl.getAh());
-            System.out.println("ai: " + htjl.getAi());
-            System.out.println("aj: " + htjl.getAj());
-            System.out.println("ak: " + htjl.getAk());
-            System.out.println("al: " + htjl.getAl());
-            System.out.println("am: " + htjl.getAm());
-            System.out.println("an: " + htjl.getAn());
-            System.out.println("ao: " + htjl.getAo());
-            System.out.println("ap: " + htjl.getAp());
-            System.out.println("aq: " + htjl.getAq());
-            System.out.println("ar: " + htjl.getAr());
-            System.out.println("as: " + htjl.getAs());
-            System.out.println("at: " + htjl.getAt());
-            System.out.println("au: " + htjl.getAu());
-            System.out.println("av: " + htjl.getAv());
-            System.out.println("aw: " + htjl.getAw());
-            System.out.println("ax: " + htjl.getAx());
-
-            if (htjlService.update(htjl)) {
-                return ResultInfo.success("修改成功", htjl);
-            } else {
-                return ResultInfo.error("修改失败");
+            Integer id = (Integer) params.get("id");
+            if (id == null) {
+                return Result.error("ID不能为空");
             }
+
+            // 移除id，剩下的就是需要更新的字段
+            params.remove("id");
+
+            if (params.isEmpty()) {
+                return Result.error("没有要更新的字段");
+            }
+
+            boolean success = htjlService.updateField(id, params);
+
+            if (success) {
+                return Result.success("更新成功");
+            } else {
+                return Result.error("更新失败");
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
-            log.error("修改失败：{}", e.getMessage());
-            return ResultInfo.error("修改失败: " + e.getMessage());
+            return Result.error("系统错误: " + e.getMessage());
         }
     }
 
@@ -137,57 +119,6 @@ public class HtjlController {
     @RequestMapping("/add")
     public ResultInfo add(@RequestBody Htjl htjl, HttpSession session) {
         try {
-            // 直接接收Thjl对象，不需要手动解析
-            System.out.println("=== 接收新增请求 ===");
-            System.out.println("直接接收的Htjl对象:");
-            System.out.println("业务单位(c): " + htjl.getC());
-            System.out.println("合同号(d): " + htjl.getD());
-            System.out.println("任务号(e): " + htjl.getE());
-            System.out.println("工艺规程状态(f): " + htjl.getF());
-            System.out.println("工序(g): " + htjl.getG());
-            System.out.println("名称(h): " + htjl.getH());
-            System.out.println("图号(i): " + htjl.getI());
-            System.out.println("单位(j): " + htjl.getJ());
-            System.out.println("数量(k): " + htjl.getK());
-            System.out.println("材质(l): " + htjl.getL());
-            System.out.println("序合计(m): " + htjl.getM());
-            System.out.println("重量(n): " + htjl.getN());
-            System.out.println("工件(o): " + htjl.getO());
-            System.out.println("单位元(p): " + htjl.getP());
-            System.out.println("合计金额(q): " + htjl.getQ());
-            System.out.println("铣工时/40(r): " + htjl.getR());
-            System.out.println("铣单价(s): " + htjl.getS());
-            System.out.println("车工时/40(t): " + htjl.getT());
-            System.out.println("车单价(u): " + htjl.getU());
-            System.out.println("钳公式/40(v): " + htjl.getV());
-            System.out.println("钳单位(w): " + htjl.getW());
-            System.out.println("整件外委工时/57.6(x): " + htjl.getX());
-            System.out.println("整件外委单位(y): " + htjl.getY());
-            System.out.println("外委工时/48(z): " + htjl.getZ());
-            System.out.println("外委单价(aa): " + htjl.getAa());
-            System.out.println("镗工时/73(ab): " + htjl.getAb());
-            System.out.println("镗单价(ac): " + htjl.getAc());
-            System.out.println("割工时/24(ad): " + htjl.getAd());
-            System.out.println("割单价(ae): " + htjl.getAe());
-            System.out.println("磨工时/42(af): " + htjl.getAf());
-            System.out.println("磨单价(ag): " + htjl.getAg());
-            System.out.println("数控铣工时/69(ah): " + htjl.getAh());
-            System.out.println("数控铣单价(ai): " + htjl.getAi());
-            System.out.println("立车/71(aj): " + htjl.getAj());
-            System.out.println("立车单价(ak): " + htjl.getAk());
-            System.out.println("电火花/42(al): " + htjl.getAl());
-            System.out.println("电火花单价(am): " + htjl.getAm());
-            System.out.println("中走丝/38(an): " + htjl.getAn());
-            System.out.println("中走丝单价(ao): " + htjl.getAo());
-            System.out.println("下料(ap): " + htjl.getAp());
-            System.out.println("深孔钻(aq): " + htjl.getAq());
-            System.out.println("回厂日期(ar): " + htjl.getAr());
-            System.out.println("出厂日期(as): " + htjl.getAs());
-            System.out.println("订单要求交货时间(at): " + htjl.getAt());
-            System.out.println("铣(au): " + htjl.getAu());
-            System.out.println("车(av): " + htjl.getAv());
-            System.out.println("登记员(aw): " + htjl.getAw());
-            System.out.println("备注(ax): " + htjl.getAx());
 
             // 插入新用户数据
             boolean result = htjlService.add(htjl);

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <title>首页</title>
@@ -13,72 +13,382 @@
     <link rel="stylesheet" href="../bootstrap-5.1.3-dist/icons/bootstrap-icons.css">
     <script type="text/javascript" src="../bootstrap-5.1.3-dist/js/bootstrap.min.js"></script>
 
-    <link rel="stylesheet" href="../bootstrap-4.5.0-dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="../bootstrap-4.5.0-dist/icons/bootstrap-icons.css">
-    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap.min.js"></script>
-
     <link rel="stylesheet" href="../css/main.css">
     <script type="text/javascript" src="../js/main.js"></script>
 
-    <style>body{min-height:100vh;min-height:-webkit-fill-available}html{height:-webkit-fill-available}main{display:flex;flex-wrap:nowrap;height:100vh;height:-webkit-fill-available;max-height:100vh;overflow-x:auto;overflow-y:hidden}.b-example-divider{flex-shrink:0;width:1.5rem;height:100vh;background-color:rgba(0,0,0,.1);border:solid rgba(0,0,0,.15);border-width:1px 0;box-shadow:inset 0 .5em 1.5em rgba(0,0,0,.1),inset 0 .125em .5em rgba(0,0,0,.15)}.bi{vertical-align:-.125em;pointer-events:none;fill:currentColor}.dropdown-toggle{outline:0}.nav-flush .nav-link{border-radius:0}.btn-toggle{display:inline-flex;align-items:center;padding:.25rem .5rem;font-weight:600;color:rgba(0,0,0,.65);background-color:transparent;border:0}.btn-toggle:hover,.btn-toggle:focus{color:rgba(0,0,0,.85);background-color:#d2f4ea}.btn-toggle::before{width:1.25em;line-height:0;content:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba%280,0,0,.5%29' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 14l6-6-6-6'/%3e%3c/svg%3e");transition:transform .35s ease;transform-origin:.5em 50%}.btn-toggle[aria-expanded="true"]{color:rgba(0,0,0,.85)}.btn-toggle[aria-expanded="true"]::before{transform:rotate(90deg)}.btn-toggle-nav a{display:inline-flex;padding:.1875rem .5rem;margin-top:.125rem;text-decoration:none}.btn-toggle-nav a:hover,.btn-toggle-nav a:focus{background-color:#d2f4ea}.scrollarea{overflow-y:auto}.fw-semibold{font-weight:600}.lh-tight{line-height:1.25}.bd-placeholder-img{font-size:1.125rem;text-anchor:middle;-webkit-user-select:none;-moz-user-select:none;user-select:none}@media (min-width:768px){.bd-placeholder-img-lg{font-size:3.5rem}}</style>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --sidebar-bg: #1e293b;
+            --sidebar-hover: #334155;
+            --sidebar-active: #4361ee;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+        }
+
+        main {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 180px;
+            background: var(--sidebar-bg);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid #334155;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 45px;
+            height: 45px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .company-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+            height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        .sidebar-nav::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: #334155;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: #64748b;
+            border-radius: 2px;
+        }
+
+        .nav-section {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-section-title {
+            padding: 0.75rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-item {
+            margin: 0.125rem 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.75rem 1rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 0 0.5rem;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: var(--sidebar-hover);
+            color: var(--text-primary);
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: var(--sidebar-active);
+            color: white;
+            box-shadow: 0 2px 8px rgba(67, 97, 238, 0.3);
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .nav-text {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+
+        .nav-badge {
+            background: #ef4444;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: auto;
+        }
+
+        .divider {
+            height: 1px;
+            background: #334155;
+            margin: 1rem 0;
+        }
+
+        /* 主内容区域 */
+        .main-content {
+            flex: 1;
+            background: #f8fafc;
+            overflow: hidden;
+        }
+
+        .content-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+            }
+
+            .sidebar-header .company-name,
+            .nav-text,
+            .nav-section-title {
+                display: none;
+            }
+
+            .nav-link {
+                justify-content: center;
+                padding: 0.75rem;
+            }
+
+            .logo-container {
+                justify-content: center;
+            }
+        }
+
+        /* 菜单项分组样式 */
+        .menu-group {
+            margin-bottom: 1rem;
+        }
+
+        .menu-group-title {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 1rem 0 0.5rem 1rem;
+        }
+
+        /* 其他菜单特殊样式 */
+        .other-menu {
+            border-top: 1px solid #334155;
+            margin-top: auto;
+            padding-top: 1rem;
+        }
+
+        .version-info {
+            padding: 0.75rem 1rem;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-align: center;
+            border-top: 1px solid #334155;
+            margin-top: 1rem;
+        }
+    </style>
 </head>
 <body>
-    <main>
-        <div id="main1" class="flex-shrink-0 p-3" style="width: 200px;background-color: #bfbfbf">
-            <a href="main.html" class="d-flex align-items-center pb-3 mb-3 link-dark text-decoration-none border-bottom">
-                <img src="../img/logo_1.png" width="50" height="50" class="d-inline-block align-top rounded" alt=""/>
-                <span class="fs-5 fw-semibold" style="color:white">&nbsp;坤鑫金属</span>
-            </a>
-            <ul class="list-unstyled ps-0" style="height: 520px; overflow-y: scroll;">
+<main>
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <a href="main.html" style="text-decoration: none;" >
+                <img src="../img/zuoyanan_logo.jpg" class="logo" alt="龙辉制造">
 
-                <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-                    <li><img src="../img/客户资料.png" class="image-small"><a href="#" class="link-dark rounded" data-src="Lcd.html" style="font-weight: bold;clear: both">流程单</a></li>
-                    <li><img src="../img/供应商资料.png" class="image-small"><a href="#" class="link-dark rounded" data-src="Bgd.html" style="font-weight: bold">报工单</a></li>
-                    <li><img src="../img/供应商资料.png" class="image-small"><a href="#" class="link-dark rounded" data-src="pzb.html" style="font-weight: bold">配置表</a></li>
-                    <li><img src="../img/银行卡.png" class="image-small"><a href="#" class="link-dark rounded" data-src="gygc.html" style="font-weight: bold">工艺规程单</a></li>
-                    <li><img src="../img/银行卡.png" class="image-small"><a href="#" class="link-dark rounded" data-src="ywcht.html" style="font-weight: bold">已完成合同</a></li>
-                    <li><img src="../img/银行卡.png" class="image-small"><a href="#" class="link-dark rounded" data-src="kpht.html" style="font-weight: bold">开票合同</a></li>
-                    <li><img src="../img/银行卡.png" class="image-small"><a href="#" class="link-dark rounded" data-src="userinfo.html" style="font-weight: bold">账号管理</a></li>
-                    <li><img src="../img/银行卡.png" class="image-small"><a href="#" class="link-dark rounded" data-src="thjl.html" style="font-weight: bold">退货记录查询</a></li>
-                    <li><img src="../img/供应商资料.png" class="image-small"><a href="#" class="link-dark rounded" data-src="ckd.html" style="font-weight: bold">出库单</a></li>
-                    <li><img src="../img/供应商资料.png" class="image-small"><a href="#" class="link-dark rounded" data-src="htjl.html" style="font-weight: bold">合同记录</a></li>
-                    <li><img src="../img/供应商资料.png" class="image-small"><a href="#" class="link-dark rounded" data-src="yggs.html" style="font-weight: bold">员工工时</a></li>
-                </ul>
 
-                <li class="border-top my-3"></li>
-                <li class="mb-1">
-                    <i class="bi bi-x-square-fill"></i>
-                    <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#other" aria-expanded="false" style="font-size: 16px">
-                        其他
-                    </button>
-                    <div class="collapse" id="other">
-                        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-                            <li><img src="../img/退出.png" class="image-small"><a href="#" class="link-dark rounded" data-src="退出" style="font-weight: bold">退出</a></li>
-                            <li><a href="#" class="link-dark rounded" style="font-weight: bold">V 1.0.9</a></li>
-                        </ul>
-                    </div>
-                </li>
-            </ul>
+
+                <span class="company-name">龙辉制造</span>
+                </a>
+            </div>
         </div>
 
-        <div class="embed-responsive embed-responsive-1by1 h-100">
-            <iframe id="iframe" class="embed-responsive-item" src="main_item.html"></iframe>
+        <div class="sidebar-nav">
+            <!-- 主要功能菜单 -->
+            <div class="menu-group">
+                <div class="menu-group-title">主要功能</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-src="Lcd.html">
+                        <i class="bi bi-diagram-3 nav-icon"></i>
+                        <span class="nav-text">流程单</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-src="Bgd.html">
+                        <i class="bi bi-clipboard-check nav-icon"></i>
+                        <span class="nav-text">报工单</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-src="pzb.html">
+                        <i class="bi bi-gear nav-icon"></i>
+                        <span class="nav-text">配置表</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-src="gygc.html">
+                        <i class="bi bi-tools nav-icon"></i>
+                        <span class="nav-text">工艺规程单</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 合同管理菜单 -->
+            <div class="menu-group">
+                <div class="menu-group-title">合同管理</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-src="ywcht.html">
+                        <i class="bi bi-file-check nav-icon"></i>
+                        <span class="nav-text">已完成合同</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-src="kpht.html">
+                        <i class="bi bi-receipt nav-icon"></i>
+                        <span class="nav-text">开票合同</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-src="htjl.html">
+                        <i class="bi bi-archive nav-icon"></i>
+                        <span class="nav-text">合同记录</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 系统管理菜单 -->
+            <div class="menu-group">
+                <div class="menu-group-title">系统管理</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-src="userinfo.html">
+                        <i class="bi bi-people nav-icon"></i>
+                        <span class="nav-text">账号管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-src="yggs.html">
+                        <i class="bi bi-clock-history nav-icon"></i>
+                        <span class="nav-text">员工工时</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 库存管理菜单 -->
+            <div class="menu-group">
+                <div class="menu-group-title">库存管理</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-src="ckd.html">
+                        <i class="bi bi-box-arrow-up nav-icon"></i>
+                        <span class="nav-text">出库单</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-src="thjl.html">
+                        <i class="bi bi-arrow-return-left nav-icon"></i>
+                        <span class="nav-text">退货记录查询</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 其他菜单 -->
+            <div class="other-menu">
+                <div class="nav-item">
+                    <a href="#" class="nav-link text-danger" data-src="退出">
+                        <i class="bi bi-box-arrow-right nav-icon"></i>
+                        <span class="nav-text">退出登录</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="version-info">
+                V 1.0.0
+            </div>
         </div>
-    </main>
-</body>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <iframe id="iframe" class="content-iframe" src="main_item.html"></iframe>
+    </div>
+</main>
+
 <script type="text/javascript">
     $(function () {
-        $('a').click(function () {
+        // 菜单点击事件
+        $('.nav-link').click(function (e) {
+            e.preventDefault();
+
+            // 移除所有active类
+            $('.nav-link').removeClass('active');
+            // 添加当前active类
+            $(this).addClass('active');
+
             let src = $(this).data('src');
-            if (src != '' && src != undefined) {
-                if(src=="退出"){
-                    window.location.href="../index.html"
-                }else{
+            if (src) {
+                if (src === "退出") {
+                    if (confirm('确定要退出系统吗？')) {
+                        window.location.href = "../index.html";
+                    }
+                } else {
                     $('#iframe').attr('src', src);
                 }
-
             }
-        })
-    })
+        });
+
+        // 设置默认激活的菜单项
+        $('.nav-link[data-src="main_item.html"]').addClass('active');
+
+        // 侧边栏滚动条美化
+        $('.sidebar-nav').on('scroll', function() {
+            $(this).addClass('scrolling');
+        });
+    });
 </script>
+</body>
 </html>

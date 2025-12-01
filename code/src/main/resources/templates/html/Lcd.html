@@ -25,15 +25,77 @@
     <link rel="stylesheet" href="../css/main.css">
     <script type="text/javascript" src="../js/main.js"></script>
     <script type="text/javascript" src="../js/lcd.js"></script>
+    <link rel="stylesheet" href="../css/new.css">
 </head>
 
-<body class="pt-2">
-<div id="table-toolbar">
-<h2>未完成项目进行进度</h2>
+<body >
+<div class="top-header">
+    <div class="header-content">
+        <div class="logo-section">
+            <i class="bi bi-person-badge-fill logo-icon"></i>
+            <span class="system-title">信息管理系统</span>
+        </div>
+
+        <div class="time-display">
+            <i class="bi bi-clock"></i>
+            <span id="now_time"></span>
+        </div>
+
+        <div class="user-info">
+            <i class="bi bi-person-circle"></i>
+            您好 <span class="user-name" id="dlm"></span>，欢迎登录！
+        </div>
+
+        <div class="nav-icons">
+            <div class="nav-icon">
+                <a href="http://localhost:9093/index.html" target="_top" class="dropdown-item-custom">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="table-div border-top">
-    <table id="lrTable"></table>
+<div class="main-container">
+
+
+    <!-- 数据表格 -->
+    <div class="table-container">
+        <div class="table-header">
+            <i class="bi bi-table me-2"></i>
+            未完成项目进行进度
+        </div>
+        <div class="table-responsive">
+            <table id="lrTable" class="gradient-table">
+                <!-- 表格内容将通过JavaScript动态生成 -->
+            </table>
+        </div>
+    </div>
 </div>
+
+
+
 </body>
+<script>
+    // 更新时间显示
+    function updateTime() {
+        const now = new Date();
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        document.getElementById('now_time').textContent = now.toLocaleDateString('zh-CN', options);
+    }
+
+    // 初始更新时间并设置定时器
+    updateTime();
+    setInterval(updateTime, 1000);
+
+</script>
 </html>

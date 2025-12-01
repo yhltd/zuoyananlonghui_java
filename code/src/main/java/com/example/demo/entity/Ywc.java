@@ -1,6 +1,7 @@
 package com.example.demo.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -9,9 +10,6 @@ import lombok.Data;
 @TableName("hetong_jilu")
 public class Ywc {
 
-    /**
-     * id自增列
-     */
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
@@ -39,32 +37,86 @@ public class Ywc {
     private String x;
     private String y;
     private String z;
+
+    // 为所有双字母字段添加明确的映射，使用方括号
+    @TableField("[aa]")
     private String aa;
+
+    @TableField("[ab]")
     private String ab;
+
+    @TableField("[ac]")
     private String ac;
+
+    @TableField("[ad]")
     private String ad;
+
+    @TableField("[ae]")
     private String ae;
+
+    @TableField("[af]")
     private String af;
+
+    @TableField("[ag]")
     private String ag;
+
+    @TableField("[ah]")
     private String ah;
+
+    @TableField("[ai]")
     private String ai;
+
+    @TableField("[aj]")
     private String aj;
+
+    @TableField("[ak]")
     private String ak;
+
+    @TableField("[al]")
     private String al;
+
+    @TableField("[am]")
     private String am;
+
+    @TableField("[an]")
     private String an;
+
+    @TableField("[ao]")
     private String ao;
+
+    @TableField("[ap]")
     private String ap;
+
+    @TableField("[aq]")
     private String aq;
+
+    @TableField("[ar]")
     private String ar;
-    private String as;
+
+    // 特别处理 SQL 关键字 'as'
+    @TableField("[as]")
+    private String aas;
+
+    @TableField("[at]")
     private String at;
+
+    @TableField("hetong_zhuangtai")
+    private String hetongzhuangtai;
+
+    @TableField("[au]")
     private String au;
+
+    @TableField("[av]")
     private String av;
+
+    @TableField("[aw]")
     private String aw;
+
+    @TableField("[ax]")
     private String ax;
+
+    @TableField("[ay]")
     private String ay;
+
     private String riqi;
-
-
 }

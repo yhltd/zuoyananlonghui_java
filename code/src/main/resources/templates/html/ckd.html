@@ -5,14 +5,18 @@
     <title>出库单</title>
     <link rel="shortcut icon" href="#"/>
 
+    <!-- 先加载jQuery -->
     <script type="text/javascript" src="../js/Jquery.js"></script>
     <script type="text/javascript" src="../js/jquerysession.js"></script>
 
+    <!-- CSS文件 -->
     <link rel="stylesheet" href="../bootstrap-4.5.0-dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="../bootstrap-4.5.0-dist/icons/bootstrap-icons.css">
+
+    <!-- Bootstrap JS（必须在jQuery之后） -->
     <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap.min.js"></script>
 
-    <!--bootstrap-table-->
+    <!-- bootstrap-table -->
     <link rel="stylesheet" href="../bootstrap-4.5.0-dist/css/bootstrap-table.css">
     <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table.js"></script>
     <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table-zh-CN.min.js"></script>
@@ -23,64 +27,39 @@
     <script type="text/javascript" src="../js/sweetalert-dev.js"></script>
 
     <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/new.css">
     <script type="text/javascript" src="../js/main.js"></script>
     <script type="text/javascript" src="../js/ckd.js"></script>
 </head>
 
 <body class="pt-2">
-<div class="background-image">
-    <img src="../img/时间.png" class="img1">
-    <span style="color: black; font-size: 20px;margin-left: 20px" id="now_time" ></span>
-    <span style="margin-left: 50px;font-size: 20px"><img src="../img/个人.png" style="height: 30px;">  您 好 <b><span id="dlm" style="color: black"></span></b> , 欢 迎 您 登 录 !</span>
-    <img src="../img/重金属.png" class="img1" style="margin-left: 30px">
-    <img src="../img/金属.png" class="img1"style="margin-left: 30px">
-    <img src="../img/钻石.png" class="img1"style="margin-left: 30px">
-    <div class="menu">
-        <button class="btn2"><img src="../img/个人信息.png" class="img1"></button>
-        <div class="content">
-            <div>
-                <img src="../img/img_1.png">
-            </div>
-            <div style="margin-left: 60px">
-                <a href="grxx.html" class="link-dark rounded">个人信息</a>
-            </div>
-            <div style="margin-left: 60px">
-                <a href="http://localhost:9093/index.html" target="_top">退出登录</a>
+<div class="top-header">
+    <div class="header-content">
+        <div class="logo-section">
+            <i class="bi bi-person-badge-fill logo-icon"></i>
+            <span class="system-title">信息管理系统</span>
+        </div>
+
+        <div class="time-display">
+            <i class="bi bi-clock"></i>
+            <span id="now_time"></span>
+        </div>
+
+        <div class="user-info">
+            <i class="bi bi-person-circle"></i>
+            您好 <span class="user-name" id="dlm"></span>，欢迎登录！
+        </div>
+
+        <div class="nav-icons">
+            <div class="nav-icon">
+                <a href="http://localhost:9093/index.html" target="_top" class="dropdown-item-custom">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+
             </div>
         </div>
     </div>
-    <a href="main.html" target="_top"><img src="../img/首页.png" class="img1"></a>
-    <img src="../img/地球仪.png" class="img1" style="margin-left: 20px;">
 </div>
-
-
-
-<!--<div id="table-toolbar">-->
-<!--    <div class="btn-group" role="group">-->
-<!--        <button id="refresh-btn" class="btn btn-primary" style="border-radius:5px;">-->
-<!--            <i class="bi bi-arrow-clockwise icon"></i>-->
-<!--            刷新-->
-<!--        </button>-->
-<!--        <span style="border-right: 20px solid white"></span>-->
-<!--        <button id="add-btn" class="btn btn-primary" style="border-radius:5px;">-->
-<!--            <i class="bi bi-plus-square icon"></i>-->
-<!--            新增-->
-<!--        </button>-->
-<!--        <span style="border-right: 20px solid white"></span>-->
-<!--        <button id="update-btn" class="btn btn-primary" style="border-radius:5px;">-->
-<!--            <i class="bi bi-pencil-square icon"></i>-->
-<!--            修改-->
-<!--        </button>-->
-<!--        <span style="border-right: 20px solid white"></span>-->
-<!--        <button id="delete-btn" class="btn btn-primary" style="border-radius:5px;background-color: red">-->
-<!--            <i class="bi bi-trash icon"></i>-->
-<!--            删除-->
-<!--        </button>-->
-<!--        <span style="border-right: 20px solid white"></span>-->
-<!--        <a class="btn btn-primary" style="color: white;padding-top: 8px;border-radius:5px;">当前页：商品信息</a>-->
-<!--    </div>-->
-<!--</div>-->
-
 
 
 <!-- 出库单模块 -->
@@ -88,20 +67,14 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="mb-0">出库单</h4>
         <div>
-            <button id="add-row-btn1" class="btn btn-success btn-sm">
+            <button id="add-row-btn" class="btn btn-success btn-sm">
                 <i class="bi bi-plus-circle"></i> 添加行
             </button>
             <button id="remove-row-btn1" class="btn btn-danger btn-sm ml-2">
                 <i class="bi bi-dash-circle"></i> 删除行
             </button>
-            <button id="generate-btn1" class="btn btn-primary btn-sm ml-2">
-                <i class="bi bi-file-earmark-text"></i> 生成出库单
-            </button>
             <button id="save-return-btn1" class="btn btn-primary btn-sm ml-2" onclick="saveReturnOrder()">
                 <i class="bi bi-file-earmark-text"></i> 保存
-            </button>
-            <button id="print-btn1" class="btn btn-info btn-sm ml-2">
-                <i class="bi bi-printer"></i> 打印
             </button>
         </div>
     </div>
@@ -127,11 +100,11 @@
                 <div class="form-group row">
                     <label class="col-sm-4 col-form-label"><strong>初库单号：</strong></label>
                     <div class="col-sm-8">
-                        <input type="text" class="form-control form-control-sm" id="return-no1" value="202511260001" readonly>
+                        <input type="text" class="form-control form-control-sm" id="return-no1" >
                     </div>
                 </div>
                 <div class="form-group row">
-                    <label class="col-sm-4 col-form-label"><strong>初库日期：</strong></label>
+                    <label class="col-sm-4 col-form-label"><strong>送货日期：</strong></label>
                     <div class="col-sm-8">
                         <input type="date" class="form-control form-control-sm" id="return-date1">
                     </div>
@@ -181,22 +154,6 @@
                 </tbody>
             </table>
         </div>
-
-        <!-- 合计金额 -->
-<!--        <div class="row mt-3">-->
-<!--            <div class="col-md-6">-->
-<!--                <div class="form-group">-->
-<!--                    <label><strong>合计(大写)：</strong></label>-->
-<!--                    <span id="total-amount-chinese1">零元整</span>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--            <div class="col-md-6 text-right">-->
-<!--                <div class="form-group">-->
-<!--                    <label><strong>合计金额：</strong></label>-->
-<!--                    <span id="total-amount1">0</span>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
 
         <!-- 底部信息 -->
         <div class="row mt-4">
@@ -306,4 +263,26 @@
 </div>
 
 </body>
+
+<script>
+    // 更新时间显示
+    function updateTime() {
+        const now = new Date();
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        document.getElementById('now_time').textContent = now.toLocaleDateString('zh-CN', options);
+    }
+
+    // 初始更新时间并设置定时器
+    updateTime();
+    setInterval(updateTime, 1000);
+
+</script>
 </html>

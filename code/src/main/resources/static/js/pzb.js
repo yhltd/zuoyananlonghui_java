@@ -71,12 +71,78 @@ $(function () {
 
 
 
+    //点击新增按钮显示弹窗
+    $("#add-btn-modal").click(function () {
+        $('#add-modal').modal('show');
+    });
 
 
 
+    //新增弹窗里点击关闭按钮
+    $('#add-close-btn').click(function () {
+        $('#add-modal').modal('hide');
+    });
+
+    //新增弹窗里点击提交按钮
+    $("#add-submit-btn").click(function () {
+        // 防止重复提交
+        var $btn = $(this);
+        if ($btn.data('submitting')) {
+            return;
+        }
+        $btn.data('submitting', true);
+        $btn.prop('disabled', true);
+
+        var originalText = $btn.html();
+        $btn.html('<i class="bi bi-arrow-clockwise icon"></i>提交中...');
 
 
+        var jsonData = JSON.stringify({
+            c: $('#add-gyy').val() || '',
+            d: $('#add-jdy').val() || '',
+            e: $('#add-pzr').val() || ''
+        });
 
+        console.log('前端输入的数据:', jsonData); // 调试信息
+
+        if (checkForm('#add-form')) {
+            $ajax({
+                type: 'post',
+                url: '/pzb/add',
+                data: jsonData,  // 直接发送 JSON 字符串
+                contentType: 'application/json; charset=utf-8',  // 重要：设置内容类型
+                dataType: 'json',
+                traditional: true
+            }, false, '', function (res) {
+                // 恢复按钮状态
+                $btn.data('submitting', false);
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+
+                console.log('服务器响应:', res);
+
+                if (res.code == 200) {
+                    swal("", res.msg, "success");
+                    $('#add-form')[0].reset();
+                    getList();
+                    $('#add-modal').modal('hide');
+                } else {
+                    swal("", res.msg, "error");
+                }
+            }, function() {
+                // 请求失败时也恢复按钮状态
+                $btn.data('submitting', false);
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                swal("", "请求失败，请检查网络连接", "error");
+            });
+        } else {
+            // 表单验证失败时恢复按钮状态
+            $btn.data('submitting', false);
+            $btn.prop('disabled', false);
+            $btn.html(originalText);
+        }
+    });
 
 //点击新增按钮
     $('#add-btn').click(function () {
@@ -162,16 +228,12 @@ function setTable(data) {
 $('#ysyfTable').bootstrapTable({
     data: data,
     sortStable: true,
-    classes: 'table table-hover text-nowrap table table-bordered',
+    classes: 'table table-hover table-bordered',
     idField: 'id',
     pagination: true,
     pageSize: 15,
     clickToSelect: true,
     locale: 'zh-CN',
-    toolbar: '#table-toolbar',
-    toolbarAlign: 'left',
-    theadClasses: "thead-light",
-    style:'table-layout:fixed',
     columns: [
         {
             field: '',

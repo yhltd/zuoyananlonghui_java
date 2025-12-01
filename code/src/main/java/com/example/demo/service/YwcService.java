@@ -5,6 +5,7 @@ import com.example.demo.entity.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author hui
@@ -38,6 +39,8 @@ public interface YwcService extends IService<Ywc> {
      * 根据姓名和部门查询
      */
     List<Ywc> queryList(String name);
+
+    boolean updateField(Integer id, Map<String, Object> updateFields);
 
 
 }

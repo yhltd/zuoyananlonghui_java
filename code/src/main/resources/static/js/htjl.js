@@ -10,6 +10,8 @@ var columnMultipliers = {
     'v': 40
 };
 
+var currentTableData = [];
+
 
 var idd;
 // 在 htjl.js 文件中添加
@@ -18,54 +20,24 @@ function initTitleInputs() {
     console.log("initTitleInputs 函数被调用");
     // 具体的初始化逻辑...
 }
-// function getList() {
-//     $('#name').val("");
-//     $('#power').val("");
-//     $ajax({
-//         type: 'post',
-//         url: '/htjl/getList',
-//     }, false, '', function (res) {
-//         console.log('=== 调试信息开始 ===');
-//         console.log('API响应状态:', res.code);
-//         console.log('API响应消息:', res.msg);
-//         console.log('完整响应数据:', res);
-//         if (res.code == 200) {
-//             setTable(res.data);
-//             $("#userTable").colResizable({
-//                 liveDrag: true,
-//                 gripInnerHtml: "<div class='grip'></div>",
-//                 draggingClass: "dragging",
-//                 resizeMode: 'fit'
-//             });
-//             for (i=0;i<=res.data.id;i++){
-//                 idd=i;
-//             }
-//         }
-//     })
-// }
-
-
 
 function getList() {
     $('#name').val("");
     $('#power').val("");
     $ajax({
         type: 'post',
-        url: '/htjl/getListExcludeThjl',  // 修改为新的接口
+        url: '/htjl/getListExcludeThjl',
     }, false, '', function (res) {
-        console.log('=== 调试信息开始 ===');
-        console.log('API响应状态:', res.code);
-        console.log('API响应消息:', res.msg);
-        console.log('完整响应数据:', res);
         if (res.code == 200) {
-            setTable(res.data);
+            // 保存数据到全局变量
+            currentTableData = res.data;
+            setTable(currentTableData);
             $("#userTable").colResizable({
                 liveDrag: true,
                 gripInnerHtml: "<div class='grip'></div>",
                 draggingClass: "dragging",
                 resizeMode: 'fit'
             });
-            // 移除有问题的循环，根据实际情况调整
             if (res.data && res.data.length > 0) {
                 idd = res.data[res.data.length - 1].id;
             }
@@ -73,10 +45,17 @@ function getList() {
     })
 }
 
+
 $(function () {
     getList();
 
+    $('#goto-return-btn').click(function(e) {
+        e.preventDefault();
+        console.log('跳转到出库单按钮被点击');
+        gotoReturnOrderPage();
+    });
 
+    initReturnOrder();
 
 
     // 初始化标题输入框
@@ -84,34 +63,91 @@ $(function () {
 
 
 
-    $('#select-btn').click(function () {
-        var name = $('#name').val();
-        var department = $('#department').val(); // 假设部门输入框的id是department
-        console.log('查询条件 - 姓名:', name, '部门:', department);
+    // 修改查询按钮点击事件
+    $('#select-btn').click(function() {
+        var name = $('#name').val().trim();
+        var processStatus = $('#department').val().trim(); // 改为 processStatus
 
-        $ajax({
-            type: 'post',
-            url: '/htjl/queryList',
-            data: {
-                name: name,
-                department: department  // 添加部门参数
-            }
-        }, true, '', function (res) {
-            console.log('查询响应:', res);
-            if (res.code == 200) {
-                console.log('查询到的数据:', res.data);
-                setTable(res.data);
-                swal("查询成功", "找到 " + res.data.length + " 条记录", "success");
-            } else {
-                swal("查询失败", res.msg, "error");
-            }
-        })
+        console.log('查询条件 - 业务单位:', name, '工艺规程状态:', processStatus);
+
+        if (currentTableData.length === 0) {
+            swal("提示", "请先加载数据", "info");
+            return;
+        }
+
+        // 前端过滤数据
+        var filteredData = filterTableData(name, processStatus);
+        console.log('过滤后的数据:', filteredData);
+
+        // 更新表格
+        setTable(filteredData);
+        swal("查询成功", "找到 " + filteredData.length + " 条记录", "success");
     });
 
 
-    //刷新
+    // 修复过滤函数
+    function filterTableData(name, processStatus) {
+        if (!name && !processStatus) {
+            return currentTableData;
+        }
+
+        return currentTableData.filter(function(item) {
+            var matchName = true;
+            var matchStatus = true;
+
+            // 按业务单位过滤 (c字段)
+            if (name) {
+                var itemName = (item.c || '').toString().toLowerCase();
+                matchName = itemName.includes(name.toLowerCase());
+            }
+
+            // 按工艺规程状态过滤
+            if (processStatus) {
+                // 计算当前行的工艺规程状态（与表格显示逻辑一致）
+                var currentStatus = calculateProcessStatus(item);
+                matchStatus = currentStatus.includes(processStatus);
+            }
+
+            return matchName && matchStatus;
+        });
+    }
+
+    // 添加状态计算函数（与表格格式化函数保持一致）
+    function calculateProcessStatus(row) {
+        // 如果已经有状态值，直接返回
+        if (row.zhuangtai && row.zhuangtai !== '未创建') {
+            return row.zhuangtai;
+        }
+
+        var kValue = row.k;
+        var mValue = row.m;
+
+        if (kValue === null || kValue === undefined || kValue === '') {
+            return '未创建';
+        }
+
+        kValue = parseFloat(kValue) || 0;
+        mValue = parseFloat(mValue) || 0;
+
+        if (kValue > mValue) {
+            return '未完成';
+        } else {
+            return '已完成';
+        }
+    }
+
+
+    // 修改刷新按钮，重置查询条件并显示所有数据
     $("#refresh-btn").click(function () {
-        getList();
+        // 清空查询条件
+        $('#name').val("");
+        $('#department').val("");
+
+        getList()
+
+        // 显示所有数据
+        setTable(currentTableData);
+        swal("刷新成功", "已显示所有数据", "success");
     });
 
     //点击新增按钮显示弹窗
@@ -142,7 +178,7 @@ $(function () {
             c: $('#add-c').val(),      // 业务单位
             d: $('#add-d').val(),      // 合同号
             e: $('#add-e').val(),      // 任务号
-            f: $('#add-f').val(),      // 工艺规程状态
+            hetongzhuangtai: $('#add-f').val(),       // 工艺规程状态
             g: $('#add-g').val(),      // 工序
             h: $('#add-h').val(),      // 名称
             i: $('#add-i').val(),      // 图号
@@ -321,7 +357,7 @@ $(function () {
             $('#update-c').val(selectedRow.c || '');  // 业务单位
             $('#update-d').val(selectedRow.d || '');  // 合同号
             $('#update-e').val(selectedRow.e || '');  // 任务号
-            $('#update-f').val(selectedRow.f || '');  // 工艺规程状态
+            $('#update-f').val(selectedRow.hetongzhuangtai || '');  // 工艺规程状态
             $('#update-g').val(selectedRow.g || '');  // 工序
             $('#update-h').val(selectedRow.h || '');  // 名称
             $('#update-i').val(selectedRow.i || '');  // 图号
@@ -369,59 +405,6 @@ $(function () {
 
             $('#id').val(selectedRow.id || '');  // 添加这一行！
 
-
-            console.log('填充后的表单值:');
-            console.log('业务单位:', $('#update-c').val());
-            console.log('合同号:', $('#update-d').val());
-            console.log('任务号:', $('#update-e').val());
-            console.log('工艺规程状态:', $('#update-f').val());
-            console.log('工序:', $('#update-g').val());
-            console.log('名称:', $('#update-h').val());
-            console.log('图号:', $('#update-i').val());
-            console.log('单位:', $('#update-j').val());
-            console.log('数量:', $('#update-k').val());
-            console.log('材质:', $('#update-l').val());
-            console.log('序合计:', $('#update-m').val());
-            console.log('重量:', $('#update-n').val());
-            console.log('工件:', $('#update-o').val());
-            console.log('单位元:', $('#update-p').val());
-            console.log('合计金额:', $('#update-q').val());
-            console.log('铣工时/40:', $('#update-r').val());
-            console.log('铣单价:', $('#update-s').val());
-            console.log('车工时/40:', $('#update-t').val());
-            console.log('车单价:', $('#update-u').val());
-            console.log('钳公式/40:', $('#update-v').val());
-            console.log('钳单位:', $('#update-w').val());
-            console.log('整件外委工时/57.6:', $('#update-x').val());
-            console.log('整件外委单位:', $('#update-y').val());
-            console.log('外委工时/48:', $('#update-z').val());
-            console.log('外委单价:', $('#update-aa').val());
-            console.log('镗工时/73:', $('#update-ab').val());
-            console.log('镗单价:', $('#update-ac').val());
-            console.log('割工时/24:', $('#update-ad').val());
-            console.log('割单价:', $('#update-ae').val());
-            console.log('磨工时/42:', $('#update-af').val());
-            console.log('磨单价:', $('#update-ag').val());
-            console.log('数控铣工时/69:', $('#update-ah').val());
-            console.log('数控铣单价:', $('#update-ai').val());
-            console.log('立车/71:', $('#update-aj').val());
-            console.log('立车单价:', $('#update-ak').val());
-            console.log('电火花/42:', $('#update-al').val());
-            console.log('电火花单价:', $('#update-am').val());
-            console.log('中走丝/38:', $('#update-an').val());
-            console.log('中走丝单价:', $('#update-ao').val());
-            console.log('下料:', $('#update-ap').val());
-            console.log('深孔钻:', $('#update-aq').val());
-            console.log('回厂日期:', $('#update-ar').val());
-            console.log('出厂日期:', $('#update-as').val());
-            console.log('订单要求交货时间:', $('#update-at').val());
-            console.log('铣:', $('#update-au').val());
-            console.log('车:', $('#update-av').val());
-            console.log('登记员:', $('#update-aw').val());
-            console.log('备注:', $('#update-ax').val());
-
-
-
             window.selectedUserData = null;
         }
     });
@@ -439,7 +422,7 @@ $(function () {
                 c: $('#update-c').val(),  // 业务单位
                 d: $('#update-d').val(),  // 合同号
                 e: $('#update-e').val(),  // 任务号
-                f: $('#update-f').val(),  // 工艺规程状态
+                hetongzhuangtai: $('#update-f').val(),
                 g: $('#update-g').val(),  // 工序
                 h: $('#update-h').val(),  // 名称
                 i: $('#update-i').val(),  // 图号
@@ -580,466 +563,701 @@ function setTable(data) {
         idField: 'id',
         pagination: true,
         pageSize: 15,
-        clickToSelect: true,
+        clickToSelect: false, // 禁用默认的点击选择
         locale: 'zh-CN',
+        rowAttributes: function(row, index) {
+            return {
+                'data-index': index,
+                'data-id': row.id
+            };
+        },
         columns: [
             {
                 field: 'c',
                 title: '业务单位',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
                 field: 'd',
                 title: '合同号',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
                 field: 'e',
                 title: '任务号',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
-                field: 'zhuangtai',  // 字段名应该是实际的字段名，不是'未创建'
+                field: 'zhuangtai',
                 title: '工艺规程状态',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable',
                 formatter: function(value, row, index) {
-                    // 如果状态字段有值，直接显示
-                    if (value && value !== '未创建') {
-                        return value;
-                    }
-
-                    // 获取K列和M列的值
-                    var kValue = row.k;
-                    var mValue = row.m;
-
-                    // 先判断K列是否为空
-                    if (kValue === null || kValue === undefined || kValue === '') {
-                        return '未创建';
-                    }
-
-                    // 如果K列不为空，再进行比较
-                    kValue = parseFloat(kValue) || 0;
-                    mValue = parseFloat(mValue) || 0;
-
-                    // 根据逻辑判断状态
-                    if (kValue > mValue) {
-                        return '未完成';
-                    } else {
-                        return '已完成';
-                    }
+                    return value || '';
                 }
-            },{
+            }, {
                 field: 'g',
                 title: '工序',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
                 field: 'h',
                 title: '名称',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
                 field: 'i',
                 title: '图号',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
                 field: 'j',
                 title: '单位',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 80,
+                class: 'editable'
             }, {
                 field: 'k',
                 title: '数量',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 80,
+                class: 'editable'
             }, {
                 field: 'l',
                 title: '材质',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'm',
+                field: 'av',
                 title: '序合计',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'n',
+                field: 'aw',
                 title: '重量',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 80,
+                class: 'editable'
             }, {
-                field: 'o',
-                title: '工件',
+                field: 'ax',
+                title: '工件尺寸',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'm',
+                title: '单价元',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'p',
-                title: '单位元',
-                align: 'center',
-                sortable: true,
-                width: 100,
-                formatter: function(value, row, index) {
-                    // 计算 s + u + w + y + aa + ac + ae + ag + ai + ak + am + ao 的总和
-                    var sum = 0;
-
-                    // 获取各个列的值并累加
-                    var columns = ['s', 'u', 'w', 'y', 'aa', 'ac', 'ae', 'ag', 'ai', 'ak', 'am', 'ao'];
-
-                    columns.forEach(function(field) {
-                        var columnValue = row[field];
-                        if (columnValue !== null && columnValue !== undefined && columnValue !== '') {
-                            sum += parseFloat(columnValue) || 0;
-                        }
-                    });
-
-                    // 返回计算结果，保留2位小数
-                    return sum.toFixed(2);
-                }
-            }, {
-                field: 'q',
+                field: 'n',
                 title: '合计金额',
                 align: 'center',
                 sortable: true,
-                width: 100,
-                formatter: function (value, row, index) {
-                    var quantity = parseFloat(row.k) || 0; // 数量
-
-                    // 重新计算单位元（和p列相同的逻辑）
-                    var unitPrice = 0;
-                    var priceColumns = ['s', 'u', 'w', 'y', 'aa', 'ac', 'ae', 'ag', 'ai', 'ak', 'am', 'ao'];
-
-                    priceColumns.forEach(function(field) {
-                        var columnValue = row[field];
-                        if (columnValue !== null && columnValue !== undefined && columnValue !== '') {
-                            unitPrice += parseFloat(columnValue) || 0;
-                        }
-                    });
-
-                    if (quantity > 0 && unitPrice > 0) {
-                        return (quantity * unitPrice).toFixed(2);
-                    }
-                    return '';
-                }
-            },{
-                field: 'r',
-                title: '铣工时/40',
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'o',
+                title: '铣工时',
                 align: 'center',
                 sortable: true,
                 width: 100,
-                formatter: function(value) {
-                    if (value !== null && value !== undefined && value !== '') {
-                        return (parseFloat(value) * columnMultipliers['r']).toFixed(2);
-                    }
-                    return value || '';
-                }
+                class: 'editable'
             }, {
-                field: 's',
+                field: 'p',
                 title: '铣单价',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 't',
-                title: '车工时/40',
+                field: 'q',
+                title: '车工时',
                 align: 'center',
                 sortable: true,
                 width: 100,
-                formatter: function(value) {
-                    if (value !== null && value !== undefined && value !== '') {
-                        return (parseFloat(value) * columnMultipliers['t']).toFixed(2);
-                    }
-                    return value || '';
-                }
-            },  {
-                field: 'u',
+                class: 'editable'
+            }, {
+                field: 'r',
                 title: '车单价',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
+            }, {
+                field: 's',
+                title: '钳工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 't',
+                title: '钳单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'u',
+                title: '整件外委工时',
+                align: 'center',
+                sortable: true,
+                width: 140,
+                class: 'editable'
             }, {
                 field: 'v',
-                title: '钳公式/40',
-                align: 'center',
-                sortable: true,
-                width: 100,
-                formatter: function(value) {
-                    if (value !== null && value !== undefined && value !== '') {
-                        return (parseFloat(value) * columnMultipliers['v']).toFixed(2);
-                    }
-                    return value || '';
-                }
-            }, {
-                field: 'w',
-                title: '钳单位',
-                align: 'center',
-                sortable: true,
-                width: 100,
-            }, {
-                field: 'x',
-                title: '整件外委工时/57.6',
-                align: 'center',
-                sortable: true,
-                width: 150,
-                formatter: function(value) {
-                    if (value !== null && value !== undefined && value !== '') {
-                        return (parseFloat(value) * columnMultipliers['x']).toFixed(2);
-                    }
-                    return value || '';
-                }
-            },  {
-                field: 'y',
                 title: '整件外委单位',
                 align: 'center',
                 sortable: true,
-                width: 150,
+                width: 140,
+                class: 'editable'
             }, {
-                field: 'z',
-                title: '外委工时/48',
+                field: 'w',
+                title: '外委工时',
                 align: 'center',
                 sortable: true,
-                width: 150,
-                formatter: function(value) {
-                    if (value !== null && value !== undefined && value !== '') {
-                        return (parseFloat(value) * columnMultipliers['z']).toFixed(2);
-                    }
-                    return value || '';
-                }
+                width: 100,
+                class: 'editable'
             }, {
-                field: 'aa',
+                field: 'x',
                 title: '外委单价',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'ab',
-                title: '镗工时/73',
+                field: 'y',
+                title: '镗工时',
                 align: 'center',
                 sortable: true,
                 width: 100,
-                formatter: function(value) {
-                    if (value !== null && value !== undefined && value !== '') {
-                        return (parseFloat(value) * columnMultipliers['ab']).toFixed(2);
-                    }
-                    return value || '';
-                }
-            },   {
-                field: 'ac',
+                class: 'editable'
+            }, {
+                field: 'z',
                 title: '镗单价',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'ad',
-                title: '割工时/24',
+                field: 'aa',
+                title: '割工时',
                 align: 'center',
                 sortable: true,
                 width: 100,
-                formatter: function(value) {
-                    if (value !== null && value !== undefined && value !== '') {
-                        return (parseFloat(value) * columnMultipliers['ad']).toFixed(2);
-                    }
-                    return value || '';
-                }
-            },  {
-                field: 'ae',
+                class: 'editable'
+            }, {
+                field: 'ab',
                 title: '割单价',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'af',
-                title: '磨工时/42',
+                field: 'ac',
+                title: '磨工时',
                 align: 'center',
                 sortable: true,
                 width: 100,
-                formatter: function(value) {
-                    if (value !== null && value !== undefined && value !== '') {
-                        return (parseFloat(value) * columnMultipliers['af']).toFixed(2);
-                    }
-                    return value || '';
-                }
-            },{
-                field: 'ag',
+                class: 'editable'
+            }, {
+                field: 'ad',
                 title: '磨单价',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'ah',
-                title: '数控铣工时/69',
+                field: 'ae',
+                title: '数控铣工时',
                 align: 'center',
                 sortable: true,
-                width: 150,
-                formatter: function(value) {
-                    if (value !== null && value !== undefined && value !== '') {
-                        return (parseFloat(value) * columnMultipliers['ah']).toFixed(2);
-                    }
-                    return value || '';
-                }
-            },{
-                field: 'ai',
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'af',
                 title: '数控铣单价',
                 align: 'center',
                 sortable: true,
-                width: 150,
+                width: 120,
+                class: 'editable'
             }, {
-                field: 'aj',
-                title: '立车/71',
+                field: 'ag',
+                title: '立车',
                 align: 'center',
                 sortable: true,
-                width: 100,
-                formatter: function(value) {
-                    if (value !== null && value !== undefined && value !== '') {
-                        return (parseFloat(value) * columnMultipliers['aj']).toFixed(2);
-                    }
-                    return value || '';
-                }
-            },{
-                field: 'ak',
+                width: 80,
+                class: 'editable'
+            }, {
+                field: 'ah',
                 title: '立车单价',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'al',
-                title: '电火花/42',
-                align: 'center',
-                sortable: true,
-                width: 150,
-                formatter: function(value) {
-                    if (value !== null && value !== undefined && value !== '') {
-                        return (parseFloat(value) * columnMultipliers['al']).toFixed(2);
-                    }
-                    return value || '';
-                }
-            },  {
-                field: 'am',
-                title: '电火花单价',
-                align: 'center',
-                sortable: true,
-                width: 150,
-            }, {
-                field: 'an',
-                title: '中走丝/38',
-                align: 'center',
-                sortable: true,
-                width: 150,
-                formatter: function(value) {
-                    if (value !== null && value !== undefined && value !== '') {
-                        return (parseFloat(value) * columnMultipliers['an']).toFixed(2);
-                    }
-                    return value || '';
-                }
-            }, {
-                field: 'ao',
-                title: '中走丝单价',
-                align: 'center',
-                sortable: true,
-                width: 150,
-            }, {
-                field: 'ap',
-                title: '下料',
+                field: 'ai',
+                title: '电火花',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'aq',
+                field: 'aj',
+                title: '电火花单价',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'ak',
+                title: '中走丝',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'al',
+                title: '中走丝单价',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'am',
+                title: '下料',
+                align: 'center',
+                sortable: true,
+                width: 80,
+                class: 'editable'
+            }, {
+                field: 'an',
                 title: '深孔钻',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'ar',
+                field: 'ao',
                 title: '回厂日期',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
-                field: 'as',
+                field: 'ap',
                 title: '出厂日期',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
-                field: 'at',
+                field: 'ay',
                 title: '订单要求交货时间',
                 align: 'center',
                 sortable: true,
-                width: 200,
+                width: 160,
+                class: 'editable'
             }, {
-                field: 'au',
+                field: 'aq',
                 title: '铣',
                 align: 'center',
                 sortable: true,
-                width: 100,
-                formatter: function(value, row, index) {
-                    var quantity = parseFloat(row.k) || 0;
-                    var rValue = parseFloat(row.r) || 0;
-                    var calculatedR = rValue * columnMultipliers['r'];
-
-                    if (quantity > 0 && calculatedR > 0) {
-                        return (quantity * calculatedR).toFixed(2);
-                    }
-                    return '';
-                }
+                width: 80,
+                class: 'editable'
             }, {
-                field: 'av',
+                field: 'ar',
                 title: '车',
                 align: 'center',
                 sortable: true,
-                width: 100,
-                formatter: function(value, row, index) {
-                    var quantity = parseFloat(row.k) || 0;
-                    var tValue = parseFloat(row.t) || 0;
-                    var calculatedT = tValue * columnMultipliers['t'];
-
-                    if (quantity > 0 && calculatedT > 0) {
-                        return (quantity * calculatedT).toFixed(2);
-                    }
-                    return '';
-                }
+                width: 80,
+                class: 'editable'
             }, {
-                field: 'aw',
+                field: 'aas',
                 title: '登记员',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'ax',
+                field: 'at',
                 title: '备注',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 150,
+                class: 'editable'
             }
         ],
-        onClickRow: function (row, el) {
-            let isSelect = $(el).hasClass('selected')
-            if (isSelect) {
-                $(el).removeClass('selected')
-            } else {
-                $(el).addClass('selected')
-            }
+        onPostBody: function() {
+            bindRowClickEvents();
+            enableCellEditing();
         }
     });
 
     // 强制刷新表格视图
     $('#userTable').bootstrapTable('load', data);
     $('#userTable').bootstrapTable('resetView');
+}
+
+// 绑定行点击事件（区分单击和双击）
+function bindRowClickEvents() {
+    var clickTimer = null;
+    var clickedRow = null;
+
+    $('#userTable').off('click', 'tbody tr').on('click', 'tbody tr', function(e) {
+        var $row = $(this);
+
+        // 如果是双击，清除计时器并执行双击操作
+        if (clickTimer && clickedRow && clickedRow.is($row)) {
+            clearTimeout(clickTimer);
+            clickTimer = null;
+            handleRowDoubleClick($row);
+            return;
+        }
+
+        // 设置新的计时器
+        clickedRow = $row;
+        clickTimer = setTimeout(function() {
+            handleRowSingleClick($row);
+            clickTimer = null;
+            clickedRow = null;
+        }, 300); // 300ms延迟，用于区分单击和双击
+    });
+}
+
+
+// 处理行单击事件（选择行）
+function handleRowSingleClick($row) {
+    let isSelect = $row.hasClass('selected');
+    if (isSelect) {
+        $row.removeClass('selected');
+    } else {
+        $row.addClass('selected');
+    }
+}
+
+function handleRowDoubleClick($row) {
+    var rowIndex = $row.data('index');
+    var tableData = $('#userTable').bootstrapTable('getData');
+    var rowData = tableData[rowIndex];
+
+    if (rowData) {
+        console.log('双击行数据:', rowData);
+
+        // 准备传递给工艺规程页面的完整数据
+        var processData = {
+            // 基础信息
+            id: rowData.id,
+            c: rowData.c || '',           // 业务单位
+            e: rowData.e || '',           // 任务号
+            f: rowData.f || '未创建',     // 工艺规程状态
+            h: rowData.h || '',           // 名称
+            i: rowData.i || '',           // 图号
+            k: rowData.k || '',           // 数量
+            l: rowData.l || '',           // 材质
+        };
+
+        // 跳转到工艺规程页面
+        navigateToProcessPage(processData);
+    }
+}
+
+
+// 单元格编辑功能
+function enableCellEditing() {
+    $('#userTable').on('click', 'td.editable', function() {
+        var $cell = $(this);
+        var $row = $cell.closest('tr');
+
+        // 如果已经在编辑状态，则不再重复创建
+        if ($cell.find('input, select').length > 0) {
+            return;
+        }
+
+        var originalValue = $cell.text().trim();
+
+        // 修复：正确获取字段名
+        var colIndex = $cell.index();
+        var $headerTh = $('#userTable thead th').eq(colIndex);
+
+        // 方法1：从data-field属性获取
+        var field = $headerTh.attr('data-field') || $headerTh.data('field');
+
+        // 方法2：如果还获取不到，从表格配置中获取
+        if (!field) {
+            var tableOptions = $('#userTable').bootstrapTable('getOptions');
+            if (tableOptions && tableOptions.columns && tableOptions.columns[colIndex]) {
+                field = tableOptions.columns[colIndex].field;
+            }
+        }
+
+        // 方法3：如果还获取不到，从列的field属性获取
+        if (!field) {
+            field = $headerTh.find('[data-field]').attr('data-field');
+        }
+
+        console.log('字段信息:', {
+            colIndex: colIndex,
+            field: field,
+            headerHtml: $headerTh.html(),
+            headerTh: $headerTh
+        });
+
+        // 修改：使用Bootstrap Table的API获取行数据和ID
+        var rowIndex = $row.data('index');
+        var tableData = $('#userTable').bootstrapTable('getData');
+        var rowData = tableData[rowIndex];
+        var rowId = rowData ? rowData.id : null;
+
+        console.log('编辑信息:', {
+            field: field,
+            rowId: rowId,
+            originalValue: originalValue,
+            rowIndex: rowIndex
+        });
+
+        // 如果没有获取到字段名或ID，提示错误
+        if (!field || field === 'undefined') {
+            swal("编辑失败", "无法获取字段名: " + field, "error");
+            return;
+        }
+        if (!rowId) {
+            swal("编辑失败", "无法获取行ID，请刷新页面重试", "error");
+            return;
+        }
+
+        // 特殊处理工艺规程状态字段 - 使用下拉框
+        if (field === 'zhuangtai') {
+            createSelectEditor($cell, originalValue, field, rowId, tableData, rowIndex);
+        } else {
+            createInputEditor($cell, originalValue, field, rowId, tableData, rowIndex);
+        }
+    });
+}
+
+// 创建下拉框编辑器（针对工艺规程状态字段）
+function createSelectEditor($cell, originalValue, field, rowId, tableData, rowIndex) {
+    var $select = $('<select class="form-control cell-edit-select">')
+        .css({
+            width: '100%',
+            height: '100%',
+            border: '1px solid #007bff',
+            borderRadius: '3px',
+            padding: '2px 5px'
+        });
+
+    // 添加工艺规程状态选项
+    $select.append('<option value="">请选择</option>');
+    $select.append('<option value="未创建">未创建</option>');
+
+    // 设置当前值
+    $select.val(originalValue);
+
+    // 清空单元格内容并添加下拉框
+    $cell.empty().append($select);
+    $select.focus();
+
+    // 保存编辑
+    function saveEdit() {
+        var newValue = $select.val();
+
+        // 如果值没有变化，则不保存
+        if (newValue === originalValue) {
+            $cell.text(originalValue);
+            return;
+        }
+
+        console.log('发送更新:', { id: rowId, field: field, newValue: newValue });
+
+        // 发送更新请求
+        $.ajax({
+            type: 'post',
+            url: '/htjl/updateField',
+            data: JSON.stringify({
+                id: rowId,
+                [field]: newValue
+            }),
+            dataType: 'json',
+            contentType: 'application/json;charset=utf-8',
+            success: function(res) {
+                if (res.code == 200) {
+                    $cell.text(newValue);
+                    // 更新本地数据
+                    tableData[rowIndex][field] = newValue;
+                    // 注释掉这行，避免重新加载表格中断编辑状态
+                    // getList();
+                } else {
+                    $cell.text(originalValue);
+                    swal("更新失败", res.msg, "error");
+                }
+            },
+            error: function(xhr, status, error) {
+                $cell.text(originalValue);
+                console.error('更新请求失败:', error);
+                swal("更新失败", "网络错误，请重试", "error");
+            }
+        });
+    }
+
+    // 绑定事件
+    $select.on('blur', saveEdit);
+    $select.on('change', saveEdit); // 选择即保存
+    $select.on('keydown', function(e) {
+        if (e.keyCode === 27) { // ESC键
+            $cell.text(originalValue);
+        }
+    });
+}
+
+// 创建输入框编辑器
+function createInputEditor($cell, originalValue, field, rowId, tableData, rowIndex) {
+    var $input = $('<input type="text" class="form-control cell-edit-input">')
+        .val(originalValue)
+        .css({
+            width: '100%',
+            height: '100%',
+            border: '1px solid #007bff',
+            borderRadius: '3px',
+            padding: '2px 5px'
+        });
+
+    // 清空单元格内容并添加输入框
+    $cell.empty().append($input);
+    $input.focus().select();
+
+    // 保存编辑
+    function saveEdit() {
+        var newValue = $input.val().trim();
+
+        // 如果值没有变化，则不保存
+        if (newValue === originalValue) {
+            $cell.text(originalValue);
+            return;
+        }
+
+        console.log('发送更新:', { id: rowId, field: field, newValue: newValue });
+
+        // 发送更新请求
+        $.ajax({
+            type: 'post',
+            url: '/htjl/updateField',
+            data: JSON.stringify({
+                id: rowId,
+                [field]: newValue
+            }),
+            dataType: 'json',
+            contentType: 'application/json;charset=utf-8',
+            success: function(res) {
+                if (res.code == 200) {
+                    $cell.text(newValue);
+                    // 更新本地数据
+                    tableData[rowIndex][field] = newValue;
+                    // 注释掉这行，避免重新加载表格中断编辑状态
+                    // getList();
+                } else {
+                    $cell.text(originalValue);
+                    swal("更新失败", res.msg, "error");
+                }
+            },
+            error: function(xhr, status, error) {
+                $cell.text(originalValue);
+                console.error('更新请求失败:', error);
+                swal("更新失败", "网络错误，请重试", "error");
+            }
+        });
+    }
+
+    // 绑定事件
+    $input.on('blur', saveEdit);
+    $input.on('keydown', function(e) {
+        if (e.keyCode === 13) { // Enter键
+            saveEdit();
+        } else if (e.keyCode === 27) { // ESC键
+            $cell.text(originalValue);
+        }
+    });
+}
+
+// 绑定状态单元格双击事件
+function bindStatusCellDoubleClick() {
+    // 使用事件委托来绑定双击事件
+    $('#userTable').off('dblclick', '.status-cell').on('dblclick', '.status-cell', function(e) {
+        e.stopPropagation();
+
+        var $cell = $(this);
+        var rowIndex = $cell.data('row-index');
+        var table = $('#userTable');
+        var rowData = table.bootstrapTable('getData')[rowIndex];
+
+        if (rowData) {
+            console.log('双击工艺规程状态单元格:', rowData);
+            handleStatusDoubleClick(rowData);
+        }
+    });
+
+    console.log('状态单元格双击事件已绑定');
+}
+
+// 状态列格式化函数
+function statusFormatter(value, row, index) {
+    var statusClass = '';
+    var statusText = value || '未创建';
+
+    switch(statusText) {
+        case '未创建':
+            statusClass = 'status-not-created';
+            break;
+        case '未完成':
+            statusClass = 'status-in-progress';
+            break;
+        case '已完成':
+            statusClass = 'status-completed';
+            break;
+        default:
+            statusClass = 'status-unknown';
+    }
+
+    return '<span class="status-cell ' + statusClass + '" data-row-index="' + index + '" style="cursor: pointer; padding: 5px; border-radius: 3px;" title="双击查看/编辑工艺规程">' + statusText + '</span>';
+}
+
+// 跳转到工艺规程页面
+function navigateToProcessPage(data) {
+    // 使用sessionStorage传递完整数据
+    sessionStorage.setItem('currentProcessData', JSON.stringify(data));
+
+    // 修改iframe的src
+    var iframe = window.frameElement;
+    if (iframe) {
+        // 当前在iframe中，让父页面修改iframe的src
+        window.parent.changeIframeSrc('gygc.html');
+    } else {
+        window.location.href = 'gygc.html';
+    }
 }
 // ==================== 列标题编辑功能 ====================
 
@@ -1347,439 +1565,26 @@ function initializeTableColumns() {
 }
 
 
-
-//
-// // ==================== 退货单功能 ====================
-// function initReturnOrder() {
-//     $('#return-date').val(getCurrentDate());
-//     bindReturnOrderEvents();
-//     calculateTotalAmount();
-// }
-//
-// function bindReturnOrderEvents() {
-//     $('#select-all').click(function() {
-//         $('.row-select').prop('checked', this.checked);
-//     });
-// // 保存退货单按钮点击事件
-//     $("#save-return-btn").click(function () {
-//
-//         // 检测必填字段
-//         var returnCustomer = $('#return-customer').val();
-//         var returnDate = $('#return-date').val();
-//         var returnNo = $('#return-no').val();
-//         var returnPhone = $('#return-phone').val();
-//
-//         // 检测逻辑
-//         if (!returnCustomer) {
-//             swal("保存失败", "请填写退货客户", "error");
-//             return;
-//         }
-//         if (!returnDate) {
-//             swal("保存失败", "请选择退货日期", "error");
-//             return;
-//         }
-//         if (!returnNo) {
-//             swal("保存失败", "请生成退货单号", "error");
-//             return;
-//         }
-//         if (!returnPhone) {
-//             swal("保存失败", "请填写退货电话", "error");
-//             return;
-//         }
-//
-//         var $btn = $(this);
-//         if ($btn.data('submitting')) {
-//             return;
-//         }
-//         $btn.data('submitting', true);
-//         $btn.prop('disabled', true);
-//
-//         var originalText = $btn.html();
-//         $btn.html('<i class="bi bi-arrow-clockwise icon"></i>提交中...');
-//
-//         // 直接收集所有明细行的数据
-//         var details = [];
-//         $('#return-detail-table tbody tr').each(function(index) {
-//             var $row = $(this);
-//             var detail = {
-//                 // 共用信息
-//                 f: $('#return-no').val(),
-//                 c: $('#return-customer').val(),
-//                 d: $('#return-phone').val(),
-//                 r: $('#company-address').val() ,
-//                 t: $('#company-phone').val(),
-//                 e: $('return-date').val(),
-//                 s: $('#customer-signature').val(),
-//                 // 明细特有信息
-//                 q: $row.find('input[name="returnReason"]').val(),
-//                 g: $row.find('input[name="contractNo"]').val(),
-//                 h: $row.find('input[name="taskNo"]').val(),
-//                 i: $row.find('input[name="productName"]').val(),
-//                 j: $row.find('input[name="drawingNo"]').val(),
-//                 k: $row.find('input[name="unit"]').val(),
-//                 l: $row.find('input[name="quantity"]').val(),
-//                 m: $row.find('input[name="unitPrice"]').val(),
-//                 n: $row.find('input[name="amount"]').val(),
-//                 o: $row.find('input[name="material"]').val(),
-//                 p: $row.find('input[name="weight"]').val(),
-//                 w: $row.find('input[name="returnDate"]').val(),
-//                 u: $row.find('input[name="remark"]').val(),
-//                 v: $row.data('original-id') || ''  // 从data属性获取原表id
-//             };
-//
-//
-//             details.push(detail);
-//
-//         });
-//
-//         console.log('要保存的退货单数据:', details);
-//
-//         // 遍历发送每个明细
-//         var successCount = 0;
-//         var totalCount = details.length;
-//
-//         details.forEach(function(detail, index) {
-//             $ajax({
-//                 type: 'post',
-//                 url: '/htjl/save',
-//                 data: JSON.stringify(detail),
-//                 dataType: 'json',
-//                 contentType: 'application/json;charset=utf-8'
-//             }, false, '', function (res) {
-//                 successCount++;
-//
-//                 if (successCount === totalCount) {
-//                     $btn.data('submitting', false);
-//                     $btn.prop('disabled', false);
-//                     $btn.html(originalText);
-//
-//                     if (res.code == 200) {
-//                         swal("", "保存成功，共插入 " + successCount + " 条数据", "success");
-//                         // 清空表单
-//                         $('#return-customer').val('');
-//                         $('#return-phone').val('');
-//                         $('#return-reason').val('');
-//                         $('#customer-signature').val('');
-//                         $('#return-detail-table tbody').empty();
-//                         addReturnRow();
-//                         calculateTotalAmount();
-//                     } else {
-//                         swal("", res.msg, "error");
-//                     }
-//                 }
-//             }, function(xhr, status, error) {
-//                 $btn.data('submitting', false);
-//                 $btn.prop('disabled', false);
-//                 $btn.html(originalText);
-//                 swal("", "请求失败: " + error, "error");
-//             });
-//         });
-//     });
-//     $('#add-row-btn').click(function() {
-//         addReturnRow();
-//     });
-//
-//     $('#remove-row-btn').click(function() {
-//         removeSelectedRows();
-//     });
-//
-//     $('#generate-btn').click(function() {
-//         generateReturnOrder();
-//     });
-//     $('#baocun-btn').click(function() {
-//         tuihuojilu();
-//     });
-//
-//     $('#print-btn').click(function() {
-//         printReturnOrder();
-//     });
-//
-//     $(document).on('input', 'input[name="quantity"], input[name="unitPrice"]', function() {
-//         calculateRowAmount($(this).closest('tr'));
-//         calculateTotalAmount();
-//     });
-//
-//     $(document).on('change', '.row-select', function() {
-//         updateSelectAllState();
-//     });
-// }
-//
-//
-//
-//
-//
-// function addReturnRow() {
-//     var table = $('#return-detail-table tbody');
-//     var rowCount = table.find('tr').length;
-//     var newRow = `
-//         <tr>
-//             <td><input type="checkbox" class="row-select"></td>
-//             <td>${rowCount + 1}</td>
-//             <td><input type="text" class="form-control form-control-sm" name="contractNo"></td>
-//             <td><input type="text" class="form-control form-control-sm" name="taskNo"></td>
-//             <td><input type="text" class="form-control form-control-sm" name="productName"></td>
-//             <td><input type="text" class="form-control form-control-sm" name="drawingNo"></td>
-//             <td><input type="text" class="form-control form-control-sm" name="unit"></td>
-//             <td><input type="number" class="form-control form-control-sm" name="quantity" value="1"></td>
-//             <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="0"></td>
-//             <td><input type="number" class="form-control form-control-sm" name="amount" value="0" readonly></td>
-//             <td><input type="text" class="form-control form-control-sm" name="material"></td>
-//             <td><input type="text" class="form-control form-control-sm" name="weight"></td>
-//             <td><input type="date" class="form-control form-control-sm" name="returnDate"></td>
-//             <td><input type="text" class="form-control form-control-sm" name="returnReason"></td>
-//             <td><input type="text" class="form-control form-control-sm" name="remark"></td>
-//         </tr>
-//     `;
-//     table.append(newRow);
-//     updateRowNumbers();
-// }
-//
-// function removeSelectedRows() {
-//     var selectedRows = $('.row-select:checked');
-//     if (selectedRows.length === 0) {
-//         alert('请选择要删除的行');
-//         return;
-//     }
-//
-//     if (confirm('确定要删除选中的行吗？')) {
-//         selectedRows.each(function() {
-//             $(this).closest('tr').remove();
-//         });
-//         updateRowNumbers();
-//         calculateTotalAmount();
-//     }
-// }
-//
-// function updateRowNumbers() {
-//     $('#return-detail-table tbody tr').each(function(index) {
-//         $(this).find('td:eq(1)').text(index + 1);
-//     });
-// }
-//
-// function calculateRowAmount(row) {
-//     var quantity = parseFloat(row.find('input[name="quantity"]').val()) || 0;
-//     var unitPrice = parseFloat(row.find('input[name="unitPrice"]').val()) || 0;
-//     var amount = quantity * unitPrice;
-//     row.find('input[name="amount"]').val(amount.toFixed(2));
-//     return amount;
-// }
-//
-// function calculateTotalAmount() {
-//     var total = 0;
-//     $('#return-detail-table tbody tr').each(function() {
-//         total += calculateRowAmount($(this));
-//     });
-//
-//     $('#total-amount').text(total.toFixed(2));
-//     $('#total-amount-chinese').text(numberToChinese(total));
-// }
-//
-// function numberToChinese(num) {
-//     if (num === 0) return '零元整';
-//
-//     var chineseNum = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
-//     var chineseUnit = ['', '拾', '佰', '仟'];
-//     var bigUnit = ['', '万', '亿'];
-//
-//     var numStr = Math.round(num * 100).toString();
-//     var integerPart = numStr.slice(0, -2) || '0';
-//     var decimalPart = numStr.slice(-2);
-//
-//     var integerChinese = '';
-//     var integerArray = integerPart.split('').reverse();
-//
-//     for (var i = 0; i < integerArray.length; i++) {
-//         var digit = parseInt(integerArray[i]);
-//         var unit = chineseUnit[i % 4];
-//         var bigUnitIndex = Math.floor(i / 4);
-//         var bigUnitChar = bigUnit[bigUnitIndex];
-//
-//         if (digit === 0) {
-//             if (integerChinese.charAt(0) !== '零' && i % 4 !== 0) {
-//                 integerChinese = '零' + integerChinese;
-//             }
-//         } else {
-//             integerChinese = chineseNum[digit] + unit + bigUnitChar + integerChinese;
-//         }
-//     }
-//
-//     var decimalChinese = '';
-//     var jiao = parseInt(decimalPart.charAt(0)) || 0;
-//     var fen = parseInt(decimalPart.charAt(1)) || 0;
-//
-//     if (jiao > 0) {
-//         decimalChinese += chineseNum[jiao] + '角';
-//     }
-//     if (fen > 0) {
-//         decimalChinese += chineseNum[fen] + '分';
-//     }
-//
-//     var result = integerChinese + '元';
-//     if (decimalChinese) {
-//         result += decimalChinese;
-//     } else {
-//         result += '整';
-//     }
-//
-//     return result;
-// }
-//
-// function updateSelectAllState() {
-//     var allChecked = $('.row-select:checked').length === $('.row-select').length;
-//     $('#select-all').prop('checked', allChecked);
-// }
-//
-// function generateReturnOrder() {
-//
-//     let rows = getTableSelection('#userTable');
-//     if (rows.length == 0) {
-//         swal('请选择要生成退货单的数据!');
-//         return;
-//     }
-//
-//     console.log('选中的行数据:', rows);
-//
-//     // 清空现有退货单数据（保留第一行）
-//     $('#return-detail-table tbody tr:gt(0)').remove();
-//
-//     // 填充退货单数据
-//     rows.forEach(function(selectedRow, index) {
-//         let rowData = selectedRow.data;
-//         console.log('第' + (index + 1) + '行数据:', rowData);
-//
-//         if (index === 0) {
-//             // 第一行使用现有行
-//             fillReturnRowData($('#return-detail-table tbody tr:first'), rowData);
-//         } else {
-//             // 添加新行并填充数据
-//             addReturnRow();
-//             var newRow = $('#return-detail-table tbody tr:last');
-//             fillReturnRowData(newRow, rowData);
-//         }
-//     });
-//
-//     // 更新退货单头部信息（使用第一个选中行的信息）
-//     if (rows.length > 0) {
-//         let firstRow = rows[0].data;
-//         $('#return-customer').val(firstRow.c || '');
-//         $('#return-phone').val(firstRow.phone || '');
-//
-//         // 生成退货单号（根据当前时间）
-//         $('#return-no').val(generateReturnNo());
-//
-//         // 设置当前日期为退货日期
-//         $('#return-date').val(getCurrentDate());
-//     }
-//
-//     // 计算总金额
-//     calculateTotalAmount();
-//
-//     $('#return-modal').modal('show');
-//     swal("生成成功", "已生成 " + rows.length + " 条退货单数据", "success");
-// }
-// // 填充退货单行数据
-// function fillReturnRowData($row, rowData) {
-//     $row.find('input[name="contractNo"]').val(rowData.d || '');
-//     $row.find('input[name="taskNo"]').val(rowData.e || '');
-//     $row.find('input[name="productName"]').val(rowData.h || '');
-//     $row.find('input[name="drawingNo"]').val(rowData.i || '');
-//     $row.find('input[name="unit"]').val(rowData.j || '');
-//     $row.find('input[name="quantity"]').val(rowData.k || '1');
-//     $row.find('input[name="unitPrice"]').val(rowData.p || '0');
-//     $row.find('input[name="material"]').val(rowData.l || '');
-//     $row.find('input[name="weight"]').val(rowData.n || '');
-//     $row.find('input[name="remark"]').val(rowData.ax || '');
-// // 设置隐藏的原表id
-//     $row.data('original-id', rowData.id);  // 将原表id存储在data属性中
-//     // 计算金额
-//     calculateRowAmount($row);
-// }
-//
-// // 简化版 - 纯前端生成退货单号
-// function generateReturnNo() {
-//     $ajax({
-//         type: 'post',
-//         url: '/htjl/getddh',
-//     }, false, '', function (res) {
-//         if (res.code == 200) {
-//             var now = new Date();
-//             var dateStr = now.getFullYear() +
-//                 String(now.getMonth() + 1).padStart(2, '0') +
-//                 String(now.getDate()).padStart(2, '0');
-//             maxNo = res.data;  // 注意：这里是小写 f，但数据库字段是大写 F
-//             var newReturnNo;
-//
-//             if (!maxNo || maxNo === '') {
-//                 newReturnNo = "No:" + dateStr + "0001";
-//             } else {
-//                 var numberPart = maxNo.split(":")[1];
-//                 var nextNum = parseInt(numberPart) + 1;
-//                 newReturnNo = "No:" + nextNum;
-//             }
-//
-//             // 直接填入输入框
-//             $('#return-no').val(newReturnNo);
-//             console.log('退货单号已更新:', newReturnNo);
-//
-//         } else {
-//             console.error('获取单号失败');
-//             // 失败时生成临时单号
-//             var tempNo = "No:" + new Date().getTime();
-//             $('#return-no').val(tempNo);
-//         }
-//     });  // 这里添加了缺少的右括号
-// }
-//
-// function getCurrentDate() {
-//     var now = new Date();
-//     var year = now.getFullYear();
-//     var month = String(now.getMonth() + 1).padStart(2, '0');
-//     var day = String(now.getDate()).padStart(2, '0');
-//     return year + '-' + month + '-' + day;
-// }
-//
-// function printReturnOrder() {
-//     alert('打印功能开发中...');
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ==================== 出库单单功能 ====================
-// 跳转到出库单页面功能
 function gotoReturnOrderPage() {
     let rows = getTableSelection('#userTable');
     if (rows.length == 0) {
-        swal('请先选择数据', '请在表格中选择要生成出库单的数据', 'info');
+        swal({
+            title: '请先选择数据',
+            text: '请在表格中选择要生成出库单的数据',
+            icon: 'info',
+            confirmButtonText: '确定'
+        });
         return false;
     }
 
     console.log('选中的行数据:', rows);
 
-
-    // 筛选符合条件的数据（f字段为"已完成"）
+    // 筛选符合条件的数据（状态为"已完成"）
     let validRows = rows.filter(function(selectedRow) {
         let rowData = selectedRow.data;
-// 方法1：直接从数据中获取状态
         let processStatus = rowData.zhuangtai || '';
 
-        // 方法2：如果方法1不行，重新计算状态（和表格中一样的逻辑）
+        // 重新计算状态（和表格中一样的逻辑）
         if (!processStatus || processStatus === '未创建') {
             let kValue = parseFloat(rowData.k) || 0;
             let mValue = parseFloat(rowData.m) || 0;
@@ -1791,234 +1596,449 @@ function gotoReturnOrderPage() {
             } else {
                 processStatus = '已完成';
             }
-        }        let isValid = processStatus === '已完成';
+        }
 
+        let isValid = processStatus === '已完成';
         console.log('行数据工艺状态:', processStatus, '是否有效:', isValid);
         return isValid;
     });
 
     if (validRows.length === 0) {
-        swal('生成失败', '选中的行中没有工艺规程状态为"已完成"的数据!', 'error');
+        swal({
+            title: '生成失败',
+            text: '选中的行中没有工艺规程状态为"已完成"的数据!',
+            icon: 'error',
+            confirmButtonText: '确定'
+        });
         return false;
     }
 
-
-
-    // 提取所有选中行的ID
-    // const selectedIds = rows.map(row => row.data.id);
-    const selectedIds = validRows.map(row => row.data.id);
-    console.log('所有选中的ID:', selectedIds);
-
-    const params = {
-        ids: selectedIds.join(','), // 用逗号分隔多个ID
-        count: rows.length,
-        source: 'main',
-        timestamp: Date.now()
+    // 准备传递给出库页面的数据
+    var returnData = {
+        selectedRows: validRows.map(row => {
+            // 只传递必要字段，减少数据量
+            return {
+                id: row.data.id,
+                c: row.data.c,           // 业务单位
+                d: row.data.d,           // 合同号
+                e: row.data.e,           // 任务号
+                h: row.data.h,           // 名称
+                i: row.data.i,           // 图号
+                j: row.data.j,           // 单位
+                k: row.data.k,           // 数量
+                l: row.data.l,           // 材质
+                m: row.data.m,           // 序合计
+                n: row.data.n,           // 重量
+                p: row.data.p,           // 单位元
+                zhuangtai: row.data.zhuangtai || '已完成'
+            };
+        }),
+        count: validRows.length,
+        timestamp: Date.now(),
+        source: 'htjl_page'
     };
 
-    const queryString = new URLSearchParams(params).toString();
-    const targetUrl = 'spmc.html?' + queryString;
+    console.log('传递给出库页面的数据:', returnData);
 
-    console.log('跳转URL:', targetUrl);
-    window.open(targetUrl, '_blank');
+    // 使用sessionStorage传递完整数据
+    sessionStorage.setItem('currentReturnData', JSON.stringify(returnData));
+
+    // 跳转到出库页面
+    var iframe = window.frameElement;
+    if (iframe) {
+        // 当前在iframe中，让父页面修改iframe的src
+        console.log('在iframe中，调用父页面方法');
+        window.parent.changeIframeSrc('ckd.html');
+    } else {
+        console.log('直接跳转到出库页面');
+        window.location.href = 'ckd.html';
+    }
 
     return true;
 }
 
-// 绑定按钮点击事件
-$(document).ready(function() {
-    // 在现有的初始化代码中添加
-    $('#goto-return-btn').click(function() {
-        gotoReturnOrderPage();
+// ==================== 退货单功能 ====================
+function initReturnOrder() {
+    $('#return-date').val(getCurrentDate());
+    bindReturnOrderEvents();
+    calculateTotalAmount();
+}
+
+function bindReturnOrderEvents() {
+    $('#select-all').click(function() {
+        $('.row-select').prop('checked', this.checked);
+    });
+// 保存退货单按钮点击事件
+    $("#save-return-btn").click(function () {
+
+        // 检测必填字段
+        var returnCustomer = $('#return-customer').val();
+        var returnDate = $('#return-date').val();
+        var returnNo = $('#return-no').val();
+        var returnPhone = $('#return-phone').val();
+
+        // 检测逻辑
+        if (!returnCustomer) {
+            swal("保存失败", "请填写退货客户", "error");
+            return;
+        }
+        if (!returnDate) {
+            swal("保存失败", "请选择退货日期", "error");
+            return;
+        }
+        if (!returnNo) {
+            swal("保存失败", "请生成退货单号", "error");
+            return;
+        }
+        if (!returnPhone) {
+            swal("保存失败", "请填写退货电话", "error");
+            return;
+        }
+
+        var $btn = $(this);
+        if ($btn.data('submitting')) {
+            return;
+        }
+        $btn.data('submitting', true);
+        $btn.prop('disabled', true);
+
+        var originalText = $btn.html();
+        $btn.html('<i class="bi bi-arrow-clockwise icon"></i>提交中...');
+
+        // 直接收集所有明细行的数据
+        var details = [];
+        $('#return-detail-table tbody tr').each(function(index) {
+            var $row = $(this);
+            var detail = {
+                // 共用信息
+                f: $('#return-no').val(),
+                c: $('#return-customer').val(),
+                d: $('#return-phone').val(),
+                r: $('#company-address').val() ,
+                t: $('#company-phone').val(),
+                e: $('return-date').val(),
+                s: $('#customer-signature').val(),
+                // 明细特有信息
+                q: $row.find('input[name="returnReason"]').val(),
+                g: $row.find('input[name="contractNo"]').val(),
+                h: $row.find('input[name="taskNo"]').val(),
+                i: $row.find('input[name="productName"]').val(),
+                j: $row.find('input[name="drawingNo"]').val(),
+                k: $row.find('input[name="unit"]').val(),
+                l: $row.find('input[name="quantity"]').val(),
+                m: $row.find('input[name="unitPrice"]').val(),
+                n: $row.find('input[name="amount"]').val(),
+                o: $row.find('input[name="material"]').val(),
+                p: $row.find('input[name="weight"]').val(),
+                w: $row.find('input[name="returnDate"]').val(),
+                u: $row.find('input[name="remark"]').val(),
+                v: $row.data('original-id') || ''  // 从data属性获取原表id
+            };
+
+
+            details.push(detail);
+
+        });
+
+        console.log('要保存的退货单数据:', details);
+
+        // 遍历发送每个明细
+        var successCount = 0;
+        var totalCount = details.length;
+
+        details.forEach(function(detail, index) {
+            $ajax({
+                type: 'post',
+                url: '/htjl/save',
+                data: JSON.stringify(detail),
+                dataType: 'json',
+                contentType: 'application/json;charset=utf-8'
+            }, false, '', function (res) {
+                successCount++;
+
+                if (successCount === totalCount) {
+                    $btn.data('submitting', false);
+                    $btn.prop('disabled', false);
+                    $btn.html(originalText);
+
+                    if (res.code == 200) {
+                        swal("", "保存成功，共插入 " + successCount + " 条数据", "success");
+                        // 清空表单
+                        $('#return-customer').val('');
+                        $('#return-phone').val('');
+                        $('#return-reason').val('');
+                        $('#customer-signature').val('');
+                        $('#return-detail-table tbody').empty();
+                        addReturnRow();
+                        calculateTotalAmount();
+                    } else {
+                        swal("", res.msg, "error");
+                    }
+                }
+            }, function(xhr, status, error) {
+                $btn.data('submitting', false);
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                swal("", "请求失败: " + error, "error");
+            });
+        });
+    });
+    $('#add-row-btn').click(function() {
+        addReturnRow();
     });
 
-    // // 也可以修改现有的生成按钮，让它也使用跳转功能
-    // $('#generate-btn1').click(function() {
-    //     gotoReturnOrderPage();
-    // });
-});
+    $('#remove-row-btn').click(function() {
+        removeSelectedRows();
+    });
+
+    $('#generate-btn').click(function() {
+        generateReturnOrder();
+    });
+    $('#baocun-btn').click(function() {
+        tuihuojilu();
+    });
+
+
+    $(document).on('input', 'input[name="quantity"], input[name="unitPrice"]', function() {
+        calculateRowAmount($(this).closest('tr'));
+        calculateTotalAmount();
+    });
+
+    $(document).on('change', '.row-select', function() {
+        updateSelectAllState();
+    });
+}
 
 
 
 
 
+function addReturnRow() {
+    var table = $('#return-detail-table tbody');
+    var rowCount = table.find('tr').length;
+    var newRow = `
+        <tr>
+            <td><input type="checkbox" class="row-select"></td>
+            <td>${rowCount + 1}</td>
+            <td><input type="text" class="form-control form-control-sm" name="contractNo"></td>
+            <td><input type="text" class="form-control form-control-sm" name="taskNo"></td>
+            <td><input type="text" class="form-control form-control-sm" name="productName"></td>
+            <td><input type="text" class="form-control form-control-sm" name="drawingNo"></td>
+            <td><input type="text" class="form-control form-control-sm" name="unit"></td>
+            <td><input type="number" class="form-control form-control-sm" name="quantity" value="1"></td>
+            <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="0"></td>
+            <td><input type="number" class="form-control form-control-sm" name="amount" value="0" readonly></td>
+            <td><input type="text" class="form-control form-control-sm" name="material"></td>
+            <td><input type="text" class="form-control form-control-sm" name="weight"></td>
+            <td><input type="date" class="form-control form-control-sm" name="returnDate"></td>
+            <td><input type="text" class="form-control form-control-sm" name="returnReason"></td>
+            <td><input type="text" class="form-control form-control-sm" name="remark"></td>
+        </tr>
+    `;
+    table.append(newRow);
+    updateRowNumbers();
+}
 
+function removeSelectedRows() {
+    var selectedRows = $('.row-select:checked');
+    if (selectedRows.length === 0) {
+        alert('请选择要删除的行');
+        return;
+    }
 
+    if (confirm('确定要删除选中的行吗？')) {
+        selectedRows.each(function() {
+            $(this).closest('tr').remove();
+        });
+        updateRowNumbers();
+        calculateTotalAmount();
+    }
+}
 
-// // 根据ID查询单条记录
-// function getById(id) {
-//     console.log('根据ID查询:', id);
-//     alert(222)
-//
-//     $ajax({
-//         type: 'post',
-//         url: '/htjl/getById',
-//         data: {
-//             id: id  // 传递ID参数
-//         }
-//     }, true, '', function (res) {
-//         console.log('单条记录查询响应:', res);
-//         if (res.code == 200) {
-//             console.log('查询到的数据:', res.data);
-//             alert(res.data[0].id)
-//             // 这里可以处理单条数据，比如填充表单或显示详情
-//             showDetail(res.data);
-//             swal("查询成功", "找到对应记录", "success");
-//         } else {
-//             swal("查询失败", res.msg, "error");
-//         }
-//     })
-// }
-//
-// // 显示详情的方法示例
-// function showDetail(data) {
-//     // 根据你的页面结构填充数据
-//     // 例如：
-//     // $('#detailId').val(data.id);
-//     // $('#detailName').val(data.c); // 假设c字段是姓名
-//     // ... 其他字段
-//     console.log('显示详情:', data);
-// }
-//
-// // 在需要的地方调用，比如点击表格行时
-// $('#dataTable').on('click', 'tr', function() {
-//     var id = $(this).data('id'); // 假设行上有data-id属性
-//     if (id) {
-//         getById(id);
-//     }
-// });
-//
-//
-//
-//
-//
-//
-//
-//
-// // 根据多个ID查询
-// function getByIds(ids) {
-//     console.log('根据多个ID查询:', ids);
-//     alert(111)
-//
-//     $ajax({
-//         type: 'post',
-//         url: '/htjl/getByIds',
-//         data: {
-//             ids: ids.join(',')  // 将数组转换为逗号分隔的字符串
-//         }
-//     }, true, '', function (res) {
-//         console.log('多条记录查询响应:', res);
-//         alert(res.data[0].id)
-//         if (res.code == 200) {
-//             console.log('查询到的数据:', res.data);
-//             alert(res.data[0].id)
-//             setTable(res.data); // 更新表格
-//             swal("查询成功", "找到 " + res.data.length + " 条记录", "success");
-//         } else {
-//             swal("查询失败", res.msg, "error");
-//         }
-//     })
-// }
+function updateRowNumbers() {
+    $('#return-detail-table tbody tr').each(function(index) {
+        $(this).find('td:eq(1)').text(index + 1);
+    });
+}
 
+function calculateRowAmount(row) {
+    var quantity = parseFloat(row.find('input[name="quantity"]').val()) || 0;
+    var unitPrice = parseFloat(row.find('input[name="unitPrice"]').val()) || 0;
+    var amount = quantity * unitPrice;
+    row.find('input[name="amount"]').val(amount.toFixed(2));
+    return amount;
+}
 
+function calculateTotalAmount() {
+    var total = 0;
+    $('#return-detail-table tbody tr').each(function() {
+        total += calculateRowAmount($(this));
+    });
 
+    $('#total-amount').text(total.toFixed(2));
+    $('#total-amount-chinese').text(numberToChinese(total));
+}
 
-// // 填充表格数据的函数
-// function setTable1(data) {
-//     var tableBody = $('#return-detail-table1 tbody');
-//     tableBody.empty(); // 清空现有数据
-//
-//     if (!data || data.length === 0) {
-//         // 如果没有数据，显示空行
-//         tableBody.append(`
-//             <tr>
-//                 <td colspan="14" class="text-center">暂无数据</td>
-//             </tr>
-//         `);
-//         return;
-//     }
-//
-//     // 遍历数据并生成表格行
-//     data.forEach(function(item, index) {
-//         var row = `
-//             <tr>
-//                 <td><input type="checkbox" class="row-select"></td>
-//                 <td><input type="text" class="form-control form-control-sm" name="xuhao" value="${index + 1}" contenteditable="false"></td>
-//                 <td><input type="text" class="form-control form-control-sm" name="contractNo" value="${item.contractNo || ''}" contenteditable="false"></td>
-//                 <td><input type="text" class="form-control form-control-sm" name="taskNo" value="${item.taskNo || ''}" contenteditable="false"></td>
-//                 <td><input type="text" class="form-control form-control-sm" name="gongxu" value="${item.gongxu || ''}" contenteditable="false"></td>
-//                 <td><input type="text" class="form-control form-control-sm" name="productName" value="${item.productName || ''}" contenteditable="false"></td>
-//                 <td><input type="text" class="form-control form-control-sm" name="drawingNo" value="${item.drawingNo || ''}" contenteditable="false"></td>
-//                 <td><input type="text" class="form-control form-control-sm" name="unit" value="${item.unit || ''}" contenteditable="false"></td>
-//                 <td><input type="number" class="form-control form-control-sm" name="quantity" value="${item.quantity || ''}" contenteditable="false"></td>
-//                 <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="${item.unitPrice || ''}" contenteditable="false"></td>
-//                 <td><input type="number" class="form-control form-control-sm" name="amount" value="${item.amount || ''}" contenteditable="false"></td>
-//                 <td><input type="text" class="form-control form-control-sm" name="material" value="${item.material || ''}" contenteditable="false"></td>
-//                 <td><input type="text" class="form-control form-control-sm" name="weight" value="${item.weight || ''}" contenteditable="false"></td>
-//                 <td><input type="text" class="form-control form-control-sm" name="remark" value="${item.remark || ''}" contenteditable="false"></td>
-//             </tr>
-//         `;
-//         tableBody.append(row);
-//     });
-// }
-//
-// // 字段映射函数（根据你的API返回字段调整）
-// function mapDataFields(apiData) {
-//     return apiData.map(function(item) {
-//         return {
-//             contractNo: item.contractNo || item.htbh || '', // 合同号
-//             taskNo: item.taskNo || item.rwh || '', // 任务号
-//             gongxu: item.gongxu || item.jggx || '', // 加工工序
-//             productName: item.productName || item.cpmc || '', // 产品名称
-//             drawingNo: item.drawingNo || item.th || '', // 图号
-//             unit: item.unit || item.dw || '', // 单位
-//             quantity: item.quantity || item.sl || '', // 数量
-//             unitPrice: item.unitPrice || item.dj || '', // 单价
-//             amount: item.amount || item.je || '', // 金额
-//             material: item.material || item.cz || '', // 材质
-//             weight: item.weight || item.zl || '', // 重量
-//             remark: item.remark || item.bz || '' // 备注
-//         };
-//     });
-// }
-//
-// // 全选功能
-// $('#select-all1').change(function() {
-//     var isChecked = $(this).prop('checked');
-//     $('#return-detail-table1 .row-select').prop('checked', isChecked);
-// });
-//
-// // 使用示例
-// function loadData() {
-//     $ajax({
-//         type: 'post',
-//         url: '/your-api-url', // 替换为你的API地址
-//         data: {
-//             // 你的查询参数
-//         }
-//     }, true, '', function (res) {
-//         console.log('查询响应:', res);
-//         if (res.code == 200) {
-//             console.log('查询到的数据:', res.data);
-//
-//             // 如果字段名不匹配，先进行映射
-//             var mappedData = mapDataFields(res.data);
-//
-//             // 填充表格
-//             setTable(mappedData);
-//
-//             swal("查询成功", "找到 " + res.data.length + " 条记录", "success");
-//         } else {
-//             swal("查询失败", res.msg, "error");
-//         }
-//     });
-// }
-//
-// // 页面加载完成后初始化
-// $(document).ready(function() {
-//     // 绑定全选事件
-//     $('#select-all1').change(function() {
-//         var isChecked = $(this).prop('checked');
-//         $('#return-detail-table1 .row-select').prop('checked', isChecked);
-//     });
-// });
+function numberToChinese(num) {
+    if (num === 0) return '零元整';
+
+    var chineseNum = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+    var chineseUnit = ['', '拾', '佰', '仟'];
+    var bigUnit = ['', '万', '亿'];
+
+    var numStr = Math.round(num * 100).toString();
+    var integerPart = numStr.slice(0, -2) || '0';
+    var decimalPart = numStr.slice(-2);
+
+    var integerChinese = '';
+    var integerArray = integerPart.split('').reverse();
+
+    for (var i = 0; i < integerArray.length; i++) {
+        var digit = parseInt(integerArray[i]);
+        var unit = chineseUnit[i % 4];
+        var bigUnitIndex = Math.floor(i / 4);
+        var bigUnitChar = bigUnit[bigUnitIndex];
+
+        if (digit === 0) {
+            if (integerChinese.charAt(0) !== '零' && i % 4 !== 0) {
+                integerChinese = '零' + integerChinese;
+            }
+        } else {
+            integerChinese = chineseNum[digit] + unit + bigUnitChar + integerChinese;
+        }
+    }
+
+    var decimalChinese = '';
+    var jiao = parseInt(decimalPart.charAt(0)) || 0;
+    var fen = parseInt(decimalPart.charAt(1)) || 0;
+
+    if (jiao > 0) {
+        decimalChinese += chineseNum[jiao] + '角';
+    }
+    if (fen > 0) {
+        decimalChinese += chineseNum[fen] + '分';
+    }
+
+    var result = integerChinese + '元';
+    if (decimalChinese) {
+        result += decimalChinese;
+    } else {
+        result += '整';
+    }
+
+    return result;
+}
+
+function updateSelectAllState() {
+    var allChecked = $('.row-select:checked').length === $('.row-select').length;
+    $('#select-all').prop('checked', allChecked);
+}
+
+function generateReturnOrder() {
+
+    let rows = getTableSelection('#userTable');
+    if (rows.length == 0) {
+        swal('请选择要生成退货单的数据!');
+        return;
+    }
+
+    console.log('选中的行数据:', rows);
+
+    // 清空现有退货单数据（保留第一行）
+    $('#return-detail-table tbody tr:gt(0)').remove();
+
+    // 填充退货单数据
+    rows.forEach(function(selectedRow, index) {
+        let rowData = selectedRow.data;
+        console.log('第' + (index + 1) + '行数据:', rowData);
+
+        if (index === 0) {
+            // 第一行使用现有行
+            fillReturnRowData($('#return-detail-table tbody tr:first'), rowData);
+        } else {
+            // 添加新行并填充数据
+            addReturnRow();
+            var newRow = $('#return-detail-table tbody tr:last');
+            fillReturnRowData(newRow, rowData);
+        }
+    });
+
+    // 更新退货单头部信息（使用第一个选中行的信息）
+    if (rows.length > 0) {
+        let firstRow = rows[0].data;
+        $('#return-customer').val(firstRow.c || '');
+        $('#return-phone').val(firstRow.phone || '');
+
+        // 生成退货单号（根据当前时间）
+        $('#return-no').val(generateReturnNo());
+
+        // 设置当前日期为退货日期
+        $('#return-date').val(getCurrentDate());
+    }
+
+    // 计算总金额
+    calculateTotalAmount();
+
+    $('#return-modal').modal('show');
+    swal("生成成功", "已生成 " + rows.length + " 条退货单数据", "success");
+}
+// 填充退货单行数据
+function fillReturnRowData($row, rowData) {
+    $row.find('input[name="contractNo"]').val(rowData.d || '');
+    $row.find('input[name="taskNo"]').val(rowData.e || '');
+    $row.find('input[name="productName"]').val(rowData.h || '');
+    $row.find('input[name="drawingNo"]').val(rowData.i || '');
+    $row.find('input[name="unit"]').val(rowData.j || '');
+    $row.find('input[name="quantity"]').val(rowData.k || '1');
+    $row.find('input[name="unitPrice"]').val(rowData.p || '0');
+    $row.find('input[name="material"]').val(rowData.l || '');
+    $row.find('input[name="weight"]').val(rowData.n || '');
+    $row.find('input[name="remark"]').val(rowData.ax || '');
+// 设置隐藏的原表id
+    $row.data('original-id', rowData.id);  // 将原表id存储在data属性中
+    // 计算金额
+    calculateRowAmount($row);
+}
+
+// 简化版 - 纯前端生成退货单号
+function generateReturnNo() {
+    $ajax({
+        type: 'post',
+        url: '/htjl/getddh',
+    }, false, '', function (res) {
+        if (res.code == 200) {
+            var now = new Date();
+            var dateStr = now.getFullYear() +
+                String(now.getMonth() + 1).padStart(2, '0') +
+                String(now.getDate()).padStart(2, '0');
+            maxNo = res.data;  // 注意：这里是小写 f，但数据库字段是大写 F
+            var newReturnNo;
+
+            if (!maxNo || maxNo === '') {
+                newReturnNo = "No:" + dateStr + "0001";
+            } else {
+                var numberPart = maxNo.split(":")[1];
+                var nextNum = parseInt(numberPart) + 1;
+                newReturnNo = "No:" + nextNum;
+            }
+
+            // 直接填入输入框
+            $('#return-no').val(newReturnNo);
+            console.log('退货单号已更新:', newReturnNo);
+
+        } else {
+            console.error('获取单号失败');
+            // 失败时生成临时单号
+            var tempNo = "No:" + new Date().getTime();
+            $('#return-no').val(tempNo);
+        }
+    });  // 这里添加了缺少的右括号
+}
+
+function getCurrentDate() {
+    var now = new Date();
+    var year = now.getFullYear();
+    var month = String(now.getMonth() + 1).padStart(2, '0');
+    var day = String(now.getDate()).padStart(2, '0');
+    return year + '-' + month + '-' + day;
+}

@@ -5,6 +5,7 @@ import com.example.demo.entity.Htjl;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author hui
@@ -62,19 +63,6 @@ public interface HtjlService extends IService<Htjl> {
     boolean save1(Htjl htjl);
     String getddh1();
 
-
-
-//    /**
-//     * 根据ID查询单条数据
-//     */
-//    Htjl getById(String id);
-//
-//    /**
-//     * 根据多个ID查询数据
-//     */
-//    List<Htjl> getByIds(List<String> ids);
-
-
     /**
      * 根据ID查询合同记录
      */
@@ -86,6 +74,6 @@ public interface HtjlService extends IService<Htjl> {
      */
     List<Htjl> getByIds(List<String> ids);
 
-
+    boolean updateField(Integer id, Map<String, Object> updateFields);
 
 }

@@ -5,15 +5,13 @@ import com.example.demo.service.YwcService;
 import com.example.demo.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -41,82 +39,36 @@ public class YwcController {
         }
     }
 
-
-
-
-    /**
-     * 修改
-     */
-    @RequestMapping(value = "/update", method = RequestMethod.POST)
-    public ResultInfo update(@RequestBody String updateJson, HttpSession session) {
+    @PostMapping("/updateField")
+    public Result<?> updateField(@RequestBody Map<String, Object> params) {
         try {
-            System.out.println("接收到的JSON: " + updateJson);
+            System.out.println("更新字段请求:" + params);
 
-            // 这里应该能正确映射C、D、E、F字段
-            Ywc ywc = GsonUtil.toEntity(updateJson, Ywc.class);
-
-            System.out.println("c: " + ywc.getC());
-            System.out.println("d: " + ywc.getD());
-            System.out.println("e: " + ywc.getE());
-            System.out.println("f: " + ywc.getF());
-            System.out.println("g: " + ywc.getG());
-            System.out.println("h: " + ywc.getH());
-            System.out.println("i: " + ywc.getI());
-            System.out.println("j: " + ywc.getJ());
-            System.out.println("k: " + ywc.getK());
-            System.out.println("l: " + ywc.getL());
-            System.out.println("m: " + ywc.getM());
-            System.out.println("n: " + ywc.getN());
-            System.out.println("o: " + ywc.getO());
-            System.out.println("p: " + ywc.getP());
-            System.out.println("q: " + ywc.getQ());
-            System.out.println("r: " + ywc.getR());
-            System.out.println("s: " + ywc.getS());
-            System.out.println("t: " + ywc.getT());
-            System.out.println("u: " + ywc.getU());
-            System.out.println("v: " + ywc.getV());
-            System.out.println("w: " + ywc.getW());
-            System.out.println("x: " + ywc.getX());
-            System.out.println("y: " + ywc.getY());
-            System.out.println("z: " + ywc.getZ());
-            System.out.println("aa: " + ywc.getAa());
-            System.out.println("ab: " + ywc.getAb());
-            System.out.println("ac: " + ywc.getAc());
-            System.out.println("ad: " + ywc.getAd());
-            System.out.println("ae: " + ywc.getAe());
-            System.out.println("af: " + ywc.getAf());
-            System.out.println("ag: " + ywc.getAg());
-            System.out.println("ah: " + ywc.getAh());
-            System.out.println("ai: " + ywc.getAi());
-            System.out.println("aj: " + ywc.getAj());
-            System.out.println("ak: " + ywc.getAk());
-            System.out.println("al: " + ywc.getAl());
-            System.out.println("am: " + ywc.getAm());
-            System.out.println("an: " + ywc.getAn());
-            System.out.println("ao: " + ywc.getAo());
-            System.out.println("ap: " + ywc.getAp());
-            System.out.println("aq: " + ywc.getAq());
-            System.out.println("ar: " + ywc.getAr());
-            System.out.println("as: " + ywc.getAs());
-            System.out.println("at: " + ywc.getAt());
-            System.out.println("au: " + ywc.getAu());
-            System.out.println("av: " + ywc.getAv());
-            System.out.println("aw: " + ywc.getAw());
-            System.out.println("ax: " + ywc.getAx());
-
-            if (ywcService.update(ywc)) {
-                return ResultInfo.success("修改成功", ywc);
-            } else {
-                return ResultInfo.error("修改失败");
+            Integer id = (Integer) params.get("id");
+            if (id == null) {
+                return Result.error("ID不能为空");
             }
+
+            // 移除id，剩下的就是需要更新的字段
+            params.remove("id");
+
+            if (params.isEmpty()) {
+                return Result.error("没有要更新的字段");
+            }
+
+            boolean success = ywcService.updateField(id, params);
+
+            if (success) {
+                return Result.success("更新成功");
+            } else {
+                return Result.error("更新失败");
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
-            log.error("修改失败：{}", e.getMessage());
-            return ResultInfo.error("修改失败: " + e.getMessage());
+            return Result.error("系统错误: " + e.getMessage());
         }
     }
-
-
 
 
 

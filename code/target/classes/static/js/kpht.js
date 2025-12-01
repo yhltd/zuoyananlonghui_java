@@ -33,29 +33,7 @@ function getList() {
 $(function () {
     getList();
 
-    // $('#select-btn').click(function () {
-    //     var name = $('#name').val();
-    //     console.log('查询条件 - 姓名:', name);
-    //
-    //     $ajax({
-    //         type: 'post',
-    //         url: '/thjl/queryList',
-    //         data: {
-    //             name: name  // 只传递姓名参数
-    //         }
-    //     }, true, '', function (res) {
-    //         console.log('查询响应:', res);
-    //         if (res.code == 200) {
-    //             console.log('查询到的数据:', res.data);
-    //             setTable(res.data);
-    //             swal("查询成功", "找到 " + res.data.length + " 条记录", "success");
-    //         } else {
-    //             swal("查询失败", res.msg, "error");
-    //         }
-    //     })
-    // });
-
-
+    //条件查询
     $('#select-btn').click(function () {
         var name = $('#name').val();
         console.log('查询条件 - 姓名:', name);
@@ -78,424 +56,10 @@ $(function () {
         })
     });
 
-
     //刷新
     $("#refresh-btn").click(function () {
         getList();
     });
-
-//     //点击新增按钮显示弹窗
-//     $("#add-btn").click(function () {
-//         $('#add-modal').modal('show');
-//     });
-//
-// //新增弹窗里点击关闭按钮
-//     $('#add-close-btn').click(function () {
-//         $('#add-modal').modal('hide');
-//     });
-//
-// //新增弹窗里点击提交按钮
-//     $("#add-submit-btn").click(function () {
-//         // 防止重复提交
-//         var $btn = $(this);
-//         if ($btn.data('submitting')) {
-//             return;
-//         }
-//         $btn.data('submitting', true);
-//         $btn.prop('disabled', true);
-//
-//         var originalText = $btn.html();
-//         $btn.html('<i class="bi bi-arrow-clockwise icon"></i>提交中...');
-//
-//         // 手动构建参数，包含所有字段
-//         let params = {
-//             c: $('#add-c').val(),      // 业务单位
-//             d: $('#add-d').val(),      // 合同号
-//             e: $('#add-e').val(),      // 任务号
-//             f: $('#add-f').val(),      // 工艺规程状态
-//             g: $('#add-g').val(),      // 工序
-//             h: $('#add-h').val(),      // 名称
-//             i: $('#add-i').val(),      // 图号
-//             j: $('#add-j').val(),      // 单位
-//             k: $('#add-k').val(),      // 数量
-//             l: $('#add-l').val(),      // 材质
-//             m: $('#add-m').val(),      // 序合计
-//             n: $('#add-n').val(),      // 重量
-//             o: $('#add-o').val(),      // 工件
-//             p: $('#add-p').val(),      // 单位元
-//             q: $('#add-q').val(),      // 合计金额
-//             r: $('#add-r').val(),      // 铣工时/40
-//             s: $('#add-s').val(),      // 铣单价
-//             t: $('#add-t').val(),      // 车工时/40
-//             u: $('#add-u').val(),      // 车单价
-//             v: $('#add-v').val(),      // 钳公式/40
-//             w: $('#add-w').val(),      // 钳单位
-//             x: $('#add-x').val(),      // 整件外委工时/57.6
-//             y: $('#add-y').val(),      // 整件外委单位
-//             z: $('#add-z').val(),      // 外委工时/48
-//             aa: $('#add-aa').val(),    // 外委单价
-//             ab: $('#add-ab').val(),    // 镗工时/73
-//             ac: $('#add-ac').val(),    // 镗单价
-//             ad: $('#add-ad').val(),    // 割工时/24
-//             ae: $('#add-ae').val(),    // 割单价
-//             af: $('#add-af').val(),    // 磨工时/42
-//             ag: $('#add-ag').val(),    // 磨单价
-//             ah: $('#add-ah').val(),    // 数控铣工时/69
-//             ai: $('#add-ai').val(),    // 数控铣单价
-//             aj: $('#add-aj').val(),    // 立车/71
-//             ak: $('#add-ak').val(),    // 立车单价
-//             al: $('#add-al').val(),    // 电火花/42
-//             am: $('#add-am').val(),    // 电火花单价
-//             an: $('#add-an').val(),    // 中走丝/38
-//             ao: $('#add-ao').val(),    // 中走丝单价
-//             ap: $('#add-ap').val(),    // 下料
-//             aq: $('#add-aq').val(),    // 深孔钻
-//             ar: $('#add-ar').val(),    // 回厂日期
-//             as: $('#add-as').val(),    // 出厂日期
-//             at: $('#add-at').val(),    // 订单要求交货时间
-//             au: $('#add-au').val(),    // 铣
-//             av: $('#add-av').val(),    // 车
-//             aw: $('#add-aw').val(),    // 登记员
-//             ax: $('#add-ax').val()     // 备注
-//         };
-//
-//         console.log('前端输入的数据:', params);
-//         console.log('发送的JSON数据:', JSON.stringify(params));
-//
-//         // 直接提交，不进行表单验证
-//         $ajax({
-//             type: 'post',
-//             url: '/htjl/add',
-//             data: JSON.stringify(params),
-//             dataType: 'json',
-//             contentType: 'application/json;charset=utf-8'
-//         }, false, '', function (res) {
-//             // 恢复按钮状态
-//             $btn.data('submitting', false);
-//             $btn.prop('disabled', false);
-//             $btn.html(originalText);
-//
-//             console.log('服务器响应:', res);
-//
-//             if (res.code == 200) {
-//                 swal("", res.msg, "success");
-//                 $('#add-form')[0].reset();
-//                 getList();
-//                 $('#add-modal').modal('hide');
-//             } else {
-//                 swal("", res.msg, "error");
-//             }
-//         }, function(xhr, status, error) {
-//             // 请求失败时也恢复按钮状态
-//             $btn.data('submitting', false);
-//             $btn.prop('disabled', false);
-//             $btn.html(originalText);
-//
-//             console.error('请求失败详情:');
-//             console.error('状态:', status);
-//             console.error('错误:', error);
-//             console.error('响应文本:', xhr.responseText);
-//
-//             swal("", "请求失败，请检查网络连接: " + error, "error");
-//         });
-//     });
-
-
-
-
-
-    //点击修改按钮显示弹窗
-    $('#update-btn').click(function () {
-        let rows = getTableSelection('#userTable');
-        if (rows.length > 1 || rows.length == 0) {
-            swal('请选择一条数据修改!');
-            return;
-        }
-
-        let selectedRow = rows[0];
-        console.log('选中的行数据:', selectedRow);
-
-        // 数据在 data 属性中，正确访问方式：
-        let rowData = selectedRow.data;
-        console.log('实际数据对象:', rowData);
-
-        // 存储数据 - 从 data 属性中获取
-        window.selectedUserData = {
-            c: rowData.c,
-            d: rowData.d,
-            e: rowData.e,
-            f: rowData.f,
-            g: rowData.g,
-            h: rowData.h,
-            i: rowData.i,
-            j: rowData.j,
-            k: rowData.k,
-            l: rowData.l,
-            m: rowData.m,
-            n: rowData.n,
-            o: rowData.o,
-            p: rowData.p,
-            q: rowData.q,
-            r: rowData.r,
-            s: rowData.s,
-            t: rowData.t,
-            u: rowData.u,
-            v: rowData.v,
-            w: rowData.w,
-            x: rowData.x,
-            y: rowData.y,
-            z: rowData.z,
-            aa: rowData.aa,
-            ab: rowData.ab,
-            ac: rowData.ac,
-            ad: rowData.ad,
-            ae: rowData.ae,
-            af: rowData.af,
-            ag: rowData.ag,
-            ah: rowData.ah,
-            ai: rowData.ai,
-            aj: rowData.aj,
-            ak: rowData.ak,
-            al: rowData.al,
-            am: rowData.am,
-            an: rowData.an,
-            ao: rowData.ao,
-            ap: rowData.ap,
-            aq: rowData.aq,
-            ar: rowData.ar,
-            as: rowData.as,
-            at: rowData.at,
-            au: rowData.au,
-            av: rowData.av,
-            aw: rowData.aw,
-            ax: rowData.ax,
-            id: rowData.id
-        };
-
-        console.log('存储的数据:', window.selectedUserData);
-
-        $('#update-modal').modal('show');
-    });
-
-// 监听弹窗完全显示事件
-    $('#update-modal').on('shown.bs.modal', function () {
-        if (window.selectedUserData) {
-            console.log('读取的数据:', window.selectedUserData);
-
-            let selectedRow = window.selectedUserData;
-
-            console.log('弹窗已显示，开始填充数据...');
-            console.log('要填充的数据:', selectedRow);
-
-            // 填充数据
-            $('#update-c').val(selectedRow.c || '');  // 业务单位
-            $('#update-d').val(selectedRow.d || '');  // 合同号
-            $('#update-e').val(selectedRow.e || '');  // 任务号
-            $('#update-f').val(selectedRow.f || '');  // 工艺规程状态
-            $('#update-g').val(selectedRow.g || '');  // 工序
-            $('#update-h').val(selectedRow.h || '');  // 名称
-            $('#update-i').val(selectedRow.i || '');  // 图号
-            $('#update-j').val(selectedRow.j || '');  // 单位
-            $('#update-k').val(selectedRow.k || '');  // 数量
-            $('#update-l').val(selectedRow.l || '');  // 材质
-            $('#update-m').val(selectedRow.m || '');  // 序合计
-            $('#update-n').val(selectedRow.n || '');  // 重量
-            $('#update-o').val(selectedRow.o || '');  // 工件
-            $('#update-p').val(selectedRow.p || '');  // 单位元
-            $('#update-q').val(selectedRow.q || '');  // 合计金额
-            $('#update-r').val(selectedRow.r || '');  // 铣工时/40
-            $('#update-s').val(selectedRow.s || '');  // 铣单价
-            $('#update-t').val(selectedRow.t || '');  // 车工时/40
-            $('#update-u').val(selectedRow.u || '');  // 车单价
-            $('#update-v').val(selectedRow.v || '');  // 钳公式/40
-            $('#update-w').val(selectedRow.w || '');  // 钳单位
-            $('#update-x').val(selectedRow.x || '');  // 整件外委工时/57.6
-            $('#update-y').val(selectedRow.y || '');  // 整件外委单位
-            $('#update-z').val(selectedRow.z || '');  // 外委工时/48
-            $('#update-aa').val(selectedRow.aa || '');  // 外委单价
-            $('#update-ab').val(selectedRow.ab || '');  // 镗工时/73
-            $('#update-ac').val(selectedRow.ac || '');  // 镗单价
-            $('#update-ad').val(selectedRow.ad || '');  // 割工时/24
-            $('#update-ae').val(selectedRow.ae || '');  // 割单价
-            $('#update-af').val(selectedRow.af || '');  // 磨工时/42
-            $('#update-ag').val(selectedRow.ag || '');  // 磨单价
-            $('#update-ah').val(selectedRow.ah || '');  // 数控铣工时/69
-            $('#update-ai').val(selectedRow.ai || '');  // 数控铣单价
-            $('#update-aj').val(selectedRow.aj || '');  // 立车/71
-            $('#update-ak').val(selectedRow.ak || '');  // 立车单价
-            $('#update-al').val(selectedRow.al || '');  // 电火花/42
-            $('#update-am').val(selectedRow.am || '');  // 电火花单价
-            $('#update-an').val(selectedRow.an || '');  // 中走丝/38
-            $('#update-ao').val(selectedRow.ao || '');  // 中走丝单价
-            $('#update-ap').val(selectedRow.ap || '');  // 下料
-            $('#update-aq').val(selectedRow.aq || '');  // 深孔钻
-            $('#update-ar').val(selectedRow.ar || '');  // 回厂日期
-            $('#update-as').val(selectedRow.as || '');  // 出厂日期
-            $('#update-at').val(selectedRow.at || '');  // 订单要求交货时间
-            $('#update-au').val(selectedRow.au || '');  // 铣
-            $('#update-av').val(selectedRow.av || '');  // 车
-            $('#update-aw').val(selectedRow.aw || '');  // 登记员
-            $('#update-ax').val(selectedRow.ax || '');  // 备注
-
-            $('#id').val(selectedRow.id || '');  // 添加这一行！
-
-
-            console.log('填充后的表单值:');
-            console.log('业务单位:', $('#update-c').val());
-            console.log('合同号:', $('#update-d').val());
-            console.log('任务号:', $('#update-e').val());
-            console.log('工艺规程状态:', $('#update-f').val());
-            console.log('工序:', $('#update-g').val());
-            console.log('名称:', $('#update-h').val());
-            console.log('图号:', $('#update-i').val());
-            console.log('单位:', $('#update-j').val());
-            console.log('数量:', $('#update-k').val());
-            console.log('材质:', $('#update-l').val());
-            console.log('序合计:', $('#update-m').val());
-            console.log('重量:', $('#update-n').val());
-            console.log('工件:', $('#update-o').val());
-            console.log('单位元:', $('#update-p').val());
-            console.log('合计金额:', $('#update-q').val());
-            console.log('铣工时/40:', $('#update-r').val());
-            console.log('铣单价:', $('#update-s').val());
-            console.log('车工时/40:', $('#update-t').val());
-            console.log('车单价:', $('#update-u').val());
-            console.log('钳公式/40:', $('#update-v').val());
-            console.log('钳单位:', $('#update-w').val());
-            console.log('整件外委工时/57.6:', $('#update-x').val());
-            console.log('整件外委单位:', $('#update-y').val());
-            console.log('外委工时/48:', $('#update-z').val());
-            console.log('外委单价:', $('#update-aa').val());
-            console.log('镗工时/73:', $('#update-ab').val());
-            console.log('镗单价:', $('#update-ac').val());
-            console.log('割工时/24:', $('#update-ad').val());
-            console.log('割单价:', $('#update-ae').val());
-            console.log('磨工时/42:', $('#update-af').val());
-            console.log('磨单价:', $('#update-ag').val());
-            console.log('数控铣工时/69:', $('#update-ah').val());
-            console.log('数控铣单价:', $('#update-ai').val());
-            console.log('立车/71:', $('#update-aj').val());
-            console.log('立车单价:', $('#update-ak').val());
-            console.log('电火花/42:', $('#update-al').val());
-            console.log('电火花单价:', $('#update-am').val());
-            console.log('中走丝/38:', $('#update-an').val());
-            console.log('中走丝单价:', $('#update-ao').val());
-            console.log('下料:', $('#update-ap').val());
-            console.log('深孔钻:', $('#update-aq').val());
-            console.log('回厂日期:', $('#update-ar').val());
-            console.log('出厂日期:', $('#update-as').val());
-            console.log('订单要求交货时间:', $('#update-at').val());
-            console.log('铣:', $('#update-au').val());
-            console.log('车:', $('#update-av').val());
-            console.log('登记员:', $('#update-aw').val());
-            console.log('备注:', $('#update-ax').val());
-
-
-
-            window.selectedUserData = null;
-        }
-    });
-
-
-
-    //修改弹窗点击提交按钮 - 完全绕过验证
-    $('#update-submit-btn').click(function () {
-        var msg = confirm("确认要修改吗？");
-        console.log("msg", msg);
-        if (msg) {
-            // 获取表单数据
-            let params = {
-                id: $('#id').val(),
-                c: $('#update-c').val(),  // 业务单位
-                d: $('#update-d').val(),  // 合同号
-                e: $('#update-e').val(),  // 任务号
-                f: $('#update-f').val(),  // 工艺规程状态
-                g: $('#update-g').val(),  // 工序
-                h: $('#update-h').val(),  // 名称
-                i: $('#update-i').val(),  // 图号
-                j: $('#update-j').val(),  // 单位
-                k: $('#update-k').val(),  // 数量
-                l: $('#update-l').val(),  // 材质
-                m: $('#update-m').val(),  // 序合计
-                n: $('#update-n').val(),  // 重量
-                o: $('#update-o').val(),  // 工件
-                p: $('#update-p').val(),  // 单位元
-                q: $('#update-q').val(),  // 合计金额
-                r: $('#update-r').val(),  // 铣工时/40
-                s: $('#update-s').val(),  // 铣单价
-                t: $('#update-t').val(),  // 车工时/40
-                u: $('#update-u').val(),  // 车单价
-                v: $('#update-v').val(),  // 钳公式/40
-                w: $('#update-w').val(),  // 钳单位
-                x: $('#update-x').val(),  // 整件外委工时/57.6
-                y: $('#update-y').val(),  // 整件外委单位
-                z: $('#update-z').val(),  // 外委工时/48
-                aa: $('#update-aa').val(),  // 外委单价
-                ab: $('#update-ab').val(),  // 镗工时/73
-                ac: $('#update-ac').val(),  // 镗单价
-                ad: $('#update-ad').val(),  // 割工时/24
-                ae: $('#update-ae').val(),  // 割单价
-                af: $('#update-af').val(),  // 磨工时/42
-                ag: $('#update-ag').val(),  // 磨单价
-                ah: $('#update-ah').val(),  // 数控铣工时/69
-                ai: $('#update-ai').val(),  // 数控铣单价
-                aj: $('#update-aj').val(),  // 立车/71
-                ak: $('#update-ak').val(),  // 立车单价
-                al: $('#update-al').val(),  // 电火花/42
-                am: $('#update-am').val(),  // 电火花单价
-                an: $('#update-an').val(),  // 中走丝/38
-                ao: $('#update-ao').val(),  // 中走丝单价
-                ap: $('#update-ap').val(),  // 下料
-                aq: $('#update-aq').val(),  // 深孔钻
-                ar: $('#update-ar').val(),  // 回厂日期
-                as: $('#update-as').val(),  // 出厂日期
-                at: $('#update-at').val(),  // 订单要求交货时间
-                au: $('#update-au').val(),  // 铣
-                av: $('#update-av').val(),  // 车
-                aw: $('#update-aw').val(),  // 登记员
-                ax: $('#update-ax').val()   // 备注
-            };
-
-            console.log('提交的修改数据:', params);
-
-            // 显示加载状态
-            $(this).prop('disabled', true).text('提交中...');
-
-            $.ajax({
-                type: 'POST',
-                url: '/kpht/update',
-                data: JSON.stringify(params),
-                dataType: 'json',
-                contentType: 'application/json;charset=utf-8',
-                success: function (res) {
-                    console.log('服务器响应:', res);
-
-                    // 恢复按钮状态
-                    $('#update-submit-btn').prop('disabled', false).text('提交');
-
-                    if (res.code == 200) {
-                        swal("", res.msg, "success");
-                        $('#update-modal').modal('hide');
-                        $('#update-form')[0].reset();
-                        getList();
-                    } else {
-                        swal("", res.msg || "修改失败", "error");
-                    }
-                },
-                error: function (xhr, status, error) {
-                    console.error('请求失败:', error);
-                    console.error('状态:', status);
-                    console.error('响应文本:', xhr.responseText);
-
-                    // 恢复按钮状态
-                    $('#update-submit-btn').prop('disabled', false).text('提交');
-
-                    swal("", "请求失败，请检查网络连接或联系管理员", "error");
-                }
-            });
-        }
-    });
-
 
     //点击删除按钮
     $('#delete-btn').click(function () {
@@ -530,9 +94,223 @@ $(function () {
     })
 });
 
+// 单元格编辑功能
+function enableCellEditing() {
+    $('#userTable').on('click', 'td.editable', function() {
+        var $cell = $(this);
+        var $row = $cell.closest('tr');
+
+        // 如果已经在编辑状态，则不再重复创建
+        if ($cell.find('input, select').length > 0) {
+            return;
+        }
+
+        var originalValue = $cell.text().trim();
+
+        // 修复：正确获取字段名
+        var colIndex = $cell.index();
+        var $headerTh = $('#userTable thead th').eq(colIndex);
+
+        // 方法1：从data-field属性获取
+        var field = $headerTh.attr('data-field') || $headerTh.data('field');
+
+        // 方法2：如果还获取不到，从表格配置中获取
+        if (!field) {
+            var tableOptions = $('#userTable').bootstrapTable('getOptions');
+            if (tableOptions && tableOptions.columns && tableOptions.columns[colIndex]) {
+                field = tableOptions.columns[colIndex].field;
+            }
+        }
+
+        // 方法3：如果还获取不到，从列的field属性获取
+        if (!field) {
+            field = $headerTh.find('[data-field]').attr('data-field');
+        }
+
+        console.log('字段信息:', {
+            colIndex: colIndex,
+            field: field,
+            headerHtml: $headerTh.html(),
+            headerTh: $headerTh
+        });
+
+        // 修改：使用Bootstrap Table的API获取行数据和ID
+        var rowIndex = $row.data('index');
+        var tableData = $('#userTable').bootstrapTable('getData');
+        var rowData = tableData[rowIndex];
+        var rowId = rowData ? rowData.id : null;
+
+        console.log('编辑信息:', {
+            field: field,
+            rowId: rowId,
+            originalValue: originalValue,
+            rowIndex: rowIndex
+        });
+
+        // 如果没有获取到字段名或ID，提示错误
+        if (!field || field === 'undefined') {
+            swal("编辑失败", "无法获取字段名: " + field, "error");
+            return;
+        }
+        if (!rowId) {
+            swal("编辑失败", "无法获取行ID，请刷新页面重试", "error");
+            return;
+        }
+
+        // 特殊处理对账状态字段 - 使用下拉框
+        if (field === 'hetongzhuangtai') {
+            createSelectEditor($cell, originalValue, field, rowId, tableData, rowIndex);
+        } else {
+            createInputEditor($cell, originalValue, field, rowId, tableData, rowIndex);
+        }
+    });
+}
 
 
+// 创建下拉框编辑器（针对对账状态字段）
+function createSelectEditor($cell, originalValue, field, rowId, tableData, rowIndex) {
+    var $select = $('<select class="form-control cell-edit-select">')
+        .css({
+            width: '100%',
+            height: '100%',
+            border: '1px solid #007bff',
+            borderRadius: '3px',
+            padding: '2px 5px'
+        });
 
+    // 添加选项 - 保持只有"已开票"状态
+    $select.append('<option value="">请选择</option>');
+    $select.append('<option value="已开票">已开票</option>');
+
+    // 设置当前值
+    $select.val(originalValue);
+
+    // 清空单元格内容并添加下拉框
+    $cell.empty().append($select);
+    $select.focus();
+
+    // 保存编辑
+    function saveEdit() {
+        var newValue = $select.val();
+
+        // 如果值没有变化，则不保存
+        if (newValue === originalValue) {
+            $cell.text(originalValue);
+            return;
+        }
+
+        console.log('发送更新:', { id: rowId, field: field, newValue: newValue });
+
+        // 发送更新请求
+        $.ajax({
+            type: 'post',
+            url: '/kpht/updateField',
+            data: JSON.stringify({
+                id: rowId,
+                [field]: newValue
+            }),
+            dataType: 'json',
+            contentType: 'application/json;charset=utf-8',
+            success: function(res) {
+                if (res.code == 200) {
+                    $cell.text(newValue);
+                    // 更新本地数据
+                    tableData[rowIndex][field] = newValue;
+                    // 注释掉这行，避免重新加载表格中断编辑状态
+                    // getList();
+                } else {
+                    $cell.text(originalValue);
+                    swal("更新失败", res.msg, "error");
+                }
+            },
+            error: function(xhr, status, error) {
+                $cell.text(originalValue);
+                console.error('更新请求失败:', error);
+                swal("更新失败", "网络错误，请重试", "error");
+            }
+        });
+    }
+
+    // 绑定事件
+    $select.on('blur', saveEdit);
+    $select.on('change', saveEdit); // 选择即保存
+    $select.on('keydown', function(e) {
+        if (e.keyCode === 27) { // ESC键
+            $cell.text(originalValue);
+        }
+    });
+}
+
+// 创建输入框编辑器
+function createInputEditor($cell, originalValue, field, rowId, tableData, rowIndex) {
+    var $input = $('<input type="text" class="form-control cell-edit-input">')
+        .val(originalValue)
+        .css({
+            width: '100%',
+            height: '100%',
+            border: '1px solid #007bff',
+            borderRadius: '3px',
+            padding: '2px 5px'
+        });
+
+    // 清空单元格内容并添加输入框
+    $cell.empty().append($input);
+    $input.focus().select();
+
+    // 保存编辑
+    function saveEdit() {
+        var newValue = $input.val().trim();
+
+        // 如果值没有变化，则不保存
+        if (newValue === originalValue) {
+            $cell.text(originalValue);
+            return;
+        }
+
+        console.log('发送更新:', { id: rowId, field: field, newValue: newValue });
+
+        // 发送更新请求
+        $.ajax({
+            type: 'post',
+            url: '/kpht/updateField',
+            data: JSON.stringify({
+                id: rowId,
+                [field]: newValue
+            }),
+            dataType: 'json',
+            contentType: 'application/json;charset=utf-8',
+            success: function(res) {
+                if (res.code == 200) {
+                    $cell.text(newValue);
+                    // 更新本地数据
+                    tableData[rowIndex][field] = newValue;
+                    getList();
+                } else {
+                    $cell.text(originalValue);
+                    swal("更新失败", res.msg, "error");
+                }
+            },
+            error: function(xhr, status, error) {
+                $cell.text(originalValue);
+                console.error('更新请求失败:', error);
+                swal("更新失败", "网络错误，请重试", "error");
+            }
+        });
+    }
+
+    // 绑定事件
+    $input.on('blur', saveEdit);
+    $input.on('keydown', function(e) {
+        if (e.keyCode === 13) { // Enter键
+            saveEdit();
+        } else if (e.keyCode === 27) { // ESC键
+            $cell.text(originalValue);
+        }
+    });
+}
+
+
+//页面渲染数据
 function setTable(data) {
     // 确保表格容器存在
     if ($('#userTable').length === 0) {
@@ -555,310 +333,381 @@ function setTable(data) {
         pageSize: 15,
         clickToSelect: true,
         locale: 'zh-CN',
+        rowAttributes: function(row, index) {
+            return {
+                'data-index': index,
+                'data-id': row.id
+            };
+        },
         columns: [
             {
                 field: 'c',
                 title: '业务单位',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,  // 根据内容调整宽度
+                class: 'editable'
             }, {
                 field: 'd',
                 title: '合同号',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
                 field: 'e',
                 title: '任务号',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
-                field: 'f',
+                field: 'hetongzhuangtai',
                 title: '对账状态',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable',
+                formatter: function(value, row, index) {
+                    // 显示当前值
+                    return value || '';
+                },
+                cell: {
+                    // 添加下拉框编辑
+                    type: 'select',
+                    options: [
+                        {value: '已对账', text: '已对账'},
+                        {value: '未开票', text: '未开票'}
+                    ]
+                }
             }, {
                 field: 'g',
                 title: '工序',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
                 field: 'h',
                 title: '名称',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
                 field: 'i',
                 title: '图号',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
                 field: 'j',
                 title: '单位',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 80,
+                class: 'editable'
             }, {
                 field: 'k',
                 title: '数量',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 80,
+                class: 'editable'
             }, {
                 field: 'l',
                 title: '材质',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             },{
-                field: '',
+                field: 'au',
                 title: '出库单号',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             },  {
-                field: 'm',
+                field: 'av',
                 title: '序合计',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'n',
+                field: 'aw',
                 title: '重量',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 80,
+                class: 'editable'
             }, {
-                field: 'o',
-                title: '工件',
+                field: 'ax',
+                title: '工件尺寸',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'm',
+                title: '单价元',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'p',
-                title: '单位元',
-                align: 'center',
-                sortable: true,
-                width: 100,
-            }, {
-                field: 'q',
+                field: 'n',
                 title: '合计金额',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
-                field: 'r',
-                title: '铣工时/40',
+                field: 'o',
+                title: '铣工时',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 's',
+                field: 'p',
                 title: '铣单价',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 't',
-                title: '车工时/40',
+                field: 'q',
+                title: '车工时',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'u',
+                field: 'r',
                 title: '车单价',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
+            }, {
+                field: 's',
+                title: '钳工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 't',
+                title: '钳单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'u',
+                title: '整件外委工时',
+                align: 'center',
+                sortable: true,
+                width: 140,
+                class: 'editable'
             }, {
                 field: 'v',
-                title: '钳公式/40',
-                align: 'center',
-                sortable: true,
-                width: 100,
-            }, {
-                field: 'w',
-                title: '钳单位',
-                align: 'center',
-                sortable: true,
-                width: 100,
-            }, {
-                field: 'x',
-                title: '整件外委工时/57.6',
-                align: 'center',
-                sortable: true,
-                width: 100,
-            }, {
-                field: 'y',
                 title: '整件外委单位',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 140,
+                class: 'editable'
             }, {
-                field: 'z',
-                title: '外委工时/48',
+                field: 'w',
+                title: '外委工时',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'aa',
+                field: 'x',
                 title: '外委单价',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'ab',
-                title: '镗工时/73',
+                field: 'y',
+                title: '镗工时',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'ac',
+                field: 'z',
                 title: '镗单价',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'ad',
-                title: '割工时/24',
+                field: 'aa',
+                title: '割工时',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'ae',
+                field: 'ab',
                 title: '割单价',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'af',
-                title: '磨工时/42',
+                field: 'ac',
+                title: '磨工时',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'ag',
+                field: 'ad',
                 title: '磨单价',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'ah',
-                title: '数控铣工时/69',
+                field: 'ae',
+                title: '数控铣工时',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
-                field: 'ai',
+                field: 'af',
                 title: '数控铣单价',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
-                field: 'aj',
-                title: '立车/71',
+                field: 'ag',
+                title: '立车',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 80,
+                class: 'editable'
             }, {
-                field: 'ak',
+                field: 'ah',
                 title: '立车单价',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'al',
-                title: '电火花/42',
+                field: 'ai',
+                title: '电火花',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'am',
+                field: 'aj',
                 title: '电火花单价',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
-                field: 'an',
-                title: '中走丝/38',
+                field: 'ak',
+                title: '中走丝',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'ao',
+                field: 'al',
                 title: '中走丝单价',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
-                field: 'ap',
+                field: 'am',
                 title: '下料',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 80,
+                class: 'editable'
             }, {
-                field: 'aq',
+                field: 'an',
                 title: '深孔钻',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'ar',
+                field: 'ao',
                 title: '回厂日期',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
-                field: 'as',
+                field: 'ap',
                 title: '出厂日期',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 120,
+                class: 'editable'
             }, {
-                field: 'at',
+                field: 'ay',
                 title: '订单要求交货时间',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 160,
+                class: 'editable'
             }, {
-                field: 'au',
+                field: 'aq',
                 title: '铣',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 80,
+                class: 'editable'
             }, {
-                field: 'av',
+                field: 'ar',
                 title: '车',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 80,
+                class: 'editable'
             }, {
-                field: 'aw',
+                field: 'aas',
                 title: '登记员',
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
             }, {
-                field: 'ax',
+                field: 'at',
                 title: '备注',
                 align: 'center',
                 sortable: true,
-                width: 100,
+                width: 150,
+                class: 'editable'
             }
         ],
-        onClickRow: function (row, el) {
-            let isSelect = $(el).hasClass('selected')
+        onClickRow: function (row, $element) {
+            let isSelect = $element.hasClass('selected')
             if (isSelect) {
-                $(el).removeClass('selected')
+                $element.removeClass('selected')
             } else {
-                $(el).addClass('selected')
+                $element.addClass('selected')
             }
+        },
+        onPostBody: function() {
+            // 表格渲染完成后启用单元格编辑
+            enableCellEditing();
         }
     });
 
@@ -868,3 +717,190 @@ function setTable(data) {
 }
 
 
+// 工序配置功能
+$(function() {
+    // 工序配置按钮点击事件
+    $('#gongxu-config-btn').click(function() {
+        loadGongxuConfig();
+    });
+
+    // 关闭按钮事件
+    $('#gongxu-close-btn').click(function() {
+        $('#gongxu-modal').modal('hide');
+    });
+});
+
+// 加载工序配置
+function loadGongxuConfig() {
+    $.ajax({
+        type: 'get',
+        url: '/gx/getAll',
+        success: function(res) {
+            console.log('工序配置响应:', res);
+            if (res.code == 200) {
+                renderGongxuTable(res.data);
+                $('#gongxu-modal').modal('show');
+            } else {
+                swal("加载失败", res.msg, "error");
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('加载工序配置失败:', error);
+            swal("加载失败", "网络错误，请重试", "error");
+        }
+    });
+}
+
+// 渲染工序配置表格
+function renderGongxuTable(data) {
+    var tbody = $('#gongxuTableBody');
+    tbody.empty();
+
+    if (data && data.length > 0) {
+        $.each(data, function(index, item) {
+            var row = $('<tr>');
+            row.append('<td>' + item.id + '</td>');
+            row.append('<td>' + (item.name || '') + '</td>');
+            row.append('<td><input type="text" class="form-control gongxu-num-input" data-id="' + item.id + '" value="' + (item.num || '') + '"></td>');
+            row.append('<td><button class="btn btn-sm btn-primary save-gongxu-btn" data-id="' + item.id + '" data-name="' + (item.name || '') + '">保存</button></td>');
+            tbody.append(row);
+        });
+
+        // 绑定保存按钮事件
+        $('.save-gongxu-btn').click(function() {
+            var id = $(this).data('id');
+            var name = $(this).data('name');
+            var num = $(this).closest('tr').find('.gongxu-num-input').val();
+            saveGongxuConfig(id, name, num, $(this));
+        });
+
+        // 绑定输入框回车事件
+        $('.gongxu-num-input').keydown(function(e) {
+            if (e.keyCode === 13) { // Enter键
+                var id = $(this).data('id');
+                var name = $(this).closest('tr').find('td').eq(1).text();
+                var num = $(this).val();
+                var $btn = $(this).closest('tr').find('.save-gongxu-btn');
+                saveGongxuConfig(id, name, num, $btn);
+            }
+        });
+    } else {
+        tbody.append('<tr><td colspan="4" class="text-center">暂无数据</td></tr>');
+    }
+}
+
+// 保存工序配置
+function saveGongxuConfig(id, name, num, $btn) {
+    if (!num || num.trim() === '') {
+        swal("保存失败", "单价不能为空", "error");
+        return;
+    }
+
+    // 验证数字格式
+    if (isNaN(num)) {
+        swal("保存失败", "单价必须是数字", "error");
+        return;
+    }
+
+    var gongxuData = {
+        id: id,
+        name: name,
+        num: num
+    };
+
+    console.log('保存工序配置:', gongxuData);
+
+    // 禁用按钮防止重复点击
+    $btn.prop('disabled', true).text('保存中...');
+
+    $.ajax({
+        type: 'post',
+        url: '/gx/update',
+        data: JSON.stringify(gongxuData),
+        dataType: 'json',
+        contentType: 'application/json;charset=utf-8',
+        success: function(res) {
+            if (res.code == 200) {
+                swal("保存成功", "工序单价已更新", "success");
+                // 重新加载数据确保显示最新值
+                loadGongxuConfig();
+            } else {
+                swal("保存失败", res.msg, "error");
+                $btn.prop('disabled', false).text('保存');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('保存工序配置失败:', error);
+            swal("保存失败", "网络错误，请重试", "error");
+            $btn.prop('disabled', false).text('保存');
+        }
+    });
+}
+
+// 创建输入框编辑器
+function createInputEditor($cell, originalValue, field, rowId, tableData, rowIndex) {
+    var $input = $('<input type="text" class="form-control cell-edit-input">')
+        .val(originalValue)
+        .css({
+            width: '100%',
+            height: '100%',
+            border: '1px solid #007bff',
+            borderRadius: '3px',
+            padding: '2px 5px'
+        });
+
+    // 清空单元格内容并添加输入框
+    $cell.empty().append($input);
+    $input.focus().select();
+
+    // 保存编辑
+    function saveEdit() {
+        var newValue = $input.val().trim();
+
+        // 如果值没有变化，则不保存
+        if (newValue === originalValue) {
+            $cell.text(originalValue);
+            return;
+        }
+
+        console.log('发送更新:', { id: rowId, field: field, newValue: newValue });
+
+        // 发送更新请求
+        $.ajax({
+            type: 'post',
+            url: '/kpht/updateField',
+            data: JSON.stringify({
+                id: rowId,
+                [field]: newValue
+            }),
+            dataType: 'json',
+            contentType: 'application/json;charset=utf-8',
+            success: function(res) {
+                if (res.code == 200) {
+                    $cell.text(newValue);
+                    // 更新本地数据
+                    tableData[rowIndex][field] = newValue;
+                    getList();
+                } else {
+                    $cell.text(originalValue);
+                    swal("更新失败", res.msg, "error");
+                }
+            },
+            error: function(xhr, status, error) {
+                $cell.text(originalValue);
+                console.error('更新请求失败:', error);
+                swal("更新失败", "网络错误，请重试", "error");
+            }
+        });
+    }
+
+    // 绑定事件
+    $input.on('blur', saveEdit);
+    $input.on('keydown', function(e) {
+        if (e.keyCode === 13) { // Enter键
+            saveEdit();
+        } else if (e.keyCode === 27) { // ESC键
+            $cell.text(originalValue);
+        }
+    });
+}

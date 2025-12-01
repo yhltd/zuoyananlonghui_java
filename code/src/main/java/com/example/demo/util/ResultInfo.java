@@ -135,4 +135,5 @@ public class ResultInfo extends HashMap<String, Object> {
     return new ResultInfo(code, msg, null);
   }
 
+
 }

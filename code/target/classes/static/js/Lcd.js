@@ -149,16 +149,12 @@ function setTable(data) {
     $('#lrTable').bootstrapTable({
         data: data,
         sortStable: true,
-        classes: 'table table-hover text-nowrap table table-bordered',
+        classes: 'table table-hover table-bordered',
         idField: 'id',
         pagination: true,
         pageSize: 15,
         clickToSelect: true,
         locale: 'zh-CN',
-        toolbar: '#table-toolbar',
-        toolbarAlign: 'left',
-        theadClasses: "thead-light",
-        style: 'table-layout:fixed',
         columns: [
             {
                 field: '',

@@ -28,68 +28,72 @@
     <link rel="stylesheet" href="../css/main.css">
     <script type="text/javascript" src="../js/main.js"></script>
     <script type="text/javascript" src="../js/yggs.js"></script>
+    <link rel="stylesheet" href="../css/new.css">
 </head>
 
-<body class="pt-2">
-<div class="background-image">
-    <img src="../img/时间.png" class="img1">
-    <span style="color: black; font-size: 20px;margin-left: 20px" id="now_time" ></span>
-    <span style="margin-left: 50px;font-size: 20px"><img src="../img/个人.png" style="height: 30px;">  您 好 <b><span id="dlm" style="color: black"></span></b> , 欢 迎 您 登 录 !</span>
-    <img src="../img/重金属.png" class="img1" style="margin-left: 30px">
-    <img src="../img/金属.png" class="img1"style="margin-left: 30px">
-    <img src="../img/钻石.png" class="img1"style="margin-left: 30px">
-    <div class="menu">
-        <button class="btn2"><img src="../img/个人信息.png" class="img1"></button>
-        <div class="content">
-            <div>
-                <img src="../img/img_1.png">
-            </div>
-            <div style="margin-left: 60px">
-                <a href="grxx.html" class="link-dark rounded">个人信息</a>
-            </div>
-            <div style="margin-left: 60px">
-                <a href="http://localhost:9093/index.html" target="_top">退出登录</a>
+<body>
+<div class="top-header">
+    <div class="header-content">
+        <div class="logo-section">
+            <i class="bi bi-person-badge-fill logo-icon"></i>
+            <span class="system-title">信息管理系统</span>
+        </div>
+
+        <div class="time-display">
+            <i class="bi bi-clock"></i>
+            <span id="now_time"></span>
+        </div>
+
+        <div class="user-info">
+            <i class="bi bi-person-circle"></i>
+            您好 <span class="user-name" id="dlm"></span>，欢迎登录！
+        </div>
+
+        <div class="nav-icons">
+            <div class="nav-icon">
+                <a href="http://localhost:9093/index.html" target="_top" class="dropdown-item-custom">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+
             </div>
         </div>
     </div>
-    <a href="main.html" target="_top"><img src="../img/首页.png" class="img1"></a>
-    <img src="../img/地球仪.png" class="img1" style="margin-left: 20px;">
 </div>
 
-<div class="top-toolbar row">
-    <div class="col-md-3 mb-2">
-        <input id="ksrq1" type="date" class="form-control" placeholder="开始日期" autocomplete="off">
+<div class="top-toolbar row" style="box-shadow: 0 0 rgba(0,0,0,0);    border-bottom: 1px solid;">
+    <div class="search-yggs">
+        <input id="ksrq1" type="date" class="form-control form-control-custom" placeholder="开始日期" autocomplete="off">
     </div>
-    <div class="col-md-3 mb-2">
-        <input id="jsrq1" type="date" class="form-control" placeholder="结束日期" autocomplete="off">
+    <div class="search-yggs">
+        <input id="jsrq1" type="date" class="form-control form-control-custom" placeholder="结束日期" autocomplete="off">
     </div>
-    <div class="col-md-2 mb-2">
-        <button id="select-btn1" class="btn" style="background-color: limegreen;color: white">
-            <i class="bi bi-search icon"></i>
+    <div>
+        <button id="select-btn1" class="btn btn-yggs btn-primary-custom">
+            <i class="bi bi-search me-2"></i>
             查询汇总
         </button>
     </div>
 </div>
 
-<div class="top-toolbar row">
-    <div class="col-md-3 mb-2">
-        <input id="ksrq" type="date" class="form-control" placeholder="开始日期" autocomplete="off">
+<div class="top-toolbar row" style="box-shadow: 0 0 rgba(0,0,0,0);    border-bottom: 1px solid;">
+    <div class="search-yggs">
+        <input id="ksrq" type="date" class="form-control form-control-custom" placeholder="开始日期" autocomplete="off">
     </div>
-    <div class="col-md-3 mb-2">
-        <input id="jsrq" type="date" class="form-control" placeholder="结束日期" autocomplete="off">
+    <div class="search-yggs">
+        <input id="jsrq" type="date" class="form-control form-control-custom" placeholder="结束日期" autocomplete="off">
     </div>
-    <div class="col-md-3 mb-2">
-        <input id="yg" type="text" class="form-control" placeholder="员工姓名" autocomplete="off">
+    <div class="search-yggs">
+        <input id="yg" type="text" class="form-control form-control-custom" placeholder="员工姓名" autocomplete="off">
     </div>
-    <div class="col-md-2 mb-2">
-        <button id="select-btn" class="btn" style="background-color: limegreen;color: white">
-            <i class="bi bi-search icon"></i>
-            查询员工
+    <div>
+        <button id="select-btn" class="btn btn-yggs btn-primary-custom">
+            <i class="bi bi-search me-2"></i>
+            查询
         </button>
     </div>
 </div>
 <!-- 添加工资统计信息 -->
-<div class="top-toolbar row" id="salary-stats">
+<div class="top-toolbar row" id="salary-stats"  style="box-shadow: 0 0 rgba(0,0,0,0)">
     <div class="col-md-4 mb-3">  <!-- 添加 mb-3 下边距 -->
         <div class="card text-white bg-info" style="height: 60px;">
             <div class="card-body p-1">
@@ -102,7 +106,7 @@
         <div class="card text-white bg-success" style="height: 60px;">
             <div class="card-body p-1">
                 <h6 class="card-title mb-0" style="font-size: 0.8rem;">小时工资</h6>
-                <div class="input-group input-group-sm">
+                <div class="input-group input-group-sm" style="margin-top: 5px;">
                     <input type="number" id="hourly-wage" class="form-control" value="30" placeholder="小时工资" style="height: 24px; font-size: 0.7rem;">
                     <span class="input-group-text" style="height: 24px; font-size: 0.7rem;">元/小时</span>
                 </div>
@@ -119,36 +123,17 @@
     </div>
 </div>
 <div id="table-toolbar">
-    <div class="btn-group" role="group">
-<!--        <button id="refresh-btn" class="btn btn-primary" style="border-radius:5px;">-->
-<!--            <i class="bi bi-arrow-clockwise icon"></i>-->
-<!--            刷新-->
-<!--        </button>-->
-<!--        <span style="border-right: 20px solid white"></span>-->
-<!--        <button id="add-btn" class="btn btn-primary" style="border-radius:5px;">-->
-<!--            <i class="bi bi-plus-square icon"></i>-->
-<!--            新增-->
-<!--        </button>-->
-<!--        <span style="border-right: 20px solid white"></span>-->
-<!--        <button id="update-btn" class="btn btn-primary" style="border-radius:5px;">-->
-<!--            <i class="bi bi-pencil-square icon"></i>-->
-<!--            修改-->
-<!--        </button>-->
-<!--        <span style="border-right: 20px solid white"></span>-->
-<!--        <button id="delete-btn" class="btn btn-primary" style="border-radius:5px;background-color: red">-->
-<!--            <i class="bi bi-trash icon"></i>-->
-<!--            删除-->
-<!--        </button>-->
-<!--        <span style="border-right: 20px solid white"></span>-->
-        <a class="btn btn-primary" style="color: white;padding-top: 8px;border-radius:5px;">当前页：员工工时查询</a>
+    <div class="page-indicator" style="margin-left: 15px;">
+        <i class="bi bi-file-earmark-check me-2"></i>
+        当前页：员工工时查询
     </div>
 </div>
 
 <div class="table-div border-top">
-    <table id="userTable"></table>
+    <table id="userTable" class="table table-hover table-custom gradient-table"></table>
 </div>
 <div class="table-div border-top">
-    <table id="summaryTable"></table>
+    <table id="summaryTable" class="table table-hover table-custom gradient-table"></table>
 </div>
 
 <div id="add-modal" class="modal fade" tabindex="-1">
@@ -355,13 +340,10 @@
 
         // 手动绑定事件测试
         $('#select-btn1').on('click', function() {
-            console.log('查询汇总按钮被点击了！');
-            alert('按钮被点击了！'); // 添加alert确认
         });
     });
 
     $('#select-btn1').click(function () {
-        console.log('查询汇总按钮被点击了！');
 
         var ksrq1 = $('#ksrq1').val();
         var jsrq1 = $('#jsrq1').val();
@@ -406,4 +388,25 @@
 
 
 </body>
+<script>
+    // 更新时间显示
+    function updateTime() {
+        const now = new Date();
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        document.getElementById('now_time').textContent = now.toLocaleDateString('zh-CN', options);
+    }
+
+    // 初始更新时间并设置定时器
+    updateTime();
+    setInterval(updateTime, 1000);
+
+</script>
 </html>
