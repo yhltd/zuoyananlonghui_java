@@ -19,6 +19,7 @@ public interface BgdMapper extends BaseMapper<Bgd> {
      * 查询工艺规程数据
      */
     @Select({
+            "<script>",
             "WITH AllContracts AS (",
             "    SELECT DISTINCT hj.id",
             "    FROM hetong_jilu hj",
@@ -30,9 +31,11 @@ public interface BgdMapper extends BaseMapper<Bgd> {
             "        FROM gongyi_guicheng gg",
             "        GROUP BY C",
             "    ) status_table ON hj.id = status_table.left_id",
-            "    LEFT JOIN tuihuo t ON hj.id = t.id",
             "    WHERE ISNULL(hj.hetong_zhuangtai, '') = ''",
-            "    AND t.id IS NULL",
+            "    AND NOT EXISTS (",
+            "        SELECT 1 FROM tuihuo t ",
+            "        WHERE t.v = hj.id",
+            "    )",
             ")",
             ", RankedProcess AS (",
             "    SELECT ",
@@ -43,10 +46,10 @@ public interface BgdMapper extends BaseMapper<Bgd> {
             ")",
             "SELECT id, C, J, K, M, D",
             "FROM RankedProcess",
-            "WHERE rn = 1"
+            "WHERE rn = 1",
+            "</script>"
     })
     List<Map<String, Object>> getOptimizedProcessData();
-
     @Select({
             "<script>",
             "WITH UncompletedContracts AS (",

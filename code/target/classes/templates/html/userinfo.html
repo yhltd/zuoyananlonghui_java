@@ -33,6 +33,38 @@
     <script type="text/javascript" src="../js/login.js"></script>
     <link rel="stylesheet" href="../css/new.css">
 
+
+    <style>
+        .page-indicator {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .page-indicator:hover {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: #0d6efd;
+            transform: translateY(-1px);
+        }
+
+        .modal-body h6 {
+            color: #495057;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-body ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-body ul li {
+            margin-bottom: 0.3rem;
+        }
+    </style>
+
 </head>
 
 <body>
@@ -107,8 +139,8 @@
                 </button>
 
                 <!-- 当前页面指示器 -->
-                <div class="page-indicator">
-                    <i class="bi bi-person-badge me-2"></i>
+                <div class="page-indicator" id="pageIndicator">
+                    <i class="bi bi-file-earmark-check me-2"></i>
                     当前页：账号管理
                 </div>
             </div>
@@ -247,11 +279,11 @@
             </div>
             <div class="border-top" style="padding: 15px;display: flex">
                 <button id="update-submit-btn" type="button" class="btn btn-custom btn-success-custom">
-                    <i class="bi bi-arrow-bar-up icon"></i>
+                    <i class="bi bi-arrow-bar-up"></i>
                     提交
                 </button>
                 <button id="update-close-btn" type="button" class="btn btn-custom btn-danger-custom left-margin">
-                    <i class="bi bi-x-circle icon"></i>
+                    <i class="bi bi-x-circle"></i>
                     关闭
                 </button>
             </div>
@@ -282,6 +314,32 @@
     </div>
 </div>
 
+<!-- 使用说明弹窗 -->
+<div class="modal fade" id="instructionsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-info-circle me-2"></i>
+                    账号管理使用说明
+                </h5>
+            </div>
+            <div class="modal-body">
+                <h6><i class="bi bi-1-circle me-2"></i>基本操作</h6>
+                <ul>
+                    <li>单击单元格，浅蓝色背景为选中行，点击删除按钮可删除对应信息</li>
+                    <li>点击新增修改按钮，可在弹窗中编辑内容</li>
+                </ul>
+
+                <h6><i class="bi bi-2-circle me-2"></i>注意事项</h6>
+                <ul>
+                    <li>账号，密码不要有完全重复的值</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     // 更新时间显示
     function updateTime() {
@@ -304,6 +362,21 @@
 
     // 模拟登录用户名显示
     document.getElementById('dlm').textContent = "管理员";
+
+
+    $(document).ready(function() {
+        // 点击页面指示器显示使用说明弹窗
+        $('#pageIndicator').on('click', function() {
+            $('#instructionsModal').modal('show');
+        });
+
+        // 已阅读按钮点击事件
+        $('#confirmReadBtn').on('click', function() {
+            $('#instructionsModal').modal('hide');
+            localStorage.setItem('workReportInstructionsRead', 'true');
+            console.log('用户已确认阅读使用说明');
+        });
+    });
 </script>
 </body>
 </html>

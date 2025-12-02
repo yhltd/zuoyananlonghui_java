@@ -141,7 +141,10 @@ public class Ckd_cImpl extends ServiceImpl<Ckd_cMapper, Ckd_c> implements Ckd_cS
         ckd_cMapper.deleteByChukudanhao(chukudanhao);
     }
 
-
+    @Override
+    public String getddh() {  // 方法名必须一致
+        return ckd_cMapper.getddh();
+    }
 
 
     @Override

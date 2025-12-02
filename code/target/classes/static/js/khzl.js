@@ -49,6 +49,7 @@ $(function () {
     //刷新
     $("#refresh-btn").click(function () {
         getList();
+        swal("刷新成功", "已显示所有数据", "success");
     });
 
     //点击新增按钮显示弹窗

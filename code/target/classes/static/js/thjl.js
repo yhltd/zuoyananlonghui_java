@@ -128,6 +128,7 @@ $(function () {
     $("#refresh-btn").click(function () {
 
         getList();
+        swal("刷新成功", "已显示所有数据", "success");
     });
 
     //点击新增按钮显示弹窗
@@ -138,6 +139,10 @@ $(function () {
 //新增弹窗里点击关闭按钮
     $('#add-close-btn').click(function () {
         $('#add-modal').modal('hide');
+    });
+
+    $('#update-close-btn').click(function () {
+        $('#update-modal').modal('hide');
     });
 
 //新增弹窗里点击提交按钮

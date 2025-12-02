@@ -26,6 +26,38 @@
     <script type="text/javascript" src="../js/main.js"></script>
     <script type="text/javascript" src="../js/thjl.js"></script>
     <link rel="stylesheet" href="../css/new.css">
+
+
+    <style>
+        .page-indicator {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .page-indicator:hover {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: #0d6efd;
+            transform: translateY(-1px);
+        }
+
+        .modal-body h6 {
+            color: #495057;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-body ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-body ul li {
+            margin-bottom: 0.3rem;
+        }
+    </style>
 </head>
 
 <body >
@@ -106,8 +138,8 @@
             <i class="bi bi-trash"></i>
             删除
         </button>
-        <div class="page-indicator">
-            <i class="bi bi-file-earmark-text me-2"></i>
+        <div class="page-indicator" id="pageIndicator">
+            <i class="bi bi-file-earmark-check me-2"></i>
             当前页：退货记录查询
         </div>
     </div>
@@ -540,6 +572,28 @@
         </div>
     </div>
 </div>
+
+<!-- 使用说明弹窗 -->
+<div class="modal fade" id="instructionsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-info-circle me-2"></i>
+                    退货记录使用说明
+                </h5>
+            </div>
+            <div class="modal-body">
+                <h6><i class="bi bi-1-circle me-2"></i>基本操作</h6>
+                <ul>
+                    <li>单击表格区域浅蓝色为选中行样式，点击删除按钮可删除选中行内容</li>
+                    <li>可点击新增，修改按钮在弹窗中填写信息</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
 </body>
 <script>
     // 更新时间显示
@@ -560,6 +614,20 @@
     // 初始更新时间并设置定时器
     updateTime();
     setInterval(updateTime, 1000);
+
+    $(document).ready(function() {
+        // 点击页面指示器显示使用说明弹窗
+        $('#pageIndicator').on('click', function() {
+            $('#instructionsModal').modal('show');
+        });
+
+        // 已阅读按钮点击事件
+        $('#confirmReadBtn').on('click', function() {
+            $('#instructionsModal').modal('hide');
+            localStorage.setItem('workReportInstructionsRead', 'true');
+            console.log('用户已确认阅读使用说明');
+        });
+    });
 
 </script>
 </html>

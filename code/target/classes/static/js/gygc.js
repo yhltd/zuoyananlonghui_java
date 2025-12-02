@@ -13,8 +13,13 @@ $(document).ready(function() {
         // return;
     }
 
-    // 填充数据到表头
-    fillProcessHeader(processData);
+    // 修改执行顺序：先加载下拉数据，再填充表头
+    loadDropdownData();
+
+    // 延迟填充表头，确保下拉框已创建
+    setTimeout(() => {
+        fillProcessHeader(processData);
+    }, 500);
 
     // 添加删除按钮到控制区域
     $('.controls').append('<button id="deleteRow">🗑️ 删除选中行</button>');
@@ -187,6 +192,7 @@ function renumberTableRows() {
         $(this).find('td:first').text(index + 1);
     });
 }
+
 // 填充数据到工艺规程表格
 function fillProcessHeader(data) {
     // 填充表头基本信息
@@ -228,10 +234,17 @@ function fillProcessHeader(data) {
                 $('#jdrq').val(formatDateForInput(firstItem.t) || '');  // 校对员日期 - t字段
                 $('#pzrq').val(formatDateForInput(firstItem.v) || '');
 
-                // 设置工艺员、校对员、批准人姓名
-                $('#gyy').text(firstItem.q || '');  // 工艺员 - q字段
-                $('#jdy').text(firstItem.s || '');  // 校对员 - s字段
-                $('#pzr').text(firstItem.u || '');  // 批准 - u字段
+                // 修改这里：不直接设置文本，而是设置下拉框的值
+                if (firstItem.q) {
+                    setDropdownValue('gyy', firstItem.q);
+                }
+                if (firstItem.s) {
+                    setDropdownValue('jdy', firstItem.s);
+                }
+                if (firstItem.u) {
+                    setDropdownValue('pzr', firstItem.u);
+                }
+
                 // 填充表格数据
                 setTable(res.data);
                 swal("加载成功", "已加载 " + res.data.length + " 条工艺规程数据", "success");
@@ -365,7 +378,7 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// 保存工艺规程数据
+
 // 保存工艺规程数据
 function saveProcessData() {
     // 获取上一个页面传过来的id
@@ -381,12 +394,12 @@ function saveProcessData() {
         g: $('#product-name').text(),       // 零件名称
         h: $('#task-no').text(),         // 图号
         i: $('#drawing-no').text(),           // 数量
-        // 签名和日期
-        q: $('.signature-name:eq(0)').text(), // 工艺员
+        // 签名和日期 - 从下拉框或文本获取
+        q: getFieldValue('gyy'), // 工艺员
         r: $('#gyrq').val(),                // 工艺员日期
-        s: $('.signature-name:eq(1)').text(), // 校对员
+        s: getFieldValue('jdy'), // 校对员
         t: $('#jdrq').val(),                // 校对员日期
-        u: $('.signature-name:eq(2)').text(), // 批准人
+        u: getFieldValue('pzr'), // 批准人
         v: $('#pzrq').val()                 // 批准日期
     };
 
@@ -516,7 +529,19 @@ function saveProcessData() {
     }
 }
 
+// 新增函数：获取字段值（兼容下拉框和文本）
+function getFieldValue(fieldId) {
+    const element = $('#' + fieldId);
+    const selectElement = element.find('select');
 
+    if (selectElement.length > 0) {
+        // 如果是下拉框，获取选中的值
+        return selectElement.val() || '';
+    } else {
+        // 如果是文本，获取文本内容
+        return element.text().trim() || '';
+    }
+}
 
 
 // 当前显示的数据
@@ -656,10 +681,18 @@ function replaceTableData(data) {
         $('#quantity').text(headerData.e || '');           // 数量
         $('#material').text(headerData.f || '');           // 材质
 
-        // 设置签名和日期
-        $('#gyy').text(headerData.q || '');  // 工艺员
-        $('#jdy').text(headerData.s || '');  // 校对员
-        $('#pzr').text(headerData.u || '');  // 批准人
+        // 修改这里：设置下拉框的值
+        if (headerData.q) {
+            setDropdownValue('gyy', headerData.q);
+        }
+        if (headerData.s) {
+            setDropdownValue('jdy', headerData.s);
+        }
+        if (headerData.u) {
+            setDropdownValue('pzr', headerData.u);
+        }
+
+        // 设置日期字段
         $('#gyrq').val(formatDateForInput(headerData.r) || '');  // 工艺员日期
         $('#jdrq').val(formatDateForInput(headerData.t) || '');  // 校对员日期
         $('#pzrq').val(formatDateForInput(headerData.v) || '');  // 批准日期
@@ -878,4 +911,133 @@ function isLastRowContentModified(target) {
 
     // 检查内容是否非空
     return target.textContent.trim() !== '';
+}
+
+// 新增函数：创建下拉框
+function createDropdown(fieldId, options, defaultValue) {
+    const element = $('#' + fieldId);
+    if (element.length === 0) return;
+
+    // 如果已经是下拉框，不重复创建
+    if (element.find('select').length > 0) {
+        updateDropdownOptions(fieldId, options, defaultValue);
+        return;
+    }
+
+    // 创建下拉框
+    let selectHtml = '<select class="signature-dropdown" style="width: 100%; border: none; background: transparent; font-size: 14px;">';
+    selectHtml += '<option value="">请选择</option>';
+
+    // 去重并排序选项
+    const uniqueOptions = [...new Set(options)].sort();
+
+    uniqueOptions.forEach(option => {
+        const selected = (option === defaultValue) ? 'selected' : '';
+        selectHtml += `<option value="${option}" ${selected}>${option}</option>`;
+    });
+
+    selectHtml += '</select>';
+
+    // 替换内容
+    element.html(selectHtml);
+
+    // 监听变化，更新签名区域
+    element.find('select').on('change', function() {
+        updateSignatureField(fieldId, $(this).val());
+    });
+}
+
+// 新增函数：更新下拉框选项
+function updateDropdownOptions(fieldId, options, defaultValue) {
+    const selectElement = $('#' + fieldId + ' select');
+    if (selectElement.length === 0) return;
+
+    const currentValue = selectElement.val();
+    const uniqueOptions = [...new Set(options)].sort();
+
+    let optionsHtml = '<option value="">请选择</option>';
+    uniqueOptions.forEach(option => {
+        // 保留当前选中项，或者使用新的默认值
+        const selected = (option === currentValue) || (option === defaultValue) ? 'selected' : '';
+        optionsHtml += `<option value="${option}" ${selected}>${option}</option>`;
+    });
+
+    selectElement.html(optionsHtml);
+}
+
+// 新增函数：设置下拉框的值
+function setDropdownValue(fieldId, value) {
+    const element = $('#' + fieldId);
+    if (element.length === 0) return;
+
+    // 如果是下拉框，设置值
+    const selectElement = element.find('select');
+    if (selectElement.length > 0) {
+        selectElement.val(value);
+        // 如果值不在选项中，添加它
+        if (value && !selectElement.find('option[value="' + value + '"]').length) {
+            selectElement.append(`<option value="${value}" selected>${value}</option>`);
+        }
+        updateSignatureField(fieldId, value);
+    } else {
+        // 如果是文本，显示文本值
+        element.text(value || '');
+    }
+}
+
+// 新增函数：更新签名区域
+function updateSignatureField(fieldId, value) {
+    // 这里可以根据需要同步更新其他相关字段
+    console.log(fieldId + ' 设置为: ' + value);
+}
+
+// 新增函数：加载下拉数据
+function loadDropdownData() {
+    swal({
+        title: "加载中",
+        text: "正在加载审批人员数据...",
+        icon: "info",
+        buttons: false,
+        closeOnClickOutside: false
+    });
+
+    $ajax({
+        type: 'post',
+        url: '/pzb/getList',
+    }, false, '', function (res) {
+        swal.close();
+        if (res.code == 200) {
+            // 提取c、e、d字段的值
+            const optionsC = []; // 工艺员选项
+            const optionsE = []; // 校对员选项
+            const optionsD = []; // 批准选项
+
+            if (res.data && Array.isArray(res.data)) {
+                res.data.forEach(item => {
+                    if (item.c && item.c.trim() !== '') optionsC.push(item.c.trim());
+                    if (item.e && item.e.trim() !== '') optionsE.push(item.e.trim());
+                    if (item.d && item.d.trim() !== '') optionsD.push(item.d.trim());
+                });
+
+                // 创建下拉框（暂时不设置默认值）
+                createDropdown('gyy', optionsC, '');
+                createDropdown('jdy', optionsE, '');
+                createDropdown('pzr', optionsD, '');
+
+                // 存储选项供后续使用
+                window.dropdownOptions = {
+                    gyy: [...new Set(optionsC)].sort(),
+                    jdy: [...new Set(optionsE)].sort(),
+                    pzr: [...new Set(optionsD)].sort()
+                };
+
+                console.log('下拉框数据加载完成');
+            }
+        } else {
+            console.warn('加载审批人员数据失败:', res.msg);
+        }
+    }, function(error) {
+        swal.close();
+        console.error('获取审批人员数据失败:', error);
+    });
 }

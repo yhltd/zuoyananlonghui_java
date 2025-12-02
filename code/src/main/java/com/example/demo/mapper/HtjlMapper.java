@@ -17,6 +17,7 @@ import java.util.Map;
 public interface HtjlMapper extends BaseMapper<Htjl> {
 
     @Select({
+            "<script>",
             "SELECT ",
             "    hj.id, ",
             "    ISNULL(hj.C, '') as c, ",
@@ -84,7 +85,12 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "        GROUP BY C",
             "    ) as guicheng",
             ") as guicheng ON hj.id = guicheng.left_id ",
-            "WHERE ISNULL(hj.hetong_zhuangtai, '') = ''"
+            "WHERE ISNULL(hj.hetong_zhuangtai, '') = '' ",
+            "  AND NOT EXISTS (",
+            "      SELECT 1 FROM tuihuo tb ",
+            "      WHERE tb.v = hj.id ",
+            "  )",
+            "</script>"
     })
     List<Htjl> getListExcludeThjl();
 
@@ -179,6 +185,10 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "    ) as guicheng",
             ") as guicheng ON hj.id = guicheng.left_id ",
             "WHERE ISNULL(hj.hetong_zhuangtai, '') = ''",
+            "  AND NOT EXISTS (",
+            "      SELECT 1 FROM tuihuo tb ",
+            "      WHERE tb.v = hj.id",
+            "  )",
             "<if test='name != null and name != \"\"'>",
             "   AND hj.C LIKE '%' + #{name} + '%'",
             "</if>",

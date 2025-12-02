@@ -21,6 +21,8 @@ function getList() {
             for (i=0;i<=res.data.id;i++){
                 idd=i;
             }
+        }else if(res.code == 403){
+            swal("权限不足,请联系管理员或登录管理员账号！");
         }
     })
 }
@@ -66,6 +68,10 @@ $(function () {
     //新增弹窗里点击关闭按钮
     $('#add-close-btn').click(function () {
         $('#add-modal').modal('hide');
+    });
+    //新增弹窗里点击关闭按钮
+    $('#update-close-btn').click(function () {
+        $('#update-modal').modal('hide');
     });
 
     //新增弹窗里点击提交按钮

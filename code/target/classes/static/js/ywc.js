@@ -59,6 +59,7 @@ $(function () {
     //刷新
     $("#refresh-btn").click(function () {
         getList();
+        swal("刷新成功", "已显示所有数据", "success");
     });
 
     //点击删除按钮
@@ -183,6 +184,8 @@ function createSelectEditor($cell, originalValue, field, rowId, tableData, rowIn
     // 添加选项
     $select.append('<option value="">请选择</option>');
     $select.append('<option value="已对账">已对账</option>');
+    $select.append('<option value="未对账">未对账</option>');
+    $select.append('<option value="已开票">已开票</option>');
     $select.append('<option value="未开票">未开票</option>');
 
     // 设置当前值

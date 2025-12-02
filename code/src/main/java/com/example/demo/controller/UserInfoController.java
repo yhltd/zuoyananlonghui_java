@@ -33,6 +33,12 @@ public class UserInfoController {
     @RequestMapping("/getList")
     public ResultInfo getList(HttpSession session) {
 //        Login login = GsonUtil.toEntity(SessionUtil.getToken(session), Login.class);
+        // 检查管理员权限
+        ResultInfo authResult = AuthUtil.checkAdminAuth(session);
+        if (!authResult.isSuccess()) {
+            return authResult;
+        }
+
         try {
             List<Login> getList = loginService.getList();
             return ResultInfo.success("获取成功", getList);
@@ -51,6 +57,12 @@ public class UserInfoController {
     @RequestMapping("/queryList")
     public ResultInfo queryList(String name, HttpSession session) {
 //        Login login = GsonUtil.toEntity(SessionUtil.getToken(session), Login.class);
+        // 检查管理员权限
+        ResultInfo authResult = AuthUtil.checkAdminAuth(session);
+        if (!authResult.isSuccess()) {
+            return authResult;
+        }
+
         try {
             List<Login> list = loginService.queryList(name);
             return ResultInfo.success("获取成功", list);
@@ -68,6 +80,13 @@ public class UserInfoController {
      */
     @RequestMapping(value = "/update", method = RequestMethod.POST)
     public ResultInfo update(@RequestBody String updateJson, HttpSession session) {
+
+        // 检查管理员权限
+        ResultInfo authResult = AuthUtil.checkAdminAuth(session);
+        if (!authResult.isSuccess()) {
+            return authResult;
+        }
+
         try {
             System.out.println("接收到的JSON: " + updateJson);
 
@@ -98,6 +117,13 @@ public class UserInfoController {
      */
     @RequestMapping("/add")
     public ResultInfo add(@RequestBody HashMap map, HttpSession session) {
+
+        // 检查管理员权限
+        ResultInfo authResult = AuthUtil.checkAdminAuth(session);
+        if (!authResult.isSuccess()) {
+            return authResult;
+        }
+
         try {
             // 解析前端提交的数据
             GsonUtil gsonUtil = new GsonUtil(GsonUtil.toJson(map));
@@ -168,6 +194,12 @@ public class UserInfoController {
      */
     @RequestMapping("/getPower")
     public ResultInfo getPower(HttpSession session) {
+        // 检查管理员权限
+        ResultInfo authResult = AuthUtil.checkAdminAuth(session);
+        if (!authResult.isSuccess()) {
+            return authResult;
+        }
+
         UserInfo userInfo = GsonUtil.toEntity(SessionUtil.getToken(session), UserInfo.class);
         try {
             return ResultInfo.success("获取成功", userInfo.getPower());

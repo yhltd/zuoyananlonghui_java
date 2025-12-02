@@ -8,6 +8,8 @@ import com.example.demo.service.HtjlService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -155,49 +157,51 @@ public List<Htjl> getListExcludeThjl() {
     }
 
 
+    // 定义小数格式化器
+    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#.##"); // 保留两位小数
     /**
      * 计算汇总字段：m、n、aq、ar
      */
     private void calculateSummaryFields(Htjl currentRecord, Map<String, Object> processedFields, Map<String, Object> updateFields) {
         try {
-            // 获取当前值或更新后的值
-            double p = getNumericValue(processedFields.get("p"), currentRecord.getP());
-            double r = getNumericValue(processedFields.get("r"), currentRecord.getR());
-            double t = getNumericValue(processedFields.get("t"), currentRecord.getT());
-            double v = getNumericValue(processedFields.get("v"), currentRecord.getV());
-            double x = getNumericValue(processedFields.get("x"), currentRecord.getX());
-            double z = getNumericValue(processedFields.get("z"), currentRecord.getZ());
-            double ab = getNumericValue(processedFields.get("ab"), currentRecord.getAb());
-            double ad = getNumericValue(processedFields.get("ad"), currentRecord.getAd());
-            double af = getNumericValue(processedFields.get("af"), currentRecord.getAf());
-            double ah = getNumericValue(processedFields.get("ah"), currentRecord.getAh());
-            double aj = getNumericValue(processedFields.get("aj"), currentRecord.getAj());
-            double al = getNumericValue(processedFields.get("al"), currentRecord.getAl());
+            // 获取当前值或更新后的值（使用BigDecimal避免精度问题）
+            BigDecimal p = getBigDecimalValue(processedFields.get("p"), currentRecord.getP());
+            BigDecimal r = getBigDecimalValue(processedFields.get("r"), currentRecord.getR());
+            BigDecimal t = getBigDecimalValue(processedFields.get("t"), currentRecord.getT());
+            BigDecimal v = getBigDecimalValue(processedFields.get("v"), currentRecord.getV());
+            BigDecimal x = getBigDecimalValue(processedFields.get("x"), currentRecord.getX());
+            BigDecimal z = getBigDecimalValue(processedFields.get("z"), currentRecord.getZ());
+            BigDecimal ab = getBigDecimalValue(processedFields.get("ab"), currentRecord.getAb());
+            BigDecimal ad = getBigDecimalValue(processedFields.get("ad"), currentRecord.getAd());
+            BigDecimal af = getBigDecimalValue(processedFields.get("af"), currentRecord.getAf());
+            BigDecimal ah = getBigDecimalValue(processedFields.get("ah"), currentRecord.getAh());
+            BigDecimal aj = getBigDecimalValue(processedFields.get("aj"), currentRecord.getAj());
+            BigDecimal al = getBigDecimalValue(processedFields.get("al"), currentRecord.getAl());
 
-            double k = getNumericValue(processedFields.get("k"), currentRecord.getK());
-            double o = getNumericValue(processedFields.get("o"), currentRecord.getO());
-            double q_val = getNumericValue(processedFields.get("q"), currentRecord.getQ());
+            BigDecimal k = getBigDecimalValue(processedFields.get("k"), currentRecord.getK());
+            BigDecimal o = getBigDecimalValue(processedFields.get("o"), currentRecord.getO());
+            BigDecimal q_val = getBigDecimalValue(processedFields.get("q"), currentRecord.getQ());
 
             // 计算 m 字段：所有单价之和
-            double m = p + r + t + v + x + z + ab + ad + af + ah + aj + al;
-            processedFields.put("m", String.valueOf(m));
-            System.out.println("计算 m 字段: " + p + " + " + r + " + " + t + " + " + v + " + " + x + " + " + z +
-                    " + " + ab + " + " + ad + " + " + af + " + " + ah + " + " + aj + " + " + al + " = " + m);
+            BigDecimal m = p.add(r).add(t).add(v).add(x).add(z)
+                    .add(ab).add(ad).add(af).add(ah).add(aj).add(al);
+            processedFields.put("m", formatDecimal(m));
+            System.out.println("计算 m 字段 = " + formatDecimal(m));
 
             // 计算 n 字段：k * m
-            double n = k * m;
-            processedFields.put("n", String.valueOf(n));
-            System.out.println("计算 n 字段: " + k + " * " + m + " = " + n);
+            BigDecimal n = k.multiply(m);
+            processedFields.put("n", formatDecimal(n));
+            System.out.println("计算 n 字段: " + formatDecimal(k) + " * " + formatDecimal(m) + " = " + formatDecimal(n));
 
             // 计算 aq 字段：o * k
-            double aq = o * k;
-            processedFields.put("aq", String.valueOf(aq));
-            System.out.println("计算 aq 字段: " + o + " * " + k + " = " + aq);
+            BigDecimal aq = o.multiply(k);
+            processedFields.put("aq", formatDecimal(aq));
+            System.out.println("计算 aq 字段: " + formatDecimal(o) + " * " + formatDecimal(k) + " = " + formatDecimal(aq));
 
             // 计算 ar 字段：q * k
-            double ar = q_val * k;
-            processedFields.put("ar", String.valueOf(ar));
-            System.out.println("计算 ar 字段: " + q_val + " * " + k + " = " + ar);
+            BigDecimal ar = q_val.multiply(k);
+            processedFields.put("ar", formatDecimal(ar));
+            System.out.println("计算 ar 字段: " + formatDecimal(q_val) + " * " + formatDecimal(k) + " = " + formatDecimal(ar));
 
         } catch (Exception e) {
             System.out.println("计算汇总字段时出错: " + e.getMessage());
@@ -208,22 +212,40 @@ public List<Htjl> getListExcludeThjl() {
     /**
      * 获取数值，优先使用更新后的值，如果没有则使用当前记录的值
      */
-    private double getNumericValue(Object newValue, String currentValue) {
+    private BigDecimal getBigDecimalValue(Object newValue, String currentValue) {
         try {
+            String valueStr = null;
+
             // 优先使用更新后的值
             if (newValue != null && !newValue.toString().trim().isEmpty()) {
-                return Double.parseDouble(newValue.toString());
+                valueStr = newValue.toString().trim();
             }
             // 如果没有更新值，使用当前记录的值
-            if (currentValue != null && !currentValue.trim().isEmpty()) {
-                return Double.parseDouble(currentValue);
+            else if (currentValue != null && !currentValue.trim().isEmpty()) {
+                valueStr = currentValue.trim();
             }
-            return 0.0;
+
+            if (valueStr != null) {
+                return new BigDecimal(valueStr).setScale(4, BigDecimal.ROUND_HALF_UP);
+            }
+            return BigDecimal.ZERO;
         } catch (NumberFormatException e) {
             System.out.println("数值转换错误: newValue=" + newValue + ", currentValue=" + currentValue);
-            return 0.0;
+            return BigDecimal.ZERO;
         }
     }
+
+    /**
+     * 格式化小数，保留两位小数
+     */
+    private String formatDecimal(BigDecimal value) {
+        if (value == null) {
+            return "0";
+        }
+        // 保留两位小数，四舍五入
+        return value.setScale(2, BigDecimal.ROUND_HALF_UP).toString();
+    }
+
 
     /**
      * 如果是工时字段，自动计算对应的单价
@@ -250,16 +272,22 @@ public List<Htjl> getListExcludeThjl() {
                 String gongxuName = mapping[0];
                 String targetField = mapping[1];
 
-                double hours = Double.parseDouble(value.toString());
+                // 使用BigDecimal计算，避免精度问题
+                BigDecimal hours = new BigDecimal(value.toString().trim());
 
                 // 查询工序单价
                 String priceStr = htjlMapper.getGongxuNumByName(gongxuName);
                 if (priceStr != null && !priceStr.trim().isEmpty()) {
-                    double price = Double.parseDouble(priceStr);
-                    double result = hours * price;
+                    BigDecimal price = new BigDecimal(priceStr.trim());
+                    BigDecimal result = hours.multiply(price);
 
-                    processedFields.put(targetField, String.valueOf(result));
-                    System.out.println("自动计算: " + field + "(" + hours + ") * " + gongxuName + "(" + price + ") = " + targetField + "(" + result + ")");
+                    // 保留两位小数
+                    String formattedResult = result.setScale(2, BigDecimal.ROUND_HALF_UP).toString();
+
+                    processedFields.put(targetField, formattedResult);
+                    System.out.println("自动计算: " + field + "(" + formatDecimal(hours) + ") * " +
+                            gongxuName + "(" + formatDecimal(price) + ") = " +
+                            targetField + "(" + formattedResult + ")");
                 }
             } catch (NumberFormatException e) {
                 System.out.println("字段 " + field + " 的值不是有效数字: " + value);
@@ -267,6 +295,16 @@ public List<Htjl> getListExcludeThjl() {
                 System.out.println("计算 " + field + " 相关字段时出错: " + e.getMessage());
             }
         }
+    }
+
+    /**
+     * 辅助方法：格式化BigDecimal为字符串（如果需要）
+     */
+    private String formatDecimalForDisplay(BigDecimal value) {
+        if (value == null) {
+            return "0.00";
+        }
+        return value.setScale(2, BigDecimal.ROUND_HALF_UP).toString();
     }
 
 

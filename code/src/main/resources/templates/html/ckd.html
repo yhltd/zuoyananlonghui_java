@@ -30,6 +30,37 @@
     <link rel="stylesheet" href="../css/new.css">
     <script type="text/javascript" src="../js/main.js"></script>
     <script type="text/javascript" src="../js/ckd.js"></script>
+
+    <style>
+        .page-indicator {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .page-indicator:hover {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: #0d6efd;
+            transform: translateY(-1px);
+        }
+
+        .modal-body h6 {
+            color: #495057;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-body ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-body ul li {
+            margin-bottom: 0.3rem;
+        }
+    </style>
 </head>
 
 <body class="pt-2">
@@ -65,7 +96,10 @@
 <!-- 出库单模块 -->
 <div class="border-top mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">出库单</h4>
+        <div class="page-indicator" id="pageIndicator">
+            <i class="bi bi-file-earmark-check me-2"></i>
+            当前页：出库单
+        </div>
         <div>
             <button id="add-row-btn" class="btn btn-success btn-sm">
                 <i class="bi bi-plus-circle"></i> 添加行
@@ -89,16 +123,10 @@
                         <input type="text" class="form-control form-control-sm" id="return-customer1">
                     </div>
                 </div>
-                <!--                <div class="form-group row">-->
-                <!--                    <label class="col-sm-4 col-form-label"><strong>退货电话：</strong></label>-->
-                <!--                    <div class="col-sm-8">-->
-                <!--                        <input type="text" class="form-control form-control-sm" id="return-phone">-->
-                <!--                    </div>-->
-                <!--                </div>-->
             </div>
             <div class="col-md-6">
                 <div class="form-group row">
-                    <label class="col-sm-4 col-form-label"><strong>初库单号：</strong></label>
+                    <label class="col-sm-4 col-form-label"><strong>出库单号：</strong></label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control form-control-sm" id="return-no1" >
                     </div>
@@ -262,6 +290,26 @@
     </div>
 </div>
 
+<!-- 使用说明弹窗 -->
+<div class="modal fade" id="instructionsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-info-circle me-2"></i>
+                    出库单使用说明
+                </h5>
+            </div>
+            <div class="modal-body">
+                <h6><i class="bi bi-1-circle me-2"></i>基本操作</h6>
+                <ul>
+                    <li>在合同记录表内，单击选择对应记录（可多选），点击跳转到出库页面按钮获取数据</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
 </body>
 
 <script>
@@ -283,6 +331,20 @@
     // 初始更新时间并设置定时器
     updateTime();
     setInterval(updateTime, 1000);
+
+    $(document).ready(function() {
+        // 点击页面指示器显示使用说明弹窗
+        $('#pageIndicator').on('click', function() {
+            $('#instructionsModal').modal('show');
+        });
+
+        // 已阅读按钮点击事件
+        $('#confirmReadBtn').on('click', function() {
+            $('#instructionsModal').modal('hide');
+            localStorage.setItem('workReportInstructionsRead', 'true');
+            console.log('用户已确认阅读使用说明');
+        });
+    });
 
 </script>
 </html>

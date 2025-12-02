@@ -14,9 +14,6 @@ public interface PzbMapper extends BaseMapper<Pzb> {
 
     @Select("select * from peizhi")
     List<Pzb> getList();
-    // Mapper
-
-
 
     @Update("<script>" +
             "update peizhi set " +

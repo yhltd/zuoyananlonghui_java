@@ -59,6 +59,11 @@ public interface Ckd_cMapper extends BaseMapper<Ckd_c> {
             "</script>"
     })
     List<Map<String, Object>> selectContractInfoByNumbers(@Param("contractNumbers") List<String> contractNumbers);
+
+    @Select("select isnull(max(E),'') from chuku where E like 'LH-' + CONVERT(varchar(8), GETDATE(), 112) + '%'")
+    String  getddh();
+
+
 }
 
 

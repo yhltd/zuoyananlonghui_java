@@ -135,44 +135,44 @@
         .col-7 { width: 10%; }
         .col-8 { width: 10%; }
 
-        /* 查询弹窗样式 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
+        /*!* 查询弹窗样式 *!*/
+        /*.modal {*/
+        /*    display: none;*/
+        /*    position: fixed;*/
+        /*    top: 0;*/
+        /*    left: 0;*/
+        /*    width: 100%;*/
+        /*    height: 100%;*/
+        /*    background: rgba(0, 0, 0, 0.5);*/
+        /*    z-index: 1000;*/
+        /*    align-items: center;*/
+        /*    justify-content: center;*/
+        /*}*/
 
-        .modal-content {
-            background: white;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 900px;
-            max-height: 80vh;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            margin: auto;
-        }
+        /*.modal-content {*/
+        /*    background: white;*/
+        /*    border-radius: 8px;*/
+        /*    width: 90%;*/
+        /*    max-width: 900px;*/
+        /*    max-height: 80vh;*/
+        /*    overflow: hidden;*/
+        /*    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);*/
+        /*    margin: auto;*/
+        /*}*/
 
-        .modal-header {
-            padding: 15px 20px;
-            background: #2c5e9c;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        /*.modal-header {*/
+        /*    padding: 15px 20px;*/
+        /*    background: #2c5e9c;*/
+        /*    color: white;*/
+        /*    display: flex;*/
+        /*    justify-content: space-between;*/
+        /*    align-items: center;*/
+        /*}*/
 
-        .modal-title {
-            font-size: 18px;
-            font-weight: 500;
-        }
+        /*.modal-title {*/
+        /*    font-size: 18px;*/
+        /*    font-weight: 500;*/
+        /*}*/
 
         .close {
             font-size: 24px;
@@ -180,11 +180,11 @@
             line-height: 1;
         }
 
-        .modal-body {
-            padding: 20px;
-            max-height: calc(80vh - 120px);
-            overflow-y: auto;
-        }
+        /*.modal-body {*/
+        /*    padding: 20px;*/
+        /*    max-height: calc(80vh - 120px);*/
+        /*    overflow-y: auto;*/
+        /*}*/
 
         .search-box {
             margin-bottom: 15px;
@@ -303,9 +303,41 @@
             align-self: flex-start;
             margin-top: 10px;
         }
+        .page-indicator {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .page-indicator:hover {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: #0d6efd;
+            transform: translateY(-1px);
+        }
+
+        .modal-body h6 {
+            color: #495057;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-body ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-body ul li {
+            margin-bottom: 0.3rem;
+        }
     </style>
 </head>
 <body style="overflow: auto">
+<div class="page-indicator" id="pageIndicator">
+    <i class="bi bi-file-earmark-check me-2"></i>
+    当前页：工艺规程单
+</div>
 <div class="container">
     <div class="header">
         <h1>成都龙辉机械设备制造有限公司工艺规程</h1>
@@ -369,8 +401,9 @@
         <table class="signature-table">
             <tr>
                 <td style="width: 33%;">
-                    <div class="signature-label">工艺员</div>
+                    <div class="signature-label">工艺员：</div>
                     <div class="signature-name" id="gyy" contenteditable="true"></div>
+
                     <div class="signature-date"><input id="gyrq" type="date" class="form-control" placeholder="日期" autocomplete="off"></div>
                 </td>
                 <td style="width: 33%;">
@@ -435,9 +468,46 @@
         </div>
     </div>
 </div>
+<!-- 使用说明弹窗 -->
+<div class="modal fade" id="instructionsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-info-circle me-2"></i>
+                    工艺规程单使用说明
+                </h5>
+            </div>
+            <div class="modal-body">
+                <h6><i class="bi bi-1-circle me-2"></i>基本操作</h6>
+                <ul>
+                    <li>在合同记录表内选择对应行内容，双击自动获取信息跳转到此页面</li>
+                    <li>点击查询按钮，在弹窗列表中双击内容列表区域可获取对应内容工序展示在页面中</li>
+                </ul>
+
+                <h6><i class="bi bi-2-circle me-2"></i>注意事项</h6>
+                <ul>
+                    <li>在左侧导航栏直接进入界面或自动获取上一次的记录呈现</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
+    $(document).ready(function() {
+        // 点击页面指示器显示使用说明弹窗
+        $('#pageIndicator').on('click', function() {
+            $('#instructionsModal').modal('show');
+        });
 
+        // 已阅读按钮点击事件
+        $('#confirmReadBtn').on('click', function() {
+            $('#instructionsModal').modal('hide');
+            localStorage.setItem('workReportInstructionsRead', 'true');
+            console.log('用户已确认阅读使用说明');
+        });
+    });
 
 </script>
 </body>

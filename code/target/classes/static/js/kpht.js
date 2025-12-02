@@ -59,6 +59,7 @@ $(function () {
     //刷新
     $("#refresh-btn").click(function () {
         getList();
+        swal("刷新成功", "已显示所有数据", "success");
     });
 
     //点击删除按钮
@@ -182,7 +183,10 @@ function createSelectEditor($cell, originalValue, field, rowId, tableData, rowIn
 
     // 添加选项 - 保持只有"已开票"状态
     $select.append('<option value="">请选择</option>');
+    $select.append('<option value="已对账">已对账</option>');
+    $select.append('<option value="未对账">未对账</option>');
     $select.append('<option value="已开票">已开票</option>');
+    $select.append('<option value="未开票">未开票</option>');
 
     // 设置当前值
     $select.val(originalValue);
@@ -219,7 +223,7 @@ function createSelectEditor($cell, originalValue, field, rowId, tableData, rowIn
                     // 更新本地数据
                     tableData[rowIndex][field] = newValue;
                     // 注释掉这行，避免重新加载表格中断编辑状态
-                    // getList();
+                    getList();
                 } else {
                     $cell.text(originalValue);
                     swal("更新失败", res.msg, "error");

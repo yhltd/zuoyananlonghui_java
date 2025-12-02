@@ -28,21 +28,6 @@ function getList() {
                 draggingClass: "dragging",
                 resizeMode: 'fit'
             });
-            // var table = document.getElementById("ysyfTable");
-            // var rows = table.rows;
-            // var cells = table.cells;
-            // var colums = table.rows[0].cells.length;
-            // for(var x=1;x<colums;x++){
-            //     var zje = 0;
-            //     for(var j = 1;j<rows.length-1;j++){
-            //         var a = parseInt(rows[j].cells[10].innerHTML);
-            //         zje = zje+a
-            //     }
-            //     document.getElementById('zje').value = zje
-            // }
-            // for (i=0;i<=res.data.id;i++){
-            //     idd=i;
-            // }
         }
     })
 }
@@ -186,6 +171,7 @@ $(function () {
     //刷新
     $("#refresh-btn").click(function () {
         getList();
+        swal("刷新成功", "已显示所有数据", "success");
     });
 
     //点击删除按钮

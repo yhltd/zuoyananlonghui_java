@@ -1053,88 +1053,89 @@ function enableCellEditing() {
             return;
         }
 
-        // 特殊处理工艺规程状态字段 - 使用下拉框
-        if (field === 'zhuangtai') {
-            createSelectEditor($cell, originalValue, field, rowId, tableData, rowIndex);
-        } else {
+        // // 特殊处理工艺规程状态字段 - 使用下拉框
+        // if (field === 'zhuangtai') {
+        //     createSelectEditor($cell, originalValue, field, rowId, tableData, rowIndex);
+        // } else {
             createInputEditor($cell, originalValue, field, rowId, tableData, rowIndex);
-        }
+        // }
     });
 }
 
-// 创建下拉框编辑器（针对工艺规程状态字段）
-function createSelectEditor($cell, originalValue, field, rowId, tableData, rowIndex) {
-    var $select = $('<select class="form-control cell-edit-select">')
-        .css({
-            width: '100%',
-            height: '100%',
-            border: '1px solid #007bff',
-            borderRadius: '3px',
-            padding: '2px 5px'
-        });
-
-    // 添加工艺规程状态选项
-    $select.append('<option value="">请选择</option>');
-    $select.append('<option value="未创建">未创建</option>');
-
-    // 设置当前值
-    $select.val(originalValue);
-
-    // 清空单元格内容并添加下拉框
-    $cell.empty().append($select);
-    $select.focus();
-
-    // 保存编辑
-    function saveEdit() {
-        var newValue = $select.val();
-
-        // 如果值没有变化，则不保存
-        if (newValue === originalValue) {
-            $cell.text(originalValue);
-            return;
-        }
-
-        console.log('发送更新:', { id: rowId, field: field, newValue: newValue });
-
-        // 发送更新请求
-        $.ajax({
-            type: 'post',
-            url: '/htjl/updateField',
-            data: JSON.stringify({
-                id: rowId,
-                [field]: newValue
-            }),
-            dataType: 'json',
-            contentType: 'application/json;charset=utf-8',
-            success: function(res) {
-                if (res.code == 200) {
-                    $cell.text(newValue);
-                    // 更新本地数据
-                    tableData[rowIndex][field] = newValue;
-                    // 注释掉这行，避免重新加载表格中断编辑状态
-                    // getList();
-                } else {
-                    $cell.text(originalValue);
-                    swal("更新失败", res.msg, "error");
-                }
-            },
-            error: function(xhr, status, error) {
-                $cell.text(originalValue);
-                console.error('更新请求失败:', error);
-                swal("更新失败", "网络错误，请重试", "error");
-            }
-        });
-    }
-
-    // 绑定事件
-    $select.on('blur', saveEdit);
-    $select.on('change', saveEdit); // 选择即保存
-    $select.on('keydown', function(e) {
-        if (e.keyCode === 27) { // ESC键
-            $cell.text(originalValue);
-        }
-    });
-}
+// // 创建下拉框编辑器（针对工艺规程状态字段）
+// function createSelectEditor($cell, originalValue, field, rowId, tableData, rowIndex) {
+//     var $select = $('<select class="form-control cell-edit-select">')
+//         .css({
+//             width: '100%',
+//             height: '100%',
+//             border: '1px solid #007bff',
+//             borderRadius: '3px',
+//             padding: '2px 5px'
+//         });
+//
+//     // 添加工艺规程状态选项
+//     $select.append('<option value="">请选择</option>');
+//     $select.append('<option value="未创建">未创建</option>');
+//     $select.append('<option value="未创建">未创建</option>');
+//
+//     // 设置当前值
+//     $select.val(originalValue);
+//
+//     // 清空单元格内容并添加下拉框
+//     $cell.empty().append($select);
+//     $select.focus();
+//
+//     // 保存编辑
+//     function saveEdit() {
+//         var newValue = $select.val();
+//
+//         // 如果值没有变化，则不保存
+//         if (newValue === originalValue) {
+//             $cell.text(originalValue);
+//             return;
+//         }
+//
+//         console.log('发送更新:', { id: rowId, field: field, newValue: newValue });
+//
+//         // 发送更新请求
+//         $.ajax({
+//             type: 'post',
+//             url: '/htjl/updateField',
+//             data: JSON.stringify({
+//                 id: rowId,
+//                 [field]: newValue
+//             }),
+//             dataType: 'json',
+//             contentType: 'application/json;charset=utf-8',
+//             success: function(res) {
+//                 if (res.code == 200) {
+//                     $cell.text(newValue);
+//                     // 更新本地数据
+//                     tableData[rowIndex][field] = newValue;
+//                     // 注释掉这行，避免重新加载表格中断编辑状态
+//                     // getList();
+//                 } else {
+//                     $cell.text(originalValue);
+//                     swal("更新失败", res.msg, "error");
+//                 }
+//             },
+//             error: function(xhr, status, error) {
+//                 $cell.text(originalValue);
+//                 console.error('更新请求失败:', error);
+//                 swal("更新失败", "网络错误，请重试", "error");
+//             }
+//         });
+//     }
+//
+//     // 绑定事件
+//     $select.on('blur', saveEdit);
+//     $select.on('change', saveEdit); // 选择即保存
+//     $select.on('keydown', function(e) {
+//         if (e.keyCode === 27) { // ESC键
+//             $cell.text(originalValue);
+//         }
+//     });
+// }
 
 // 创建输入框编辑器
 function createInputEditor($cell, originalValue, field, rowId, tableData, rowIndex) {
@@ -1590,18 +1591,18 @@ function gotoReturnOrderPage() {
         let processStatus = rowData.zhuangtai || '';
 
         // 重新计算状态（和表格中一样的逻辑）
-        if (!processStatus || processStatus === '未创建') {
-            let kValue = parseFloat(rowData.k) || 0;
-            let mValue = parseFloat(rowData.m) || 0;
-
-            if (rowData.k === null || rowData.k === undefined || rowData.k === '') {
-                processStatus = '未创建';
-            } else if (kValue > mValue) {
-                processStatus = '未完成';
-            } else {
-                processStatus = '已完成';
-            }
-        }
+        // if (!processStatus || processStatus === '未创建') {
+        //     let kValue = parseFloat(rowData.k) || 0;
+        //     let mValue = parseFloat(rowData.m) || 0;
+        //
+        //     if (rowData.k === null || rowData.k === undefined || rowData.k === '') {
+        //         processStatus = '未创建';
+        //     } else if (kValue > mValue) {
+        //         processStatus = '未完成';
+        //     } else {
+        //         processStatus = '已完成';
+        //     }
+        // }
 
         if (processStatus === '已完成') {
             validRows.push(rowData);
@@ -1771,7 +1772,7 @@ function bindReturnOrderEvents() {
                 d: $('#return-phone').val(),
                 r: $('#company-address').val() ,
                 t: $('#company-phone').val(),
-                e: $('return-date').val(),
+                e: $('#return-date').val(),
                 s: $('#customer-signature').val(),
                 // 明细特有信息
                 q: $row.find('input[name="returnReason"]').val(),
@@ -1826,6 +1827,7 @@ function bindReturnOrderEvents() {
                         $('#return-detail-table tbody').empty();
                         addReturnRow();
                         calculateTotalAmount();
+                        getList();
                     } else {
                         swal("", res.msg, "error");
                     }
