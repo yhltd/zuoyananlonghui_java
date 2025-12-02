@@ -136,4 +136,11 @@ public class ResultInfo extends HashMap<String, Object> {
   }
 
 
+  /**
+   * 检查操作是否成功
+   */
+  public boolean isSuccess() {
+    Integer code = (Integer) this.get(CODE_TAG);
+    return code != null && code == HttpStatus.SUCCESS;
+  }
 }

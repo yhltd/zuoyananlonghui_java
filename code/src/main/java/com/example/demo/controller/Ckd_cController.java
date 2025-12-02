@@ -50,41 +50,6 @@ public class Ckd_cController {
     }
 
 
-///**
-// * 统一返回结果类
-// */
-//class ResultInfo {
-//    private int code;
-//    private String msg;
-//    private Object data;
-//
-//    public static ResultInfo success(String msg) {
-//        return success(msg, null);
-//    }
-//
-//    public static ResultInfo success(String msg, Object data) {
-//        ResultInfo result = new ResultInfo();
-//        result.setCode(200);
-//        result.setMsg(msg);
-//        result.setData(data);
-//        return result;
-//    }
-//
-//    public static ResultInfo error(String msg) {
-//        ResultInfo result = new ResultInfo();
-//        result.setCode(500);
-//        result.setMsg(msg);
-//        return result;
-//    }
-//
-//    // getter setter
-//    public int getCode() { return code; }
-//    public void setCode(int code) { this.code = code; }
-//    public String getMsg() { return msg; }
-//    public void setMsg(String msg) { this.msg = msg; }
-//    public Object getData() { return data; }
-//    public void setData(Object data) { this.data = data; }
-
     /**
      * 检查单号是否重复
      */
@@ -108,7 +73,13 @@ public class Ckd_cController {
      * 删除重复单号数据
      */
     @PostMapping("/deleteDuplicateOrder")
-    public ResultInfo deleteDuplicateOrder(@RequestBody Map<String, String> params) {
+    public ResultInfo deleteDuplicateOrder(HttpSession session,@RequestBody Map<String, String> params) {
+        // 检查管理员权限
+        ResultInfo authResult = AuthUtil.checkAdminAuth(session);
+        if (!authResult.isSuccess()) {
+            return authResult;
+        }
+
         try {
             String chukudanhao = params.get("chukudanhao");
             ckd_cService.deleteByOrderNo(chukudanhao);

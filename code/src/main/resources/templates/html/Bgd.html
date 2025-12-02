@@ -59,7 +59,44 @@
     </div>
 </div>
 <div class="main-container">
+    <div class="search-section">
+        <div class="search-toolbar">
 
+            <!-- 搜索字段 -->
+            <div class="search-field">
+                <label for="name" class="form-label-custom">业务单位</label>
+                <input id="name" type="text" class="form-control form-control-custom" placeholder="请输入业务单位名称" autocomplete="off">
+            </div>
+            <div class="search-field">
+                <label for="department" class="form-label-custom">合同号</label>
+                <input id="department" type="text" class="form-control form-control-custom" placeholder="合同号" autocomplete="off">
+            </div>
+            <!-- 查询按钮 -->
+            <div>
+                <label class="form-label-custom invisible">查询</label>
+                <button id="select-btn" class="btn btn-custom btn-primary-custom">
+                    <i class="bi bi-search me-2"></i>
+                    查询
+                </button>
+            </div>
+
+            <!-- 工具栏按钮 -->
+            <div class="toolbar-buttons">
+                <button id="refresh-btn" class="btn btn-custom btn-primary-custom">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    刷新
+                </button>
+
+
+                <!-- 当前页面指示器 -->
+                <div class="page-indicator">
+                    <i class="bi bi-file-earmark-check me-2"></i>
+                    当前页：报工单
+                </div>
+            </div>
+
+        </div>
+    </div>
 
     <!-- 数据表格 -->
     <div class="table-container">

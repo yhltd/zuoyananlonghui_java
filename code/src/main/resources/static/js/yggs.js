@@ -28,7 +28,7 @@ $(function () {
     var month = ('0' + (date.getMonth() + 1)).slice(-2);
     var day = ('0' + date.getDate()).slice(-2);
     var ks = year + '-' + month + '-' + day;
-    document.getElementById("ksrq").value = ks;
+    document.getElementById("ksrq").value = "";
 
     var jsDate = new Date();
     jsDate.setMonth(jsDate.getMonth() + 1);
@@ -36,7 +36,7 @@ $(function () {
     var jsmonth = ('0' + (jsDate.getMonth() + 1)).slice(-2);
     var jsday = ('0' + jsDate.getDate()).slice(-2);
     var js = jsyear + '-' + jsmonth + '-' + jsday;
-    document.getElementById("jsrq").value = js;
+    document.getElementById("jsrq").value = "";
 
 
     $('#select-btn').click(function () {
@@ -45,12 +45,12 @@ $(function () {
         var m = $('#yg').val();
 
 
-        // 添加调试信息
-        console.log('查询条件:', {
-            ksrq: ksrq,
-            jsrq: jsrq,
-            m: m,
-
+        swal({
+            title: "加载中",
+            text: "正在查询数据...",
+            icon: "info",
+            buttons: false,
+            closeOnClickOutside: false
         });
 
         // 如果日期为空，传递空字符串而不是null
@@ -66,6 +66,7 @@ $(function () {
                 m: m || ''
             }
         }, true, '查询中...', function (res) {
+            swal.close();
             console.log('查询响应:', res);
             if (res.code == 200) {
                 console.log('查询到的数据:', res.data);
@@ -246,6 +247,13 @@ $('#select-btn1').click(function () {
     jsrq1 = jsrq1 || '';
 
     console.log('准备发送AJAX请求到: /yggs/queryList1');
+    swal({
+        title: "加载中",
+        text: "正在查询数据...",
+        icon: "info",
+        buttons: false,
+        closeOnClickOutside: false
+    });
 
     $.ajax({
         type: 'POST',
@@ -255,6 +263,7 @@ $('#select-btn1').click(function () {
             jsrq1: jsrq1
         },
         success: function(res) {
+            swal.close();
             console.log('AJAX 请求成功:', res);
             if (res.code == 200) {
                 setSummaryTable(res.data);

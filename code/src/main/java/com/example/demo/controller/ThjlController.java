@@ -32,7 +32,7 @@ public class ThjlController {
      */
     @RequestMapping("/getList")
     public ResultInfo getList(HttpSession session) {
-        Thjl thjl = GsonUtil.toEntity(SessionUtil.getToken(session), Thjl.class);
+//        Thjl thjl = GsonUtil.toEntity(SessionUtil.getToken(session), Thjl.class);
         try {
             List<Thjl> getList = thjlService.getList();
             return ResultInfo.success("获取成功", getList);
@@ -222,13 +222,17 @@ public class ThjlController {
      */
     @RequestMapping("/delete")
     public ResultInfo delete(@RequestBody HashMap map,HttpSession session) {
-        Thjl thjl = GsonUtil.toEntity(SessionUtil.getToken(session), Thjl.class);
-        System.out.println(thjl);
+
+        // 检查管理员权限
+        ResultInfo authResult = AuthUtil.checkAdminAuth(session);
+        if (!authResult.isSuccess()) {
+            return authResult;
+        }
+
+//        Thjl thjl = GsonUtil.toEntity(SessionUtil.getToken(session), Thjl.class);
+//        System.out.println(thjl);
         GsonUtil gsonUtil = new GsonUtil(GsonUtil.toJson(map));
         List<Integer> idList = GsonUtil.toList(gsonUtil.get("idList"), Integer.class);
-//        if(!userInfo.getPower().equals("管理员")){
-//            return ResultInfo.error(401, "无权限");
-//        }
         try {
             for(int i=0; i<idList.size(); i++){
                 int this_id = idList.get(i);

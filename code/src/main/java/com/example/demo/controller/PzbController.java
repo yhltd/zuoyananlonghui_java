@@ -4,6 +4,7 @@ package com.example.demo.controller;
 import com.example.demo.entity.Pzb;
 
 import com.example.demo.service.PzbService;
+import com.example.demo.util.AuthUtil;
 import com.example.demo.util.GsonUtil;
 import com.example.demo.util.ResultInfo;
 import com.example.demo.util.SessionUtil;
@@ -35,7 +36,7 @@ public class PzbController {
      */
     @RequestMapping("/getList")
     public ResultInfo getList(HttpSession session) {
-        Pzb pzb = GsonUtil.toEntity(SessionUtil.getToken(session), Pzb.class);
+//        Pzb pzb = GsonUtil.toEntity(SessionUtil.getToken(session), Pzb.class);
         try {
             List<Pzb> getList = pzbService.getList();
             return ResultInfo.success("获取成功", getList);
@@ -95,13 +96,16 @@ public class PzbController {
      */
     @RequestMapping("/delete")
     public ResultInfo delete(@RequestBody HashMap map,HttpSession session) {
-        Pzb pzb = GsonUtil.toEntity(SessionUtil.getToken(session), Pzb.class);
-        System.out.println(pzb);
+        // 检查管理员权限
+        ResultInfo authResult = AuthUtil.checkAdminAuth(session);
+        if (!authResult.isSuccess()) {
+            return authResult;
+        }
+
+//        Pzb pzb = GsonUtil.toEntity(SessionUtil.getToken(session), Pzb.class);
+//        System.out.println(pzb);
         GsonUtil gsonUtil = new GsonUtil(GsonUtil.toJson(map));
         List<Integer> idList = GsonUtil.toList(gsonUtil.get("idList"), Integer.class);
-//        if(!userInfo.getPower().equals("管理员")){
-//            return ResultInfo.error(401, "无权限");
-//        }
         try {
             for(int i=0; i<idList.size(); i++){
                 int this_id = idList.get(i);

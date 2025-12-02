@@ -181,63 +181,8 @@ $(function () {
     $('#refresh_btn').click(function(){
         location.reload();
     })
-
-    // //点击修改密码显示弹窗
-    // $("#updPwd-a").click(function () {
-    //     $('#update-modal').modal('show');
-    // })
-    //
-    // //点击提交按钮
-    // $("#update-submit-btn").click(function () {
-    //     if(checkForm('#updPwdForm')) {
-    //         let params = formToJson('#updPwdForm')
-    //         if (params.newPwd != params.newPwdAgain) {
-    //             alert('两次新密码不相同')
-    //             return;
-    //         }
-    //
-    //         $ajax({
-    //             type: 'post',
-    //             url: '/user/updatePwd',
-    //             data: JSON.stringify({
-    //                 oldPwd: params.oldPwd,
-    //                 newPwd: params.newPwd
-    //             }),
-    //             contentType: 'application/json;charset=utf-8',
-    //             dataType: 'json'
-    //         }, false, '', function (res) {
-    //             if (res.code == 200) {
-    //                 alert(res.msg)
-    //                 $('#update-modal').modal('hide');
-    //                 $('#updPwdForm')[0].reset();
-    //             }
-    //         })
-    //     }
-    // })
-    //点击关闭按钮
-    // $("#update-close-btn").click(function () {
-    //     $('#update-modal').modal('hide');
-    // })
 })
 
-// setInterval('show1()',1000);
-// function show1(){
-//     function p(s) {
-//         return s < 10 ? '0' + s: s;
-//     }
-//     var myDate = new Date();
-// //获取当前年
-//     var year=myDate.getFullYear();
-// //获取当前月
-//     var month=myDate.getMonth()+1;
-// //获取当前日
-//     var date=myDate.getDate();
-//     var h=myDate.getHours(); //获取当前小时数(0-23)
-//     var m=myDate.getMinutes(); //获取当前分钟数(0-59)
-//     var s=myDate.getSeconds();
-//     var now=year+'-'+p(month)+"-"+p(date)+" "+p(h)+':'+p(m)+":"+p(s);
-//     $('#now_time').html(now)
-// }
 
 function changeIframeSrc(url) {
     $('#iframe').attr('src', url);

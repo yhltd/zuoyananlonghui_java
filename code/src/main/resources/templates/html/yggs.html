@@ -352,6 +352,13 @@
             ksrq1: ksrq1,
             jsrq1: jsrq1
         });
+        swal({
+            title: "加载中",
+            text: "正在查询数据...",
+            icon: "info",
+            buttons: false,
+            closeOnClickOutside: false
+        });
 
         ksrq1 = ksrq1 || '';
         jsrq1 = jsrq1 || '';
@@ -366,6 +373,7 @@
                 jsrq1: jsrq1
             },
             success: function(res) {
+                swal.close();
                 console.log('AJAX 请求成功:', res);
                 if (res.code == 200) {
                     setSummaryTable(res.data);

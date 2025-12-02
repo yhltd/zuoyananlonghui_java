@@ -143,10 +143,10 @@ $(function () {
         $('#name').val("");
         $('#department').val("");
 
-        getList()
+        getList();
 
         // 显示所有数据
-        setTable(currentTableData);
+        // setTable(currentTableData);
         swal("刷新成功", "已显示所有数据", "success");
     });
 
@@ -533,8 +533,10 @@ $(function () {
                 contentType: 'application/json;charset=utf-8'
             }, false, '', function (res) {
                 if (res.code == 200) {
-                    swal("", res.msg, "success");
+                    swal("删除成功！");
                     getList();
+                }else if(res.code == 403){
+                    swal("删除失败,权限不足,管理员权限可以删除");
                 } else {
                     swal("", res.msg, "error");
                 }
@@ -1580,7 +1582,10 @@ function gotoReturnOrderPage() {
     console.log('选中的行数据:', rows);
 
     // 筛选符合条件的数据（状态为"已完成"）
-    let validRows = rows.filter(function(selectedRow) {
+    let validRows = [];
+    let invalidRows = [];
+
+    rows.forEach(function(selectedRow) {
         let rowData = selectedRow.data;
         let processStatus = rowData.zhuangtai || '';
 
@@ -1598,9 +1603,11 @@ function gotoReturnOrderPage() {
             }
         }
 
-        let isValid = processStatus === '已完成';
-        console.log('行数据工艺状态:', processStatus, '是否有效:', isValid);
-        return isValid;
+        if (processStatus === '已完成') {
+            validRows.push(rowData);
+        } else {
+            invalidRows.push(rowData);
+        }
     });
 
     if (validRows.length === 0) {
@@ -1613,24 +1620,71 @@ function gotoReturnOrderPage() {
         return false;
     }
 
-    // 准备传递给出库页面的数据
+    // 如果有部分行不符合条件，给出提示
+    if (invalidRows.length > 0) {
+        swal({
+            title: '部分数据不符合条件',
+            text: `已选择 ${rows.length} 行，其中 ${validRows.length} 行状态为"已完成"可以出库，${invalidRows.length} 行状态不符合要求将被忽略。`,
+            icon: 'warning',
+            confirmButtonText: '继续'
+        });
+    }
+
+    // 准备传递给出库页面的数据 - 携带所有有效行
     var returnData = {
         selectedRows: validRows.map(row => {
-            // 只传递必要字段，减少数据量
+            // 传递完整数据，确保出库页面能获取所有必要信息
             return {
-                id: row.data.id,
-                c: row.data.c,           // 业务单位
-                d: row.data.d,           // 合同号
-                e: row.data.e,           // 任务号
-                h: row.data.h,           // 名称
-                i: row.data.i,           // 图号
-                j: row.data.j,           // 单位
-                k: row.data.k,           // 数量
-                l: row.data.l,           // 材质
-                m: row.data.m,           // 序合计
-                n: row.data.n,           // 重量
-                p: row.data.p,           // 单位元
-                zhuangtai: row.data.zhuangtai || '已完成'
+                id: row.id,
+                c: row.c,           // 业务单位
+                d: row.d,           // 合同号
+                e: row.e,           // 任务号
+                f: row.f || '',     // 工艺规程状态
+                g: row.g || '',     // 工序
+                h: row.h,           // 名称
+                i: row.i,           // 图号
+                j: row.j,           // 单位
+                k: row.k,           // 数量
+                l: row.l,           // 材质
+                m: row.m || '',     // 序合计
+                n: row.n || '',     // 重量
+                o: row.o || '',     // 工件
+                p: row.p || '',     // 单位元
+                q: row.q || '',     // 合计金额
+                r: row.r || '',     // 铣工时/40
+                s: row.s || '',     // 铣单价
+                t: row.t || '',     // 车工时/40
+                u: row.u || '',     // 车单价
+                v: row.v || '',     // 钳公式/40
+                w: row.w || '',     // 钳单位
+                x: row.x || '',     // 整件外委工时/57.6
+                y: row.y || '',     // 整件外委单位
+                z: row.z || '',     // 外委工时/48
+                aa: row.aa || '',   // 外委单价
+                ab: row.ab || '',   // 镗工时/73
+                ac: row.ac || '',   // 镗单价
+                ad: row.ad || '',   // 割工时/24
+                ae: row.ae || '',   // 割单价
+                af: row.af || '',   // 磨工时/42
+                ag: row.ag || '',   // 磨单价
+                ah: row.ah || '',   // 数控铣工时/69
+                ai: row.ai || '',   // 数控铣单价
+                aj: row.aj || '',   // 立车/71
+                ak: row.ak || '',   // 立车单价
+                al: row.al || '',   // 电火花/42
+                am: row.am || '',   // 电火花单价
+                an: row.an || '',   // 中走丝/38
+                ao: row.ao || '',   // 中走丝单价
+                ap: row.ap || '',   // 下料
+                aq: row.aq || '',   // 深孔钻
+                ar: row.ar || '',   // 回厂日期
+                as: row.as || '',   // 出厂日期
+                at: row.at || '',   // 订单要求交货时间
+                au: row.au || '',   // 铣
+                av: row.av || '',   // 车
+                aw: row.aw || '',   // 登记员
+                ax: row.ax || '',   // 备注
+                zhuangtai: row.zhuangtai || '已完成'
             };
         }),
         count: validRows.length,
@@ -1638,6 +1692,7 @@ function gotoReturnOrderPage() {
         source: 'htjl_page'
     };
 
+    console.log('传递给出库页面的数据条数:', validRows.length);
     console.log('传递给出库页面的数据:', returnData);
 
     // 使用sessionStorage传递完整数据

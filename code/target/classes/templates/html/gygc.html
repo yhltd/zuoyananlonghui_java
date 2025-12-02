@@ -88,6 +88,9 @@
             font-size: 14px;
             height: 35px;
             vertical-align: middle;
+            white-space: normal; /* 允许换行 */
+            word-wrap: break-word; /* 长单词换行 */
+            overflow: visible; /* 内容溢出时显示 */
         }
         th {
             background-color: #f0f0f0;
@@ -302,7 +305,7 @@
         }
     </style>
 </head>
-<body>
+<body style="overflow: auto">
 <div class="container">
     <div class="header">
         <h1>成都龙辉机械设备制造有限公司工艺规程</h1>

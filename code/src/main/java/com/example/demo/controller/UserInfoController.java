@@ -25,35 +25,6 @@ public class UserInfoController {
     @Autowired
     private LoginService loginService;
 
-    @RequestMapping("/login")
-    public ResultInfo login(HttpSession session, String username, String password) {
-        try {
-            //获取user
-            Map<String, Object> map = loginService.Login(username, password);
-            System.out.println("map");
-            System.out.println(map);
-
-            //为Null则查询不到
-            if (StringUtils.isEmpty(map)) {
-                SessionUtil.remove(session, "token");
-                SessionUtil.remove(session, "power");
-                SessionUtil.remove(session, "username");
-                return ResultInfo.error(-1, "账号密码错误");
-            } else {
-                SessionUtil.setToken(session, map.get("token").toString());
-                SessionUtil.setPower(session, (List<UserInfo>) map.get("power"));
-                SessionUtil.setUserName(session,(List<UserInfo>) map.get("username"));
-                return ResultInfo.success("登陆成功");
-            }
-        } catch (Exception e) {
-            log.error("登陆失败：{}", e.getMessage());
-            log.error("参数：{}", username);
-            log.error("参数：{}", password);
-            return ResultInfo.error("错误!");
-        }
-    }
-
-
     /**
      * 查询所有
      *
@@ -61,7 +32,7 @@ public class UserInfoController {
      */
     @RequestMapping("/getList")
     public ResultInfo getList(HttpSession session) {
-        Login login = GsonUtil.toEntity(SessionUtil.getToken(session), Login.class);
+//        Login login = GsonUtil.toEntity(SessionUtil.getToken(session), Login.class);
         try {
             List<Login> getList = loginService.getList();
             return ResultInfo.success("获取成功", getList);
@@ -79,7 +50,7 @@ public class UserInfoController {
      */
     @RequestMapping("/queryList")
     public ResultInfo queryList(String name, HttpSession session) {
-        Login login = GsonUtil.toEntity(SessionUtil.getToken(session), Login.class);
+//        Login login = GsonUtil.toEntity(SessionUtil.getToken(session), Login.class);
         try {
             List<Login> list = loginService.queryList(name);
             return ResultInfo.success("获取成功", list);
@@ -164,13 +135,17 @@ public class UserInfoController {
      */
     @RequestMapping("/delete")
     public ResultInfo delete(@RequestBody HashMap map,HttpSession session) {
+
+        // 检查管理员权限
+        ResultInfo authResult = AuthUtil.checkAdminAuth(session);
+        if (!authResult.isSuccess()) {
+            return authResult;
+        }
+
         Login login = GsonUtil.toEntity(SessionUtil.getToken(session), Login.class);
         System.out.println(login);
         GsonUtil gsonUtil = new GsonUtil(GsonUtil.toJson(map));
         List<Integer> idList = GsonUtil.toList(gsonUtil.get("idList"), Integer.class);
-//        if(!userInfo.getPower().equals("管理员")){
-//            return ResultInfo.error(401, "无权限");
-//        }
         try {
             for(int i=0; i<idList.size(); i++){
                 int this_id = idList.get(i);
@@ -185,17 +160,6 @@ public class UserInfoController {
         }
     }
 
-//    @RequestMapping("/getName")
-//    public ResultInfo getName(HttpSession session) {
-//        UserInfo userInfo = GsonUtil.toEntity(SessionUtil.getToken(session), UserInfo.class);
-//        try {
-//            return ResultInfo.success("获取成功", userInfo.getName());
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            log.error("获取失败：{}", e.getMessage());
-//            return ResultInfo.error("错误!");
-//        }
-//    }
 
     /**
      * 获取当前账号权限

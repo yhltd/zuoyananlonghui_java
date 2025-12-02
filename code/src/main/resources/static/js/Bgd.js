@@ -1,5 +1,5 @@
 var idd;
-
+var currentTableData = [];
 function getList() {
     $ajax({
         type: 'post',
@@ -11,8 +11,8 @@ function getList() {
             res.data.forEach((item, index) => {
                 console.log(`第${index + 1}条数据 - 合同ID:`, item.C, "完整数据:", item);
             });
-
-            setTable(res.data);
+            currentTableData = res.data;
+            setTable(currentTableData);
             $("#lrTable").colResizable({
                 liveDrag: true,
                 gripInnerHtml: "<div class='grip'></div>",
@@ -183,7 +183,68 @@ $(function () {
 
     // 添加调试信息
     console.log("页面加载完成，准备初始化表格");
+
+    // 修改查询按钮点击事件
+    $('#select-btn').click(function() {
+        var name = $('#name').val().trim();
+        var processStatus = $('#department').val().trim(); // 改为 processStatus
+
+        console.log('查询条件 - 业务单位:', name, '合同号:', processStatus);
+
+        if (currentTableData.length === 0) {
+            swal("提示", "请先加载数据", "info");
+            return;
+        }
+
+        // 前端过滤数据
+        var filteredData = filterTableData(name, processStatus);
+        console.log('过滤后的数据:', filteredData);
+
+        // 更新表格
+        setTable(filteredData);
+        swal("查询成功", "找到 " + filteredData.length + " 条记录", "success");
+    });
+
+
+    // 修改刷新按钮，重置查询条件并显示所有数据
+    $("#refresh-btn").click(function () {
+        // 清空查询条件
+        $('#name').val("");
+        $('#department').val("");
+
+        getList();
+
+        // 显示所有数据
+        // setTable(currentTableData);
+        swal("刷新成功", "已显示所有数据", "success");
+    });
 });
+
+function filterTableData(name, processStatus) {
+    if (!name && !processStatus) {
+        return currentTableData;
+    }
+
+    return currentTableData.filter(function(item) {
+        var matchName = true;
+        var matchStatus = true;
+
+        // 按业务单位过滤 (c字段)
+        if (name) {
+            var itemName = (item.D || '').toString().toLowerCase();
+            matchName = itemName.includes(name.toLowerCase());
+        }
+
+        // 按工艺规程状态过滤
+        if (processStatus) {
+            // 计算当前行的工艺规程状态（与表格显示逻辑一致）
+            var currentStatus = (item.C || '').toString().toLowerCase();
+            matchStatus = currentStatus.includes(processStatus.toLowerCase());
+        }
+
+        return matchName && matchStatus;
+    });
+}
 
 function setTable(data) {
     if ($('#lrTable').html != '') {

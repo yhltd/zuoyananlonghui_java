@@ -1,7 +1,11 @@
 var idd;
 function getList() {
-    $('#name').val("");
-    $('#power').val("");
+    $('#rwh').val("");
+    $('#th').val("");
+    $('#thyy').val("");
+    $('#hth').val("");
+    $('#jsrq').val("");
+    $('#ksrq').val("");
     $ajax({
         type: 'post',
         url: '/thjl/getList',
@@ -61,7 +65,7 @@ $(function () {
         var month = ('0' + (date.getMonth() + 1)).slice(-2);
         var day = ('0' + date.getDate()).slice(-2);
         var ks = year + '-' + month + '-' + day;
-        document.getElementById("ksrq").value = ks;
+        document.getElementById("ksrq").value ="";
 
         var jsDate = new Date();
         jsDate.setMonth(jsDate.getMonth() + 1);
@@ -69,7 +73,7 @@ $(function () {
         var jsmonth = ('0' + (jsDate.getMonth() + 1)).slice(-2);
         var jsday = ('0' + jsDate.getDate()).slice(-2);
         var js = jsyear + '-' + jsmonth + '-' + jsday;
-        document.getElementById("jsrq").value = js;
+        document.getElementById("jsrq").value = "";
 
 
         $('#select-btn').click(function () {
@@ -122,6 +126,7 @@ $(function () {
 
     //刷新
     $("#refresh-btn").click(function () {
+
         getList();
     });
 
@@ -416,7 +421,9 @@ $(function () {
                 if (res.code == 200) {
                     swal("", res.msg, "success");
                     getList();
-                } else {
+                } else if(res.code == 403){
+                    swal("删除失败,权限不足,管理员权限可以删除");
+                }else {
                     swal("", res.msg, "error");
                 }
             })

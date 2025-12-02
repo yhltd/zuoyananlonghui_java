@@ -28,7 +28,7 @@ public class KphtController {
      */
     @RequestMapping("/getList")
     public ResultInfo getList(HttpSession session) {
-        Kpht kpht = GsonUtil.toEntity(SessionUtil.getToken(session), Kpht.class);
+//        Kpht kpht = GsonUtil.toEntity(SessionUtil.getToken(session), Kpht.class);
         try {
             List<Kpht> getList = kphtService.getList();
             return ResultInfo.success("获取成功", getList);
@@ -80,13 +80,17 @@ public class KphtController {
      */
     @RequestMapping("/delete")
     public ResultInfo delete(@RequestBody HashMap map,HttpSession session) {
-        Kpht kpht = GsonUtil.toEntity(SessionUtil.getToken(session), Kpht.class);
-        System.out.println(kpht);
+
+        // 检查管理员权限
+        ResultInfo authResult = AuthUtil.checkAdminAuth(session);
+        if (!authResult.isSuccess()) {
+            return authResult;
+        }
+
+//        Kpht kpht = GsonUtil.toEntity(SessionUtil.getToken(session), Kpht.class);
+//        System.out.println(kpht);
         GsonUtil gsonUtil = new GsonUtil(GsonUtil.toJson(map));
         List<Integer> idList = GsonUtil.toList(gsonUtil.get("idList"), Integer.class);
-//        if(!userInfo.getPower().equals("管理员")){
-//            return ResultInfo.error(401, "无权限");
-//        }
         try {
             for(int i=0; i<idList.size(); i++){
                 int this_id = idList.get(i);
@@ -110,7 +114,7 @@ public class KphtController {
      */
     @RequestMapping("/queryList")
     public ResultInfo queryList(String name, HttpSession session) {
-        Kpht kpht = GsonUtil.toEntity(SessionUtil.getToken(session), Kpht.class);
+//        Kpht kpht = GsonUtil.toEntity(SessionUtil.getToken(session), Kpht.class);
         try {
             List<Kpht> list = kphtService.queryList(name);
             return ResultInfo.success("获取成功", list);

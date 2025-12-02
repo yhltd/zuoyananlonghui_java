@@ -4,9 +4,7 @@ import com.example.demo.dto.HetongVO;
 import com.example.demo.entity.Lcd;
 import com.example.demo.entity.UserInfo;
 import com.example.demo.service.LcdService;
-import com.example.demo.util.GsonUtil;
-import com.example.demo.util.ResultInfo;
-import com.example.demo.util.SessionUtil;
+import com.example.demo.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,7 +28,9 @@ public class LcdController {
      */
     @RequestMapping("/getList")
     public ResultInfo getList(HttpSession session) {
-        UserInfo userInfo = GsonUtil.toEntity(SessionUtil.getToken(session), UserInfo.class);
+
+
+//        UserInfo userInfo = GsonUtil.toEntity(SessionUtil.getToken(session), UserInfo.class);
         try {
             List<Lcd> getList = lcdService.getList();
             return ResultInfo.success("获取成功", getList);
@@ -46,7 +46,7 @@ public class LcdController {
      */
     @PostMapping("/getListByCondition")
     public ResultInfo getListByCondition(@RequestParam(required = false) String where, HttpSession session) {
-        UserInfo userInfo = GsonUtil.toEntity(SessionUtil.getToken(session), UserInfo.class);
+//        UserInfo userInfo = GsonUtil.toEntity(SessionUtil.getToken(session), UserInfo.class);
         try {
             List<Lcd> getList = lcdService.getListByUncompletedContracts(where);
             return ResultInfo.success("获取成功", getList);

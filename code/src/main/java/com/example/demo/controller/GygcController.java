@@ -123,7 +123,14 @@ public class GygcController {
 
     @RequestMapping("/delete")
     public ResultInfo delete(@RequestBody HashMap map,HttpSession session) {
-        UserInfo userInfo = GsonUtil.toEntity(SessionUtil.getToken(session), UserInfo.class);
+
+        // 检查管理员权限
+        ResultInfo authResult = AuthUtil.checkAdminAuth(session);
+        if (!authResult.isSuccess()) {
+            return authResult;
+        }
+
+//        UserInfo userInfo = GsonUtil.toEntity(SessionUtil.getToken(session), UserInfo.class);
         GsonUtil gsonUtil = new GsonUtil(GsonUtil.toJson(map));
         List<Integer> idList = GsonUtil.toList(gsonUtil.get("idList"), Integer.class);
 
@@ -145,7 +152,7 @@ public class GygcController {
 
     @RequestMapping("/getList")
     public ResultInfo getList(HttpSession session) {
-        Gygc gygc = GsonUtil.toEntity(SessionUtil.getToken(session), Gygc.class);
+//        Gygc gygc = GsonUtil.toEntity(SessionUtil.getToken(session), Gygc.class);
         try {
             List<Gygc> getList = gygcService.getList();
             return ResultInfo.success("获取成功", getList);

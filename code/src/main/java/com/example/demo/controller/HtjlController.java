@@ -21,25 +21,6 @@ public class HtjlController {
     private HtjlService htjlService;
 
 
-//    /**
-//     * 查询所有
-//     *
-//     * @return ResultInfo
-//     */
-//    @RequestMapping("/getList")
-//    public ResultInfo getList(HttpSession session) {
-//        Htjl htjl = GsonUtil.toEntity(SessionUtil.getToken(session), Htjl.class);
-//        try {
-//            List<Htjl> getList = htjlService.getList();
-//            return ResultInfo.success("获取成功", getList);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            log.error("获取失败：{}", e.getMessage());
-//            return ResultInfo.error("错误!");
-//        }
-//    }
-
-
     /**
      * 查询所有（排除退货记录中已存在的数据）
      *
@@ -57,29 +38,6 @@ public class HtjlController {
         }
     }
 
-
-    /**
-     * 修改
-     */
-//    @RequestMapping(value = "/update", method = RequestMethod.POST)
-//    public ResultInfo update(@RequestBody String updateJson, HttpSession session) {
-//        try {
-//            System.out.println("接收到的JSON: " + updateJson);
-//
-//            // 这里应该能正确映射C、D、E、F字段
-//            Htjl htjl = GsonUtil.toEntity(updateJson, Htjl.class);
-//
-//            if (htjlService.update(htjl)) {
-//                return ResultInfo.success("修改成功", htjl);
-//            } else {
-//                return ResultInfo.error("修改失败");
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            log.error("修改失败：{}", e.getMessage());
-//            return ResultInfo.error("修改失败: " + e.getMessage());
-//        }
-//    }
 
     @PostMapping("/updateField")
     public Result<?> updateField(@RequestBody Map<String, Object> params) {
@@ -145,13 +103,17 @@ public class HtjlController {
      */
     @RequestMapping("/delete")
     public ResultInfo delete(@RequestBody HashMap map, HttpSession session) {
-        Htjl htjl = GsonUtil.toEntity(SessionUtil.getToken(session), Htjl.class);
-        System.out.println(htjl);
+
+        // 检查管理员权限
+        ResultInfo authResult = AuthUtil.checkAdminAuth(session);
+        if (!authResult.isSuccess()) {
+            return authResult;
+        }
+
+//        Htjl htjl = GsonUtil.toEntity(SessionUtil.getToken(session), Htjl.class);
+//        System.out.println(htjl);
         GsonUtil gsonUtil = new GsonUtil(GsonUtil.toJson(map));
         List<Integer> idList = GsonUtil.toList(gsonUtil.get("idList"), Integer.class);
-//        if(!userInfo.getPower().equals("管理员")){
-//            return ResultInfo.error(401, "无权限");
-//        }
         try {
             for (int i = 0; i < idList.size(); i++) {
                 int this_id = idList.get(i);
@@ -174,7 +136,7 @@ public class HtjlController {
      */
     @RequestMapping("/queryList")
     public ResultInfo queryList(String name, String department, HttpSession session) {
-        Htjl htjl = GsonUtil.toEntity(SessionUtil.getToken(session), Htjl.class);
+//        Htjl htjl = GsonUtil.toEntity(SessionUtil.getToken(session), Htjl.class);
         try {
             List<Htjl> list = htjlService.queryList(name, department);
             return ResultInfo.success("获取成功", list);
@@ -221,7 +183,7 @@ public class HtjlController {
 
     @RequestMapping("/getddh")
     public ResultInfo getddh(HttpSession session) {
-        Htjl htjl = GsonUtil.toEntity(SessionUtil.getToken(session), Htjl.class);
+//        Htjl htjl = GsonUtil.toEntity(SessionUtil.getToken(session), Htjl.class);
         try {
             String getList = htjlService.getddh();
             return ResultInfo.success("获取成功", getList);
@@ -276,7 +238,7 @@ public class HtjlController {
 
     @RequestMapping("/getddh1")
     public ResultInfo getddh1(HttpSession session) {
-        Htjl htjl = GsonUtil.toEntity(SessionUtil.getToken(session), Htjl.class);
+//        Htjl htjl = GsonUtil.toEntity(SessionUtil.getToken(session), Htjl.class);
         try {
             String getList = htjlService.getddh1();
             return ResultInfo.success("获取成功", getList);

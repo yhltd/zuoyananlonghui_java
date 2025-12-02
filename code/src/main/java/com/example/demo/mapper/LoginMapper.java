@@ -1,5 +1,6 @@
 package com.example.demo.mapper;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.demo.entity.Login;
 import org.apache.ibatis.annotations.*;
@@ -9,6 +10,7 @@ import java.util.List;
 
 @Mapper
 @Repository
+@DS("druid")
 public interface LoginMapper extends BaseMapper<Login> {
 
     @Select("select * from userinfo")

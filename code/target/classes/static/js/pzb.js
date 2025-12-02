@@ -213,7 +213,9 @@ $(function () {
                 if (res.code == 200) {
                     swal("", res.msg, "success");
                     getList();
-                } else {
+                } else if(res.code == 403){
+                    swal("删除失败,权限不足,管理员权限可以删除");
+                }else {
                     swal("", res.msg, "error");
                 }
             })

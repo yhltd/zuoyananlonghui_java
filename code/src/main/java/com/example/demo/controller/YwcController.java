@@ -28,7 +28,7 @@ public class YwcController {
      */
     @RequestMapping("/getList")
     public ResultInfo getList(HttpSession session) {
-        Ywc ywc = GsonUtil.toEntity(SessionUtil.getToken(session), Ywc.class);
+//        Ywc ywc = GsonUtil.toEntity(SessionUtil.getToken(session), Ywc.class);
         try {
             List<Ywc> getList = ywcService.getList();
             return ResultInfo.success("获取成功", getList);
@@ -80,13 +80,16 @@ public class YwcController {
      */
     @RequestMapping("/delete")
     public ResultInfo delete(@RequestBody HashMap map,HttpSession session) {
-        Ywc ywc = GsonUtil.toEntity(SessionUtil.getToken(session), Ywc.class);
-        System.out.println(ywc);
+        // 检查管理员权限
+        ResultInfo authResult = AuthUtil.checkAdminAuth(session);
+        if (!authResult.isSuccess()) {
+            return authResult;
+        }
+
+//        Ywc ywc = GsonUtil.toEntity(SessionUtil.getToken(session), Ywc.class);
+//        System.out.println(ywc);
         GsonUtil gsonUtil = new GsonUtil(GsonUtil.toJson(map));
         List<Integer> idList = GsonUtil.toList(gsonUtil.get("idList"), Integer.class);
-//        if(!userInfo.getPower().equals("管理员")){
-//            return ResultInfo.error(401, "无权限");
-//        }
         try {
             for(int i=0; i<idList.size(); i++){
                 int this_id = idList.get(i);
@@ -110,7 +113,7 @@ public class YwcController {
      */
     @RequestMapping("/queryList")
     public ResultInfo queryList(String name, HttpSession session) {
-        Ywc ywc = GsonUtil.toEntity(SessionUtil.getToken(session), Ywc.class);
+//        Ywc ywc = GsonUtil.toEntity(SessionUtil.getToken(session), Ywc.class);
         try {
             List<Ywc> list = ywcService.queryList(name);
             return ResultInfo.success("获取成功", list);

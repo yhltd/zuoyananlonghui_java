@@ -757,17 +757,212 @@ public class MobileController {
                 "<html lang=\"zh-CN\">\n" +
                 "<head>\n" +
                 "    <meta charset=\"UTF-8\">\n" +
-                "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" +
+                "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\">\n" +
                 "    <title>合同工艺规程</title>\n" +
                 "    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css\" rel=\"stylesheet\">\n" +
                 "    <style>\n" +
-                "        body { background-color: #f8f9fa; }\n" +
-                "        .container { max-width: 800px; margin: 0 auto; padding: 15px; }\n" +
-                "        .card { margin-bottom: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }\n" +
-                "        .process-item { border-left: 4px solid #007bff; padding-left: 15px; margin-bottom: 10px; background-color: white; padding: 10px; border-radius: 5px; }\n" +
-                "        .signed { border-left-color: #28a745; background-color: #f8fff9; }\n" +
-                "        .unsigned { border-left-color: #dc3545; background-color: #fff8f8; }\n" +
-                "        .stats { font-size: 0.9rem; }\n" +
+                "        * {\n" +
+                "            box-sizing: border-box;\n" +
+                "        }\n" +
+                "        body { \n" +
+                "            background-color: #f8f9fa; \n" +
+                "            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n" +
+                "            font-size: 18px;\n" +
+                "            line-height: 1.6;\n" +
+                "        }\n" +
+                "        .container { \n" +
+                "            max-width: 800px; \n" +
+                "            margin: 0 auto; \n" +
+                "            padding: 20px 15px; \n" +
+                "        }\n" +
+                "        .card { \n" +
+                "            margin-bottom: 20px; \n" +
+                "            border-radius: 12px; \n" +
+                "            box-shadow: 0 4px 8px rgba(0,0,0,0.1); \n" +
+                "            border: 1px solid #dee2e6;\n" +
+                "        }\n" +
+                "        .card-header {\n" +
+                "            border-radius: 12px 12px 0 0 !important;\n" +
+                "            font-weight: 600;\n" +
+                "            padding: 18px 20px;\n" +
+                "        }\n" +
+                "        .card-body {\n" +
+                "            padding: 25px 20px;\n" +
+                "        }\n" +
+                "        h4 {\n" +
+                "            font-size: 28px;\n" +
+                "            font-weight: 700;\n" +
+                "            margin-bottom: 10px;\n" +
+                "        }\n" +
+                "        h5 {\n" +
+                "            font-size: 24px;\n" +
+                "            font-weight: 600;\n" +
+                "        }\n" +
+                "        h6 {\n" +
+                "            font-size: 22px;\n" +
+                "            font-weight: 600;\n" +
+                "        }\n" +
+                "        .process-item { \n" +
+                "            border-left: 6px solid #007bff; \n" +
+                "            padding: 20px 20px 20px 25px; \n" +
+                "            margin-bottom: 15px; \n" +
+                "            background-color: white; \n" +
+                "            border-radius: 10px; \n" +
+                "            border: 1px solid #e9ecef;\n" +
+                "        }\n" +
+                "        .signed { \n" +
+                "            border-left-color: #28a745; \n" +
+                "            background-color: #f8fff9; \n" +
+                "            border-color: #d4edda;\n" +
+                "        }\n" +
+                "        .unsigned { \n" +
+                "            border-left-color: #dc3545; \n" +
+                "            background-color: #fff8f8; \n" +
+                "            border-color: #f8d7da;\n" +
+                "        }\n" +
+                "        .stats { \n" +
+                "            font-size: 1.1rem; \n" +
+                "            padding: 15px 0;\n" +
+                "        }\n" +
+                "        .stats h5 {\n" +
+                "            font-size: 32px;\n" +
+                "            font-weight: 700;\n" +
+                "            margin-bottom: 8px;\n" +
+                "        }\n" +
+                "        .stats small {\n" +
+                "            font-size: 18px;\n" +
+                "            color: #6c757d;\n" +
+                "            display: block;\n" +
+                "        }\n" +
+                "        .text-primary { color: #0d6efd !important; }\n" +
+                "        .text-success { color: #198754 !important; }\n" +
+                "        .text-danger { color: #dc3545 !important; }\n" +
+                "        .text-muted { \n" +
+                "            color: #6c757d !important; \n" +
+                "            font-size: 19px;\n" +
+                "        }\n" +
+                "        .form-label {\n" +
+                "            font-size: 20px;\n" +
+                "            font-weight: 600;\n" +
+                "            margin-bottom: 12px;\n" +
+                "            display: block;\n" +
+                "        }\n" +
+                "        .form-control, .form-select {\n" +
+                "            font-size: 20px;\n" +
+                "            padding: 16px 20px;\n" +
+                "            border-radius: 10px;\n" +
+                "            border: 2px solid #ced4da;\n" +
+                "            height: auto;\n" +
+                "            line-height: 1.5;\n" +
+                "        }\n" +
+                "        .form-control:focus, .form-select:focus {\n" +
+                "            border-color: #80bdff;\n" +
+                "            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);\n" +
+                "        }\n" +
+                "        .btn {\n" +
+                "            font-size: 22px;\n" +
+                "            font-weight: 600;\n" +
+                "            padding: 18px 20px;\n" +
+                "            border-radius: 10px;\n" +
+                "            border-width: 2px;\n" +
+                "        }\n" +
+                "        .btn-success {\n" +
+                "            background-color: #198754;\n" +
+                "            border-color: #198754;\n" +
+                "        }\n" +
+                "        .badge {\n" +
+                "            font-size: 18px;\n" +
+                "            padding: 10px 16px;\n" +
+                "            border-radius: 8px;\n" +
+                "            font-weight: 600;\n" +
+                "        }\n" +
+                "        .bg-success { background-color: #198754 !important; }\n" +
+                "        .bg-danger { background-color: #dc3545 !important; }\n" +
+                "        .spinner-border {\n" +
+                "            width: 2rem;\n" +
+                "            height: 2rem;\n" +
+                "            border-width: 0.25em;\n" +
+                "        }\n" +
+                "        .alert {\n" +
+                "            font-size: 19px;\n" +
+                "            padding: 20px;\n" +
+                "            border-radius: 10px;\n" +
+                "            margin-bottom: 20px;\n" +
+                "        }\n" +
+                "        strong {\n" +
+                "            font-size: 20px;\n" +
+                "            font-weight: 600;\n" +
+                "            display: block;\n" +
+                "            margin-bottom: 8px;\n" +
+                "        }\n" +
+                "        span, p, div {\n" +
+                "            font-size: 19px;\n" +
+                "        }\n" +
+                "        .mb-1 { margin-bottom: 8px !important; }\n" +
+                "        .mb-2 { margin-bottom: 16px !important; }\n" +
+                "        .mb-3 { margin-bottom: 24px !important; }\n" +
+                "        .mb-4 { margin-bottom: 32px !important; }\n" +
+                "        .mt-2 { margin-top: 16px !important; }\n" +
+                "        .me-3 { margin-right: 24px !important; }\n" +
+                "        .ms-2 { margin-left: 16px !important; }\n" +
+                "        .flex-grow-1 { flex-grow: 1 !important; }\n" +
+                "        .text-end { text-align: right !important; }\n" +
+                "        .w-100 { width: 100% !important; }\n" +
+                "        .text-center { text-align: center !important; }\n" +
+                "        .row { \n" +
+                "            --bs-gutter-x: 24px; \n" +
+                "            --bs-gutter-y: 24px; \n" +
+                "        }\n" +
+                "        .col-4, .col-6, .col-12 {\n" +
+                "            padding-left: calc(var(--bs-gutter-x) * .5);\n" +
+                "            padding-right: calc(var(--bs-gutter-x) * .5);\n" +
+                "        }\n" +
+                "        .d-flex { display: flex !important; }\n" +
+                "        .justify-content-between { justify-content: space-between !important; }\n" +
+                "        .align-items-start { align-items: flex-start !important; }\n" +
+                "        .text-dark { color: #212529 !important; }\n" +
+                "        .bg-primary { background-color: #0d6efd !important; }\n" +
+                "        .bg-info { background-color: #0dcaf0 !important; }\n" +
+                "        .bg-secondary { background-color: #6c757d !important; }\n" +
+                "        .bg-warning { background-color: #ffc107 !important; }\n" +
+                "        @media (max-width: 576px) {\n" +
+                "            .container {\n" +
+                "                padding: 15px 12px;\n" +
+                "            }\n" +
+                "            .card-body {\n" +
+                "                padding: 20px 15px;\n" +
+                "            }\n" +
+                "            h4 {\n" +
+                "                font-size: 26px;\n" +
+                "            }\n" +
+                "            h5 {\n" +
+                "                font-size: 22px;\n" +
+                "            }\n" +
+                "            h6 {\n" +
+                "                font-size: 20px;\n" +
+                "            }\n" +
+                "            .stats h5 {\n" +
+                "                font-size: 28px;\n" +
+                "            }\n" +
+                "            .form-control, .form-select, .btn {\n" +
+                "                font-size: 18px;\n" +
+                "                padding: 14px 16px;\n" +
+                "            }\n" +
+                "            body {\n" +
+                "                font-size: 16px;\n" +
+                "            }\n" +
+                "            span, p, div, .text-muted {\n" +
+                "                font-size: 16px;\n" +
+                "            }\n" +
+                "            strong, .form-label {\n" +
+                "                font-size: 18px;\n" +
+                "            }\n" +
+                "        }\n" +
+                "        @media (min-width: 768px) {\n" +
+                "            .container {\n" +
+                "                padding: 25px 20px;\n" +
+                "            }\n" +
+                "        }\n" +
                 "    </style>\n" +
                 "</head>\n" +
                 "<body>\n" +
@@ -785,8 +980,8 @@ public class MobileController {
                 "            <div class=\"card-body\">\n" +
                 "                <div class=\"row\" id=\"basicInfo\">\n" +
                 "                    <div class=\"text-center\">\n" +
-                "                        <div class=\"spinner-border spinner-border-sm\" role=\"status\"></div>\n" +
-                "                        <span>加载中...</span>\n" +
+                "                        <div class=\"spinner-border text-primary\" role=\"status\"></div>\n" +
+                "                        <span class=\"text-muted mt-2 d-block\">加载中...</span>\n" +
                 "                    </div>\n" +
                 "                </div>\n" +
                 "            </div>\n" +
@@ -800,8 +995,8 @@ public class MobileController {
                 "            <div class=\"card-body\">\n" +
                 "                <div class=\"row text-center stats\" id=\"statsInfo\">\n" +
                 "                    <div class=\"col-4\">\n" +
-                "                        <div class=\"spinner-border spinner-border-sm\" role=\"status\"></div>\n" +
-                "                        <span>加载中...</span>\n" +
+                "                        <div class=\"spinner-border text-primary\" role=\"status\"></div>\n" +
+                "                        <span class=\"text-muted mt-2 d-block\">加载中...</span>\n" +
                 "                    </div>\n" +
                 "                </div>\n" +
                 "            </div>\n" +
@@ -815,8 +1010,8 @@ public class MobileController {
                 "            <div class=\"card-body\">\n" +
                 "                <div id=\"processList\">\n" +
                 "                    <div class=\"text-center\">\n" +
-                "                        <div class=\"spinner-border spinner-border-sm\" role=\"status\"></div>\n" +
-                "                        <span>加载工序列表...</span>\n" +
+                "                        <div class=\"spinner-border text-primary\" role=\"status\"></div>\n" +
+                "                        <span class=\"text-muted mt-2 d-block\">加载工序列表...</span>\n" +
                 "                    </div>\n" +
                 "                </div>\n" +
                 "            </div>\n" +
@@ -872,7 +1067,7 @@ public class MobileController {
                 "        function showError(message) {\n" +
                 "            document.getElementById('basicInfo').innerHTML = `\n" +
                 "                <div class=\"alert alert-danger\">\n" +
-                "                    <h6>加载失败</h6>\n" +
+                "                    <h6 class=\"mb-2\">加载失败</h6>\n" +
                 "                    <p class=\"mb-0\">${message}</p>\n" +
                 "                </div>\n" +
                 "            `;\n" +
@@ -890,28 +1085,28 @@ public class MobileController {
                 "            // 显示基本信息\n" +
                 "            document.getElementById('basicInfo').innerHTML = `\n" +
                 "                <div class=\"col-6\">\n" +
-                "                    <strong>业务单位:</strong><br>\n" +
-                "                    <span>${basicInfo.businessUnit || '无'}</span>\n" +
+                "                    <strong>业务单位:</strong>\n" +
+                "                    <div class=\"mt-1\">${basicInfo.businessUnit || '无'}</div>\n" +
                 "                </div>\n" +
                 "                <div class=\"col-6\">\n" +
-                "                    <strong>零件名称:</strong><br>\n" +
-                "                    <span>${basicInfo.partName || '无'}</span>\n" +
+                "                    <strong>零件名称:</strong>\n" +
+                "                    <div class=\"mt-1\">${basicInfo.partName || '无'}</div>\n" +
                 "                </div>\n" +
-                "                <div class=\"col-6 mt-2\">\n" +
-                "                    <strong>材质:</strong><br>\n" +
-                "                    <span>${basicInfo.material || '无'}</span>\n" +
+                "                <div class=\"col-6 mt-3\">\n" +
+                "                    <strong>材质:</strong>\n" +
+                "                    <div class=\"mt-1\">${basicInfo.material || '无'}</div>\n" +
                 "                </div>\n" +
-                "                <div class=\"col-6 mt-2\">\n" +
-                "                    <strong>数量:</strong><br>\n" +
-                "                    <span>${basicInfo.quantity || '无'}</span>\n" +
+                "                <div class=\"col-6 mt-3\">\n" +
+                "                    <strong>数量:</strong>\n" +
+                "                    <div class=\"mt-1\">${basicInfo.quantity || '无'}</div>\n" +
                 "                </div>\n" +
-                "                <div class=\"col-6 mt-2\">\n" +
-                "                    <strong>图号:</strong><br>\n" +
-                "                    <span>${basicInfo.drawingNumber || '无'}</span>\n" +
+                "                <div class=\"col-6 mt-3\">\n" +
+                "                    <strong>图号:</strong>\n" +
+                "                    <div class=\"mt-1\">${basicInfo.drawingNumber || '无'}</div>\n" +
                 "                </div>\n" +
-                "                <div class=\"col-6 mt-2\">\n" +
-                "                    <strong>任务号:</strong><br>\n" +
-                "                    <span>${basicInfo.taskNumber || '无'}</span>\n" +
+                "                <div class=\"col-6 mt-3\">\n" +
+                "                    <strong>任务号:</strong>\n" +
+                "                    <div class=\"mt-1\">${basicInfo.taskNumber || '无'}</div>\n" +
                 "                </div>\n" +
                 "            `;\n" +
                 "\n" +
@@ -957,7 +1152,7 @@ public class MobileController {
                 "                            <div class=\"d-flex justify-content-between align-items-start\">\n" +
                 "                                <div class=\"flex-grow-1\">\n" +
                 "                                    <strong>${process.index}. ${process.processName || '未知工序'}</strong>\n" +
-                "                                    <p class=\"mb-1 text-muted\">${process.processContent || '无内容'}</p>\n" +
+                "                                    <p class=\"mb-2 text-muted\">${process.processContent || '无内容'}</p>\n" +
                 "                                    <div class=\"d-flex\">\n" +
                 "                                        <small class=\"text-muted me-3\">工时: ${process.workHours || '0'}小时</small>\n" +
                 "                                        ${process.completionTime ? `<small class=\"text-muted\">完成时间: ${process.completionTime}</small>` : ''}\n" +
@@ -967,7 +1162,7 @@ public class MobileController {
                 "                                    <span class=\"badge ${isSigned ? 'bg-success' : 'bg-danger'}\">\n" +
                 "                                        ${isSigned ? '已签名' : '未签名'}\n" +
                 "                                    </span>\n" +
-                "                                    ${isSigned ? `<div><small class=\"text-success\">${process.employeeSign}</small></div>` : ''}\n" +
+                "                                    ${isSigned ? `<div class=\"mt-1\"><small class=\"text-success\">${process.employeeSign}</small></div>` : ''}\n" +
                 "                                </div>\n" +
                 "                            </div>\n" +
                 "                        </div>\n" +
@@ -1026,7 +1221,7 @@ public class MobileController {
                 "            // 显示加载状态\n" +
                 "            const submitBtn = this.querySelector('button[type=\"submit\"]');\n" +
                 "            const originalText = submitBtn.textContent;\n" +
-                "            submitBtn.innerHTML = '<span class=\"spinner-border spinner-border-sm\" role=\"status\"></span> 提交中...';\n" +
+                "            submitBtn.innerHTML = '<span class=\"spinner-border spinner-border-sm me-2\" role=\"status\"></span> 提交中...';\n" +
                 "            submitBtn.disabled = true;\n" +
                 "            \n" +
                 "            try {\n" +

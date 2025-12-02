@@ -169,38 +169,6 @@ $(function () {
     });
 
     //点击删除按钮
-//     $('#delete-btn').click(function () {
-//         var msg = confirm("确认要删除吗？");
-//         if (msg) {
-//             let rows = getTableSelection("#jcxxTable");
-//             if (rows.length == 0) {
-//                 swal('请选择要删除的数据！');
-//                 return;
-//             }
-//             let idList = [];
-//             $.each(rows, function (index, row) {
-//                 idList.push(row.data.id)
-//             });
-//             $ajax({
-//                 type: 'post',
-//                 url: '/khzl/delete',
-//                 data: JSON.stringify({
-//                     idList: idList
-//                 }),
-//                 dataType: 'json',
-//                 contentType: 'application/json;charset=utf-8'
-//             }, false, '', function (res) {
-//                 if (res.code == 200) {
-//                     swal("", res.msg, "success");
-//                     getList();
-//                 } else {
-//                     swal("", res.msg, "error");
-//                 }
-//             })
-//         }
-//     })
-// });
-    //点击删除按钮
     $('#delete-btn').click(function () {
         var msg = confirm("确认要删除吗？");
         if (msg) {
@@ -225,6 +193,8 @@ $(function () {
                 if (res.code == 200) {
                     swal("", res.msg, "success");
                     getList();
+                }else if(res.code == 403){
+                    swal("删除失败,权限不足,管理员权限可以删除");
                 } else {
                     swal("", res.msg, "error");
                 }

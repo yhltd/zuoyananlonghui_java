@@ -42,7 +42,7 @@ function initReturnOrder1() {
     loadDataFromSessionStorage();
 }
 
-// 从sessionStorage加载数据
+// 从sessionStorage加载数据 - 修改支持多条数据
 function loadDataFromSessionStorage() {
     try {
         var returnDataStr = sessionStorage.getItem('currentReturnData');
@@ -52,20 +52,17 @@ function loadDataFromSessionStorage() {
             console.log('从sessionStorage接收到出库数据:', returnData);
 
             if (returnData.selectedRows && returnData.selectedRows.length > 0) {
-                // 提取所有ID
-                var idsArray = returnData.selectedRows.map(row => row.id);
-                console.log('提取的ID数组:', idsArray);
+                // 直接使用传递过来的多条数据填充表格
+                console.log('接收到多条数据，直接填充表格:', returnData.selectedRows.length, '条');
 
-                if (idsArray.length > 0) {
-                    // 使用这些ID加载数据
-                    loadDataByIds(idsArray);
-                }
+                // 直接使用传递的数据填充表格，无需再次请求后端
+                fillReturnOrderTableFromData(returnData.selectedRows);
 
                 // 设置出库单号
                 if (returnData.returnNo) {
                     $('#return-no1').val(returnData.returnNo);
                 } else {
-                    // 如果没有单号，生成一个
+                    // 生成出库单号
                     generateReturnNo1(function(returnNo) {
                         $('#return-no1').val(returnNo);
                     });
@@ -76,8 +73,15 @@ function loadDataFromSessionStorage() {
                     $('#return-customer1').val(returnData.selectedRows[0].c || '');
                 }
 
+                // 设置日期为当前日期
+                $('#return-date1').val(getCurrentDate1());
+
                 // 清理sessionStorage
                 sessionStorage.removeItem('currentReturnData');
+            } else {
+                console.log('没有找到有效的selectedRows数据');
+                // 尝试使用ID加载
+                loadDataFromURLParams();
             }
         } else {
             console.log('没有从sessionStorage找到数据，检查URL参数');
@@ -88,6 +92,69 @@ function loadDataFromSessionStorage() {
         console.error('从sessionStorage加载数据错误:', e);
         loadDataFromURLParams();
     }
+}
+
+// 从传递的数据直接填充表格（支持多条数据）
+function fillReturnOrderTableFromData(dataRows) {
+    console.log('=== fillReturnOrderTableFromData 开始 ===');
+    console.log('接收到的数据行:', dataRows);
+
+    var tableBody = $('#return-detail-table1 tbody');
+    tableBody.empty();
+
+    if (!dataRows || dataRows.length === 0) {
+        console.log('数据为空');
+        tableBody.append(`
+            <tr>
+                <td colspan="14" class="text-center">暂无数据</td>
+            </tr>
+        `);
+        return;
+    }
+
+    console.log('数据长度:', dataRows.length);
+
+    // 遍历数据并生成表格行
+    dataRows.forEach(function(rowData, index) {
+        console.log(`第${index}行数据:`, rowData);
+
+        // 计算单价和金额
+        var unitPrice = calculateUnitPrice(rowData);
+        var amount = calculateAmount(rowData, unitPrice);
+
+        var row = `
+             <tr>
+                <td><input type="checkbox" class="row-select1"></td>
+                <td>${index + 1}</td>
+                <td><input type="text" class="form-control form-control-sm" name="contractNo" value="${rowData.d || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="taskNo" value="${rowData.e || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="gongxu" value="${rowData.g || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="productName" value="${rowData.h || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="drawingNo" value="${rowData.i || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="unit" value="${rowData.j || ''}"></td>
+                <td><input type="number" class="form-control form-control-sm" name="quantity" value="${rowData.k || '1'}"></td>
+                <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="${unitPrice}"></td>
+                <td><input type="number" class="form-control form-control-sm" name="amount" value="${amount}" readonly></td>
+                <td><input type="text" class="form-control form-control-sm" name="material" value="${rowData.l || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="weight" value="${rowData.n || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="remark" value="${rowData.ax || ''}"></td>
+            </tr>
+        `;
+        tableBody.append(row);
+    });
+
+    // 设置往来单位（使用第一个数据的业务单位）
+    if (dataRows.length > 0) {
+        var customer = dataRows[0].c || '';
+        $('#return-customer1').val(customer);
+        console.log('设置往来单位:', customer);
+    }
+
+    // 计算总金额
+    calculateTotalAmount1();
+
+    console.log('表格填充完成，共填充', dataRows.length, '行数据');
+    console.log('=== fillReturnOrderTableFromData 结束 ===');
 }
 
 // 从URL参数加载数据
@@ -104,7 +171,8 @@ function loadDataFromURLParams() {
         loadDataByIds(idParam);
     } else {
         console.log('没有找到要加载的数据');
-        swal("提示", "请从合同记录页面选择数据后再进入本页面", "info");
+        // 添加一个空行以便用户手动输入
+        addNewRow();
     }
 }
 
@@ -273,7 +341,7 @@ function numberToChinese1(num) {
 }
 
 // ==================== 数据加载函数 ====================
-// 根据多个ID加载数据
+// 根据多个ID加载数据（备用方案）
 function loadDataByIds(ids) {
     console.log('开始根据ID查询数据:', ids);
     console.log('ids类型:', typeof ids);
@@ -323,7 +391,7 @@ function loadDataByIds(ids) {
     });
 }
 
-// 填充表格数据
+// 填充表格数据（从后端API）
 function fillReturnOrderTable(data) {
     console.log('=== fillReturnOrderTable 开始 ===');
     console.log('接收到的完整数据:', data);

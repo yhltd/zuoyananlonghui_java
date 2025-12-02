@@ -159,6 +159,8 @@ function deleteRowFromBackend(rowId, selectedRow) {
                     // 后端删除成功，从前端移除该行
                     deleteRowFromFrontend(selectedRow);
                     swal("删除成功", "数据已成功删除", "success");
+                }else if(res.code == 403){
+                    swal("删除失败,权限不足,管理员权限可以删除");
                 } else {
                     swal("删除失败", res.msg || "删除数据失败", "error");
                 }
@@ -201,6 +203,13 @@ function fillProcessHeader(data) {
     var htid = data.id;
 
     console.log('查询工艺规程数据，htid:', htid);
+    swal({
+        title: "加载中",
+        text: "正在查询数据...",
+        icon: "info",
+        buttons: false,
+        closeOnClickOutside: false
+    });
 
     $ajax({
         type: 'post',
@@ -209,6 +218,7 @@ function fillProcessHeader(data) {
             htid: htid
         }
     }, false, '', function (res) {
+        swal.close();
         console.log('工艺规程查询响应:', res);
         if (res.code == 200) {
             if (res.data && res.data.length > 0) {
@@ -806,6 +816,13 @@ function performSearch() {
     }
 }
 function getList() {
+    swal({
+        title: "加载中",
+        text: "正在查询数据...",
+        icon: "info",
+        buttons: false,
+        closeOnClickOutside: false
+    });
     $ajax({
         type: 'post',
         url: '/gygc/getList',
@@ -814,6 +831,7 @@ function getList() {
         console.log('API响应状态:', res.code);
         console.log('API响应消息:', res.msg);
         console.log('完整响应数据:', res);
+        swal.close();
         if (res.code == 200) {
             // 填充数据到弹窗
             populateTable(res.data);
