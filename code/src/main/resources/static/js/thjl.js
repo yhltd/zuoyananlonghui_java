@@ -32,29 +32,6 @@ function getList() {
 $(function () {
     getList();
 
-    // $('#select-btn').click(function () {
-    //     var name = $('#name').val();
-    //     console.log('查询条件 - 姓名:', name);
-    //
-    //     $ajax({
-    //         type: 'post',
-    //         url: '/thjl/queryList',
-    //         data: {
-    //             name: name  // 只传递姓名参数
-    //         }
-    //     }, true, '', function (res) {
-    //         console.log('查询响应:', res);
-    //         if (res.code == 200) {
-    //             console.log('查询到的数据:', res.data);
-    //             setTable(res.data);
-    //             swal("查询成功", "找到 " + res.data.length + " 条记录", "success");
-    //         } else {
-    //             swal("查询失败", res.msg, "error");
-    //         }
-    //     })
-    // });
-
-
     $(function () {
         getList();
 
@@ -75,7 +52,6 @@ $(function () {
         var js = jsyear + '-' + jsmonth + '-' + jsday;
         document.getElementById("jsrq").value = "";
 
-
         $('#select-btn').click(function () {
             var ksrq = $('#ksrq').val();
             var jsrq = $('#jsrq').val();
@@ -84,7 +60,6 @@ $(function () {
             var k = $('#th').val();
             var r = $('#thyy').val();
 
-            // 添加调试信息
             console.log('查询条件:', {
                 ksrq: ksrq,
                 jsrq: jsrq,
@@ -94,7 +69,6 @@ $(function () {
                 r: r
             });
 
-            // 如果日期为空，传递空字符串而不是null
             ksrq = ksrq || '';
             jsrq = jsrq || '';
 
@@ -114,29 +88,23 @@ $(function () {
                 if (res.code == 200) {
                     console.log('查询到的数据:', res.data);
                     setTable(res.data);
-                    // 添加查询成功提示
                     swal("查询成功", "找到 " + res.data.length + " 条记录", "success");
                 } else {
-                    // 添加查询失败提示
                     swal("查询失败", res.msg, "error");
                 }
             })
         });
     });
 
-    //刷新
     $("#refresh-btn").click(function () {
-
         getList();
         swal("刷新成功", "已显示所有数据", "success");
     });
 
-    //点击新增按钮显示弹窗
     $("#add-btn").click(function () {
         $('#add-modal').modal('show');
     });
 
-//新增弹窗里点击关闭按钮
     $('#add-close-btn').click(function () {
         $('#add-modal').modal('hide');
     });
@@ -145,9 +113,8 @@ $(function () {
         $('#update-modal').modal('hide');
     });
 
-//新增弹窗里点击提交按钮
+    // 修改这里：根据映射关系调整新增表单的字段
     $("#add-submit-btn").click(function () {
-        // 防止重复提交
         var $btn = $(this);
         if ($btn.data('submitting')) {
             return;
@@ -158,34 +125,34 @@ $(function () {
         var originalText = $btn.html();
         $btn.html('<i class="bi bi-arrow-clockwise icon"></i>提交中...');
 
-        // 手动构建参数，包含所有字段
+        // 修正字段映射：
+        // e: 退货日期, f: 退货单号, w: 回厂日期
         let params = {
             c: $('#add-c').val(),      // 退货客户
             d: $('#add-d').val(),      // 退货电话
-            e: $('#add-e').val(),      // 退货日期
-            f: $('#add-f').val(),      // 回厂日期
-            g: $('#add-g').val(),      // 退货单号
-            h: $('#add-h').val(),      // 合同号
-            i: $('#add-i').val(),      // 任务号
-            j: $('#add-j').val(),      // 产品名称
-            k: $('#add-k').val(),      // 图号
-            l: $('#add-l').val(),      // 单位
-            m: $('#add-m').val(),      // 数量
-            n: $('#add-n').val(),      // 单价
-            o: $('#add-o').val(),      // 金额
-            p: $('#add-p').val(),      // 材质
-            q: $('#add-q').val(),      // 重量
-            r: $('#add-r').val(),      // 退货原因
-            s: $('#add-s').val(),      // 备注
-            t: $('#add-t').val(),      // 地址
-            u: $('#add-u').val(),      // 客户签字
-            v: $('#add-v').val()       // 电话
+            e: $('#add-e').val(),      // 退货日期 (正确)
+            f: $('#add-f').val(),      // 退货单号 (正确)
+            w: $('#add-w').val(),      // 回厂日期 (新增字段)
+            g: $('#add-g').val(),      // 合同号
+            h: $('#add-h').val(),      // 任务号
+            i: $('#add-i').val(),      // 产品名称
+            j: $('#add-j').val(),      // 图号
+            k: $('#add-k').val(),      // 单位
+            l: $('#add-l').val(),      // 数量
+            m: $('#add-m').val(),      // 单价
+            n: $('#add-n').val(),      // 金额
+            o: $('#add-o').val(),      // 材质
+            p: $('#add-p').val(),      // 重量
+            q: $('#add-q').val(),      // 退货原因
+            r: $('#add-r').val(),      // 地址
+            s: $('#add-s').val(),      // 客户签字
+            t: $('#add-t').val(),      // 电话
+            u: $('#add-u').val(),      // 备注
+            // v: $('#add-v').val()       // 空字段
         };
 
-        console.log('前端输入的数据:', params);
-        console.log('发送的JSON数据:', JSON.stringify(params));
+        console.log('新增数据:', params);
 
-        // 直接提交，不进行表单验证
         $ajax({
             type: 'post',
             url: '/thjl/add',
@@ -193,7 +160,6 @@ $(function () {
             dataType: 'json',
             contentType: 'application/json;charset=utf-8'
         }, false, '', function (res) {
-            // 恢复按钮状态
             $btn.data('submitting', false);
             $btn.prop('disabled', false);
             $btn.html(originalText);
@@ -209,7 +175,6 @@ $(function () {
                 swal("", res.msg, "error");
             }
         }, function(xhr, status, error) {
-            // 请求失败时也恢复按钮状态
             $btn.data('submitting', false);
             $btn.prop('disabled', false);
             $btn.html(originalText);
@@ -222,7 +187,7 @@ $(function () {
             swal("", "请求失败，请检查网络连接: " + error, "error");
         });
     });
-    //点击修改按钮显示弹窗
+
     $('#update-btn').click(function () {
         let rows = getTableSelection('#userTable');
         if (rows.length > 1 || rows.length == 0) {
@@ -233,16 +198,16 @@ $(function () {
         let selectedRow = rows[0];
         console.log('选中的行数据:', selectedRow);
 
-        // 数据在 data 属性中，正确访问方式：
         let rowData = selectedRow.data;
         console.log('实际数据对象:', rowData);
 
-        // 存储数据 - 从 data 属性中获取
+        // 修正：添加 w 字段（回厂日期）
         window.selectedUserData = {
             c: rowData.c,
             d: rowData.d,
-            e: rowData.e,
-            f: rowData.f,
+            e: rowData.e,  // 退货日期
+            f: rowData.f,  // 退货单号
+            w: rowData.w,  // 回厂日期 (新增)
             g: rowData.g,
             h: rowData.h,
             i: rowData.i,
@@ -258,7 +223,7 @@ $(function () {
             s: rowData.s,
             t: rowData.t,
             u: rowData.u,
-            v: rowData.v,
+            // v: rowData.v,
             id: rowData.id
         };
 
@@ -267,102 +232,79 @@ $(function () {
         $('#update-modal').modal('show');
     });
 
-// 监听弹窗完全显示事件
     $('#update-modal').on('shown.bs.modal', function () {
         if (window.selectedUserData) {
             console.log('读取的数据:', window.selectedUserData);
 
             let selectedRow = window.selectedUserData;
 
-            console.log('弹窗已显示，开始填充数据...');
-            console.log('要填充的数据:', selectedRow);
-
-            // 填充数据
+            // 修正：更新表单字段映射
             $('#update-c').val(selectedRow.c || '');  // 退货客户
             $('#update-d').val(selectedRow.d || '');  // 退货电话
-            $('#update-e').val(selectedRow.e || '');  // 退货日期
-            $('#update-f').val(selectedRow.f || '');  // 回厂日期
-            $('#update-g').val(selectedRow.g || '');  // 退货单号
-            $('#update-h').val(selectedRow.h || '');  // 合同号
-            $('#update-i').val(selectedRow.i || '');  // 任务号
-            $('#update-j').val(selectedRow.j || '');  // 产品名称
-            $('#update-k').val(selectedRow.k || '');  // 图号
-            $('#update-l').val(selectedRow.l || '');  // 单位
-            $('#update-m').val(selectedRow.m || '');  // 数量
-            $('#update-n').val(selectedRow.n || '');  // 单价
-            $('#update-o').val(selectedRow.o || '');  // 金额
-            $('#update-p').val(selectedRow.p || '');  // 材质
-            $('#update-q').val(selectedRow.q || '');  // 重量
-            $('#update-r').val(selectedRow.r || '');  // 退货原因
-            $('#update-s').val(selectedRow.s || '');  // 备注
-            $('#update-t').val(selectedRow.t || '');  // 地址
-            $('#update-u').val(selectedRow.u || '');  // 客户签字
-            $('#update-v').val(selectedRow.v || '');  // 电话
+            $('#update-e').val(selectedRow.e || '');  // 退货日期 (正确)
+            $('#update-f').val(selectedRow.f || '');  // 退货单号 (正确)
+            $('#update-w').val(selectedRow.w || '');  // 回厂日期 (新增字段)
+            $('#update-g').val(selectedRow.g || '');  // 合同号
+            $('#update-h').val(selectedRow.h || '');  // 任务号
+            $('#update-i').val(selectedRow.i || '');  // 产品名称
+            $('#update-j').val(selectedRow.j || '');  // 图号
+            $('#update-k').val(selectedRow.k || '');  // 单位
+            $('#update-l').val(selectedRow.l || '');  // 数量
+            $('#update-m').val(selectedRow.m || '');  // 单价
+            $('#update-n').val(selectedRow.n || '');  // 金额
+            $('#update-o').val(selectedRow.o || '');  // 材质
+            $('#update-p').val(selectedRow.p || '');  // 重量
+            $('#update-q').val(selectedRow.q || '');  // 退货原因
+            $('#update-r').val(selectedRow.r || '');  // 地址
+            $('#update-s').val(selectedRow.s || '');  // 客户签字
+            $('#update-t').val(selectedRow.t || '');  // 电话
+            $('#update-u').val(selectedRow.u || '');  // 备注
+            // $('#update-v').val(selectedRow.v || '');  // 空字段
 
-            $('#id').val(selectedRow.id || '');  // 添加这一行！
-
+            $('#id').val(selectedRow.id || '');
 
             console.log('填充后的表单值:');
-            console.log('退货客户:', $('#update-c').val());
-            console.log('退货电话:', $('#update-d').val());
             console.log('退货日期:', $('#update-e').val());
-            console.log('回厂日期:', $('#update-f').val());
-            console.log('退货单号:', $('#update-g').val());
-            console.log('合同号:', $('#update-h').val());
-            console.log('任务号:', $('#update-i').val());
-            console.log('产品名称:', $('#update-j').val());
-            console.log('图号:', $('#update-k').val());
-            console.log('单位:', $('#update-l').val());
-            console.log('数量:', $('#update-m').val());
-            console.log('单价:', $('#update-n').val());
-            console.log('金额:', $('#update-o').val());
-            console.log('材质:', $('#update-p').val());
-            console.log('重量:', $('#update-q').val());
-            console.log('退货原因:', $('#update-r').val());
-            console.log('备注:', $('#update-s').val());
-            console.log('地址:', $('#update-t').val());
-            console.log('客户签字:', $('#update-u').val());
-            console.log('电话:', $('#update-v').val());
-
-
+            console.log('退货单号:', $('#update-f').val());
+            console.log('回厂日期:', $('#update-w').val());
 
             window.selectedUserData = null;
         }
     });
 
-    //修改弹窗点击提交按钮 - 完全绕过验证
+    // 修改这里：根据映射关系调整修改表单的字段
     $('#update-submit-btn').click(function () {
         var msg = confirm("确认要修改吗？");
         console.log("msg", msg);
         if (msg) {
-            // 获取表单数据
+            // 修正字段映射
             let params = {
                 id: $('#id').val(),
                 c: $('#update-c').val(),  // 退货客户
                 d: $('#update-d').val(),  // 退货电话
-                e: $('#update-e').val(),  // 退货日期
-                f: $('#update-f').val(),  // 回厂日期
-                g: $('#update-g').val(),  // 退货单号
-                h: $('#update-h').val(),  // 合同号
-                i: $('#update-i').val(),  // 任务号
-                j: $('#update-j').val(),  // 产品名称
-                k: $('#update-k').val(),  // 图号
-                l: $('#update-l').val(),  // 单位
-                m: $('#update-m').val(),  // 数量
-                n: $('#update-n').val(),  // 单价
-                o: $('#update-o').val(),  // 金额
-                p: $('#update-p').val(),  // 材质
-                q: $('#update-q').val(),  // 重量
-                r: $('#update-r').val(),  // 退货原因
-                s: $('#update-s').val(),  // 备注
-                t: $('#update-t').val(),  // 地址
-                u: $('#update-u').val(),  // 客户签字
-                v: $('#update-v').val()   // 电话
+                e: $('#update-e').val(),  // 退货日期 (正确)
+                f: $('#update-f').val(),  // 退货单号 (正确)
+                w: $('#update-w').val(),  // 回厂日期 (新增)
+                g: $('#update-g').val(),  // 合同号
+                h: $('#update-h').val(),  // 任务号
+                i: $('#update-i').val(),  // 产品名称
+                j: $('#update-j').val(),  // 图号
+                k: $('#update-k').val(),  // 单位
+                l: $('#update-l').val(),  // 数量
+                m: $('#update-m').val(),  // 单价
+                n: $('#update-n').val(),  // 金额
+                o: $('#update-o').val(),  // 材质
+                p: $('#update-p').val(),  // 重量
+                q: $('#update-q').val(),  // 退货原因
+                r: $('#update-r').val(),  // 地址
+                s: $('#update-s').val(),  // 客户签字
+                t: $('#update-t').val(),  // 电话
+                u: $('#update-u').val(),  // 备注
+                // v: $('#update-v').val()   // 空字段
             };
 
             console.log('提交的修改数据:', params);
 
-            // 显示加载状态
             $(this).prop('disabled', true).text('提交中...');
 
             $.ajax({
@@ -374,7 +316,6 @@ $(function () {
                 success: function (res) {
                     console.log('服务器响应:', res);
 
-                    // 恢复按钮状态
                     $('#update-submit-btn').prop('disabled', false).text('提交');
 
                     if (res.code == 200) {
@@ -391,7 +332,6 @@ $(function () {
                     console.error('状态:', status);
                     console.error('响应文本:', xhr.responseText);
 
-                    // 恢复按钮状态
                     $('#update-submit-btn').prop('disabled', false).text('提交');
 
                     swal("", "请求失败，请检查网络连接或联系管理员", "error");
@@ -400,8 +340,6 @@ $(function () {
         }
     });
 
-
-    //点击删除按钮
     $('#delete-btn').click(function () {
         var msg = confirm("确认要删除吗？");
         if (msg) {
@@ -437,18 +375,15 @@ $(function () {
 });
 
 function setTable(data) {
-    // 确保表格容器存在
     if ($('#userTable').length === 0) {
         console.error('表格元素 #userTable 不存在');
         return;
     }
 
-    // 销毁现有表格
     if ($('#userTable').hasClass('bootstrap-table')) {
         $('#userTable').bootstrapTable('destroy');
     }
 
-    // 初始化表格
     $('#userTable').bootstrapTable({
         data: data,
         sortStable: true,
@@ -459,127 +394,26 @@ function setTable(data) {
         clickToSelect: true,
         locale: 'zh-CN',
         columns: [
-            {
-                field: 'c',  // 小写 c - 对应姓名
-                title: '退货客户',
-                align: 'center',
-                sortable: true,
-                width: 100,
-            }, {
-                field: 'd',  // 小写 d - 对应用户名
-                title: '退货电话',
-                align: 'center',
-                sortable: true,
-                width: 100,
-            }, {
-                field: 'e',  // 小写 e - 对应密码
-                title: '退货日期',
-                align: 'center',
-                sortable: true,
-                width: 100,
-            }, {
-                field: 'f',  // 小写 f - 对应权限
-                title: '回厂日期',
-                align: 'center',
-                sortable: true,
-                width: 100,
-            },{
-        field: 'g',  // 小写 e - 对应密码
-            title: '退货单号',
-            align: 'center',
-            sortable: true,
-            width: 100,
-    },{
-        field: 'h',  // 小写 e - 对应密码
-            title: '合同号',
-            align: 'center',
-            sortable: true,
-            width: 100,
-    },{
-        field: 'i',  // 小写 e - 对应密码
-            title: '任务号',
-            align: 'center',
-            sortable: true,
-            width: 100,
-    },{
-        field: 'j',  // 小写 e - 对应密码
-            title: '产品名称',
-            align: 'center',
-            sortable: true,
-            width: 100,
-    },{
-        field: 'k',  // 小写 e - 对应密码
-            title: '图号',
-            align: 'center',
-            sortable: true,
-            width: 100,
-    },{
-        field: 'l',  // 小写 e - 对应密码
-            title: '单位',
-            align: 'center',
-            sortable: true,
-            width: 100,
-    },{
-        field: 'm',  // 小写 e - 对应密码
-            title: '数量',
-            align: 'center',
-            sortable: true,
-            width: 100,
-    },{
-        field: 'n',  // 小写 e - 对应密码
-            title: '单价',
-            align: 'center',
-            sortable: true,
-            width: 100,
-    },{
-        field: 'o',  // 小写 e - 对应密码
-            title: '金额',
-            align: 'center',
-            sortable: true,
-            width: 100,
-    },{
-        field: 'p',  // 小写 e - 对应密码
-            title: '材质',
-            align: 'center',
-            sortable: true,
-            width: 100,
-    },{
-        field: 'q',  // 小写 e - 对应密码
-            title: '重量',
-            align: 'center',
-            sortable: true,
-            width: 100,
-    },{
-                field: 'r',  // 小写 e - 对应密码
-                title: '退货原因',
-                align: 'center',
-                sortable: true,
-                width: 100,
-            },{
-                field: 's',  // 小写 e - 对应密码
-                title: '备注',
-                align: 'center',
-                sortable: true,
-                width: 100,
-            },{
-                field: 't',  // 小写 e - 对应密码
-                title: '地址',
-                align: 'center',
-                sortable: true,
-                width: 100,
-            },{
-                field: 'u',  // 小写 e - 对应密码
-                title: '客户签字',
-                align: 'center',
-                sortable: true,
-                width: 100,
-            },{
-                field: 'v',  // 小写 e - 对应密码
-                title: '电话',
-                align: 'center',
-                sortable: true,
-                width: 100,
-            }
+            { field: 'c', title: '退货客户', align: 'center', sortable: true, width: 100 },
+            { field: 'd', title: '退货电话', align: 'center', sortable: true, width: 100 },
+            { field: 'e', title: '退货日期', align: 'center', sortable: true, width: 100 },
+            { field: 'f', title: '退货单号', align: 'center', sortable: true, width: 100 },
+            { field: 'w', title: '回厂日期', align: 'center', sortable: true, width: 100 },
+            { field: 'g', title: '合同号', align: 'center', sortable: true, width: 100 },
+            { field: 'h', title: '任务号', align: 'center', sortable: true, width: 100 },
+            { field: 'i', title: '产品名称', align: 'center', sortable: true, width: 100 },
+            { field: 'j', title: '图号', align: 'center', sortable: true, width: 100 },
+            { field: 'k', title: '单位', align: 'center', sortable: true, width: 100 },
+            { field: 'l', title: '数量', align: 'center', sortable: true, width: 100 },
+            { field: 'm', title: '单价', align: 'center', sortable: true, width: 100 },
+            { field: 'n', title: '金额', align: 'center', sortable: true, width: 100 },
+            { field: 'o', title: '材质', align: 'center', sortable: true, width: 100 },
+            { field: 'p', title: '重量', align: 'center', sortable: true, width: 100 },
+            { field: 'q', title: '退货原因', align: 'center', sortable: true, width: 100 },
+            { field: 'r', title: '地址', align: 'center', sortable: true, width: 100 },
+            { field: 's', title: '客户签字', align: 'center', sortable: true, width: 100 },
+            { field: 't', title: '电话', align: 'center', sortable: true, width: 100 },
+            { field: 'u', title: '备注', align: 'center', sortable: true, width: 100 }
         ],
         onClickRow: function (row, el) {
             let isSelect = $(el).hasClass('selected')
@@ -591,9 +425,7 @@ function setTable(data) {
         }
     });
 
-    // 强制刷新表格视图
     $('#userTable').bootstrapTable('load', data);
     $('#userTable').bootstrapTable('resetView');
 }
-
 

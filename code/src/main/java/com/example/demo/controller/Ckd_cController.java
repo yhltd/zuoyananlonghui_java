@@ -8,10 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -144,6 +141,62 @@ public class Ckd_cController {
             e.printStackTrace();
             log.error("获取失败：{}", e.getMessage());
             return ResultInfo.error("错误!");
+        }
+    }
+
+
+    // 在CkdController中添加删除出库单的接口
+    @RequestMapping("/deleteByChukudanhao")
+    public ResultInfo deleteByChukudanhao(@RequestParam("chukudanhao") String chukudanhao, HttpSession session) {
+        try {
+            // 查询该出库单的所有记录
+            List<Ckd_c> chukuList = ckd_cService.getByChukudanhao(chukudanhao);
+
+            if (chukuList == null || chukuList.isEmpty()) {
+                return ResultInfo.success("未找到相关数据");
+            }
+
+            // 提取ID列表
+            List<Integer> idList = new ArrayList<>();
+            for (Ckd_c chuku : chukuList) {
+                if (chuku.getId() != null) {
+                    idList.add(chuku.getId());
+                }
+            }
+
+            // 调用删除服务
+            boolean result = ckd_cService.delete(idList);
+
+            if (result) {
+                return ResultInfo.success("删除成功，共删除 " + idList.size() + " 条记录");
+            } else {
+                return ResultInfo.error("删除失败");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("删除出库单失败：{}", e.getMessage());
+            return ResultInfo.error("删除失败!");
+        }
+    }
+
+    // 批量删除接口
+    @RequestMapping("/deleteByIds")
+    public ResultInfo deleteByIds(@RequestBody HashMap map, HttpSession session) {
+        try {
+            GsonUtil gsonUtil = new GsonUtil(GsonUtil.toJson(map));
+            List<Integer> idList = GsonUtil.toList(gsonUtil.get("idList"), Integer.class);
+
+            boolean result = ckd_cService.delete(idList);
+
+            if (result) {
+                return ResultInfo.success("删除成功");
+            } else {
+                return ResultInfo.error("删除失败");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("批量删除出库单失败：{}", e.getMessage());
+            return ResultInfo.error("删除失败!");
         }
     }
 

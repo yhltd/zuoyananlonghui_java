@@ -25,21 +25,15 @@ public class HtjlImpl extends ServiceImpl<HtjlMapper, Htjl> implements HtjlServi
     HtjlMapper htjlMapper;
 
 
-//    @Override
-//    public List<Htjl> getList() {  // 方法名必须一致
-//        return htjlMapper.getList();
-//    }
-@Override
-public List<Htjl> getListExcludeThjl() {
-    return htjlMapper.getListExcludeThjl();
-}
+    @Override
+    public List<Htjl> getListExcludeThjl() {
+        return htjlMapper.getListExcludeThjl();
+    }
 
 
 
     @Override
     public boolean update(Htjl htjl) {
-        // 使用MyBatis-Plus的updateById方法
-        // ✅ 正确：应该调用自定义的update方法
         return htjlMapper.update(htjl);
     }
 

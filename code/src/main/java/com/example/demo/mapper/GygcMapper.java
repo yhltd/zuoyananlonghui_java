@@ -32,6 +32,26 @@ public interface GygcMapper extends BaseMapper<Gygc> {
     boolean delete(int id);
 
 
+//    @Select("SELECT hetong_jilu.* " +
+//            "FROM hetong_jilu " +
+//            "LEFT JOIN ( " +
+//            "    SELECT " +
+//            "        C AS left_id, " +
+//            "        CASE " +
+//            "            WHEN renwu > renyuan THEN '未完成' " +
+//            "            ELSE '已完成' " +
+//            "        END AS zhuangtai " +
+//            "    FROM ( " +
+//            "        SELECT " +
+//            "            C, " +
+//            "            SUM(CASE WHEN ISNULL(K, '') != '' THEN 1 ELSE 0 END) AS renwu, " +
+//            "            SUM(CASE WHEN ISNULL(M, '') != '' THEN 1 ELSE 0 END) AS renyuan " +
+//            "        FROM gongyi_guicheng " +
+//            "        GROUP BY C " +
+//            "    ) AS guicheng " +
+//            ") AS guicheng ON hetong_jilu.id = guicheng.left_id " +
+//            "WHERE ISNULL(zhuangtai, '未创建') != '未创建'")
+//    List<Gygc> getList();
     @Select("SELECT hetong_jilu.* " +
             "FROM hetong_jilu " +
             "LEFT JOIN ( " +
@@ -48,9 +68,9 @@ public interface GygcMapper extends BaseMapper<Gygc> {
             "            SUM(CASE WHEN ISNULL(M, '') != '' THEN 1 ELSE 0 END) AS renyuan " +
             "        FROM gongyi_guicheng " +
             "        GROUP BY C " +
-            "    ) AS guicheng " +
-            ") AS guicheng ON hetong_jilu.id = guicheng.left_id " +
-            "WHERE ISNULL(zhuangtai, '未创建') != '未创建'")
+            "    ) AS inner_guicheng " +
+            ") AS guicheng_status ON hetong_jilu.id = guicheng_status.left_id " +
+            "WHERE ISNULL(guicheng_status.zhuangtai, '未创建') != '未创建'")
     List<Gygc> getList();
 
 }

@@ -2,10 +2,12 @@ package com.example.demo.controller;
 
 import com.example.demo.entity.Gygc;
 import com.example.demo.entity.UserInfo;
+import com.example.demo.mapper.HtjlMapper;
 import com.example.demo.service.GygcService;
 import com.example.demo.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
@@ -19,6 +21,9 @@ import java.util.List;
 public class GygcController {
     @Autowired
     private GygcService gygcService;
+
+    @Autowired
+    private HtjlMapper htjlMapper;
 
     @RequestMapping("/queryList")
     public ResultInfo queryList(String htid, HttpSession session) {
@@ -49,6 +54,7 @@ public class GygcController {
             // 调用批量修改服务
             boolean success = gygcService.updateBatch(gygcList);
             if (success) {
+                updateHetongZhuangtaiBasedOnGongyiGuicheng();
                 return ResultInfo.success("批量修改成功，共修改 " + gygcList.size() + " 条记录", gygcList);
             } else {
                 return ResultInfo.error("批量修改失败");
@@ -59,6 +65,37 @@ public class GygcController {
             return ResultInfo.error("批量修改失败：" + e.getMessage());
         }
     }
+
+    /**
+     * 根据gongyi_guicheng表数据更新hetong_jilu表的zhuangtai字段
+     */
+    private void updateHetongZhuangtaiBasedOnGongyiGuicheng() {
+
+
+        updateZhuangtaiBySQL();
+
+    }
+
+    /**
+     * 使用SQL直接更新hetong_jilu表的zhuangtai字段
+     */
+    private void updateZhuangtaiBySQL() {
+        // 执行SQL更新
+        try {
+            System.out.println("开始更新hetong_jilu表的zhuangtai字段...");
+
+            // 使用MyBatis Mapper执行更新
+            int unfinishedRows = htjlMapper.updateZhuangtaiForUnfinished();
+            int completedRows = htjlMapper.updateZhuangtaiForCompleted();
+
+            System.out.println("更新完成：未完成=" + unfinishedRows + "条，已完成=" + completedRows + "条");
+            System.out.println("hetong_jilu表的zhuangtai字段更新完成");
+        } catch (Exception e) {
+            log.error("更新hetong_jilu表zhuangtai字段失败", e);
+        }
+    }
+
+
 
     @RequestMapping(value = "/addBatch", method = RequestMethod.POST)
     public ResultInfo addBatch(@RequestBody List<Gygc> gygcList, HttpSession session) {

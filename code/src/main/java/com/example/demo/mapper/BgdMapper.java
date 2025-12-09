@@ -18,24 +18,50 @@ public interface BgdMapper extends BaseMapper<Bgd> {
     /**
      * 查询工艺规程数据
      */
+//    @Select({
+//            "<script>",
+//            "WITH AllContracts AS (",
+//            "    SELECT DISTINCT hj.id",
+//            "    FROM hetong_jilu hj",
+//            "    LEFT JOIN (",
+//            "        SELECT C left_id,",
+//            "        CASE WHEN SUM(CASE WHEN ISNULL(gg.K, '') != '' THEN 1 ELSE 0 END) > ",
+//            "                  SUM(CASE WHEN ISNULL(gg.M, '') != '' THEN 1 ELSE 0 END)",
+//            "             THEN '未完成' ELSE '已完成' END zhuangtai",
+//            "        FROM gongyi_guicheng gg",
+//            "        GROUP BY C",
+//            "    ) status_table ON hj.id = status_table.left_id",
+//            "    WHERE ISNULL(hj.hetong_zhuangtai, '') = ''",
+//            "    AND NOT EXISTS (",
+//            "        SELECT 1 FROM tuihuo t ",
+//            "        WHERE t.v = hj.id",
+//            "    )",
+//            ")",
+//            ", RankedProcess AS (",
+//            "    SELECT ",
+//            "        gp.id, gp.C, gp.J, gp.K, gp.M, gp.D,",
+//            "        ROW_NUMBER() OVER (PARTITION BY gp.C ORDER BY gp.id ASC) rn",
+//            "    FROM gongyi_guicheng gp",
+//            "    INNER JOIN AllContracts ac ON gp.C = CAST(ac.id AS NVARCHAR(50))",
+//            ")",
+//            "SELECT id, C, J, K, M, D",
+//            "FROM RankedProcess",
+//            "WHERE rn = 1",
+//            "</script>"
+//    })
+//    List<Map<String, Object>> getOptimizedProcessData();
+
     @Select({
             "<script>",
             "WITH AllContracts AS (",
             "    SELECT DISTINCT hj.id",
             "    FROM hetong_jilu hj",
-            "    LEFT JOIN (",
-            "        SELECT C left_id,",
-            "        CASE WHEN SUM(CASE WHEN ISNULL(gg.K, '') != '' THEN 1 ELSE 0 END) > ",
-            "                  SUM(CASE WHEN ISNULL(gg.M, '') != '' THEN 1 ELSE 0 END)",
-            "             THEN '未完成' ELSE '已完成' END zhuangtai",
-            "        FROM gongyi_guicheng gg",
-            "        GROUP BY C",
-            "    ) status_table ON hj.id = status_table.left_id",
             "    WHERE ISNULL(hj.hetong_zhuangtai, '') = ''",
-            "    AND NOT EXISTS (",
-            "        SELECT 1 FROM tuihuo t ",
-            "        WHERE t.v = hj.id",
-            "    )",
+            "      AND hj.zhuangtai IN ('未完成', '已完成')",
+            "      AND NOT EXISTS (",
+            "          SELECT 1 FROM tuihuo t ",
+            "          WHERE t.v = hj.id",
+            "      )",
             ")",
             ", RankedProcess AS (",
             "    SELECT ",
@@ -50,6 +76,8 @@ public interface BgdMapper extends BaseMapper<Bgd> {
             "</script>"
     })
     List<Map<String, Object>> getOptimizedProcessData();
+
+
     @Select({
             "<script>",
             "WITH UncompletedContracts AS (",

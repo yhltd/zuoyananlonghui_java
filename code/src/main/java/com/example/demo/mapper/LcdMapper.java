@@ -16,22 +16,45 @@ public interface LcdMapper extends BaseMapper<Lcd> {
     /**
      * 直接查询工艺规程数据 - 单次SQL完成所有逻辑
      */
+//    @Select({
+//            "WITH UncompletedContracts AS (",
+//            "    SELECT DISTINCT hj.id",
+//            "    FROM hetong_jilu hj",
+//            "    LEFT JOIN (",
+//            "        SELECT C as left_id,",
+//            "        CASE WHEN SUM(CASE WHEN ISNULL(gg.K, '') != '' THEN 1 ELSE 0 END) > ",
+//            "                  SUM(CASE WHEN ISNULL(gg.M, '') != '' THEN 1 ELSE 0 END)",
+//            "             THEN '未完成' ELSE '已完成' END as zhuangtai",
+//            "        FROM gongyi_guicheng gg",
+//            "        GROUP BY C",
+//            "    ) as status_table ON hj.id = status_table.left_id",
+//            "    LEFT JOIN tuihuo t ON hj.id = t.id",
+//            "    WHERE ISNULL(hj.hetong_zhuangtai, '') = ''",
+//            "    AND ISNULL(status_table.zhuangtai, '未创建') = '未完成'",
+//            "    AND t.id IS NULL",  // 排除退货合同
+//            ")",
+//            ", RankedProcess AS (",
+//            "    SELECT ",
+//            "        gp.id, gp.C, gp.J, gp.K, gp.M, gp.D,",
+//            "        ROW_NUMBER() OVER (PARTITION BY gp.C ORDER BY gp.id ASC) as rn",
+//            "    FROM gongyi_guicheng gp",
+//            "    INNER JOIN UncompletedContracts uc ON gp.C = CAST(uc.id AS NVARCHAR(50))",
+//            "    WHERE (ISNULL(gp.M, '') = '' OR gp.M = '')",
+//            ")",
+//            "SELECT id, C, J, K, M, D",
+//            "FROM RankedProcess",
+//            "WHERE rn = 1"
+//    })
+//    List<Lcd> getOptimizedProcessData();
+
     @Select({
             "WITH UncompletedContracts AS (",
             "    SELECT DISTINCT hj.id",
             "    FROM hetong_jilu hj",
-            "    LEFT JOIN (",
-            "        SELECT C as left_id,",
-            "        CASE WHEN SUM(CASE WHEN ISNULL(gg.K, '') != '' THEN 1 ELSE 0 END) > ",
-            "                  SUM(CASE WHEN ISNULL(gg.M, '') != '' THEN 1 ELSE 0 END)",
-            "             THEN '未完成' ELSE '已完成' END as zhuangtai",
-            "        FROM gongyi_guicheng gg",
-            "        GROUP BY C",
-            "    ) as status_table ON hj.id = status_table.left_id",
             "    LEFT JOIN tuihuo t ON hj.id = t.id",
             "    WHERE ISNULL(hj.hetong_zhuangtai, '') = ''",
-            "    AND ISNULL(status_table.zhuangtai, '未创建') = '未完成'",
-            "    AND t.id IS NULL",  // 排除退货合同
+            "      AND hj.zhuangtai = '未完成'",  // 直接使用hetong_jilu表中的zhuangtai字段
+            "      AND t.id IS NULL",  // 排除退货合同
             ")",
             ", RankedProcess AS (",
             "    SELECT ",

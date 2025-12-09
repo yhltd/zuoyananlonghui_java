@@ -553,6 +553,7 @@
 
 package com.example.demo.controller;
 
+import com.example.demo.mapper.HtjlMapper;
 import com.example.demo.service.BgdService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -569,6 +570,9 @@ public class MobileController {
 
     @Autowired
     private BgdService bgdService;
+
+    @Autowired
+    private HtjlMapper htjlMapper;
 
     /**
      * 移动端合同详情页面 - 不需要登录
@@ -716,6 +720,8 @@ public class MobileController {
 
             if (success) {
                 System.out.println("签名更新成功");
+
+                updateHetongZhuangtaiBasedOnGongyiGuicheng();
                 return createSuccessResult("签名成功");
             } else {
                 System.out.println("签名更新失败");
@@ -726,6 +732,35 @@ public class MobileController {
             e.printStackTrace();
             System.out.println("签名异常: " + e.getMessage());
             return createErrorResult("系统错误: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 根据gongyi_guicheng表数据更新hetong_jilu表的zhuangtai字段
+     */
+    private void updateHetongZhuangtaiBasedOnGongyiGuicheng() {
+
+
+        updateZhuangtaiBySQL();
+
+    }
+
+    /**
+     * 使用SQL直接更新hetong_jilu表的zhuangtai字段
+     */
+    private void updateZhuangtaiBySQL() {
+        // 执行SQL更新
+        try {
+            System.out.println("开始更新hetong_jilu表的zhuangtai字段...");
+
+            // 使用MyBatis Mapper执行更新
+            int unfinishedRows = htjlMapper.updateZhuangtaiForUnfinished();
+            int completedRows = htjlMapper.updateZhuangtaiForCompleted();
+
+            System.out.println("更新完成：未完成=" + unfinishedRows + "条，已完成=" + completedRows + "条");
+            System.out.println("hetong_jilu表的zhuangtai字段更新完成");
+        } catch (Exception e) {
+
         }
     }
 

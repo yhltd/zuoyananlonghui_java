@@ -63,6 +63,9 @@ public interface Ckd_cMapper extends BaseMapper<Ckd_c> {
     @Select("select isnull(max(E),'') from chuku where E like 'LH-' + CONVERT(varchar(8), GETDATE(), 112) + '%'")
     String  getddh();
 
+    @Select("SELECT * FROM chuku WHERE e = #{chukudanhao}")
+    List<Ckd_c> getByChukudanhao(@Param("chukudanhao") String chukudanhao);
+
 
 }
 

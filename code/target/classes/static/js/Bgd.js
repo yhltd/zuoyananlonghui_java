@@ -396,9 +396,12 @@ function showQRCodeModal(contractId, qrData) {
     console.log("显示二维码模态框，合同ID:", contractId, "二维码返回数据:", qrData);
 
     var qrContent = qrData.qrContent;
-    console.log("二维码URL:", qrContent);
+    var qrCodeImage = qrData.qrCodeImage; // 获取后端返回的base64图片
 
-    if (!qrContent) {
+    console.log("二维码URL:", qrContent);
+    console.log("base64图片数据长度:", qrCodeImage ? qrCodeImage.length : 0);
+
+    if (!qrContent || !qrCodeImage) {
         console.error("二维码内容为空!");
         swal("", "二维码内容生成失败", "error");
         return;
@@ -417,7 +420,12 @@ function showQRCodeModal(contractId, qrData) {
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-6 text-center">
-                        <div id="qrcode"></div>
+                        <!-- 直接使用后端返回的base64图片 -->
+                        <img id="qrcodeImage" 
+                             src="data:image/png;base64,${qrCodeImage}" 
+                             alt="合同二维码" 
+                             class="img-fluid"
+                             style="max-width: 250px; height: auto;">
                         <p class="mt-2"><strong>合同ID:</strong> ${contractId}</p>
                         <div class="alert alert-info mt-2">
                             <small>
@@ -456,7 +464,7 @@ function showQRCodeModal(contractId, qrData) {
     $('body').append(modalHtml);
     $('#qrCodeModal').modal('show');
 
-    generateQRImage(qrContent);
+    // 移除generateQRImage调用，因为现在直接使用后端图片
 }
 
 // 复制到剪贴板
@@ -542,16 +550,45 @@ function generateQRImage(content) {
 
 // 下载二维码
 function downloadQRCode(contractId) {
-    var canvas = document.querySelector('#qrcode canvas');
-    if (canvas) {
-        var link = document.createElement('a');
-        link.download = 'contract_' + (contractId || 'unknown') + '_qrcode.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        console.log("二维码下载成功");
+    // 从模态框中获取base64图片数据
+    var qrImage = document.getElementById('qrcodeImage');
+
+    if (qrImage && qrImage.src) {
+        try {
+            // 创建下载链接
+            var link = document.createElement('a');
+
+            // 设置文件名，包含合同ID
+            var fileName = 'contract_' + (contractId || 'unknown') + '_qrcode.png';
+            link.download = fileName;
+
+            // 直接从img的src获取base64数据
+            var base64Data = qrImage.src;
+
+            // 确保是有效的base64数据
+            if (!base64Data || base64Data === '') {
+                console.error("二维码图片数据为空");
+                swal("", "二维码数据为空，无法下载", "error");
+                return;
+            }
+
+            // 直接使用img的src作为下载链接
+            link.href = base64Data;
+
+            // 触发下载
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // 使用正确的swal调用显示成功消息
+            swal("下载成功", "二维码已成功下载，文件名: " + fileName, "success");
+
+        } catch (error) {
+            console.error("二维码下载失败:", error);
+            swal("", "二维码下载失败: " + error.message, "error");
+        }
     } else {
-        console.error("找不到二维码canvas元素");
-        swal("", "找不到二维码图像", "error");
+        swal("", "未找到二维码图片", "error");
     }
 }
 

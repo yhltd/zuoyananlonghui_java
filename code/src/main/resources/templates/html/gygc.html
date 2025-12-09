@@ -265,6 +265,16 @@
                 background-color: white !important;
                 border: 1px solid #000 !important;
             }
+
+            /* 专门针对第三行表头 */
+            table#processTable thead tr:nth-child(3) th {
+                outline: 1.5px solid #000000 !important;  /* 加深颜色，加粗线条 */
+                border: 1px solid #000 !important;     /* 保留原有边框 */
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+                border-collapse: collapse !important;
+            }
+
         }
 
         .search-fields {
@@ -445,7 +455,7 @@
                         <input type="text" id="searchDrawingNumber" placeholder="输入图号...">
                     </div>
                 </div>
-                <button class="btn" id="searchBtn">搜索</button>
+                <button class="btn" id="searchBtn" style="background-color: #2c5e9c;">搜索</button>
             </div>
             <div id="resultsContainer">
                 <!-- 表格保持不变 -->

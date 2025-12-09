@@ -1,5 +1,10 @@
 server:
-  port: 9093
+  port: 9096
+#  ssl:
+#    enabled: true #启用SSL
+#    key-store: classpath:yhocn.cn.jks #文件位置
+#    key-store-password: xk97ji4s1h3f360 #密钥存储密码（即生成时要求输入两遍的那个的密钥库口令）
+#    key-store-type: JKS
 
 spring:
   profiles:

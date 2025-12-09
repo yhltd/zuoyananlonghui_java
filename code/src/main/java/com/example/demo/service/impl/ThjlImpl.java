@@ -57,7 +57,16 @@ public class ThjlImpl extends ServiceImpl<ThjlMapper, Thjl> implements ThjlServi
         return removeByIds(idList);
     }
 
+    @Override
+    public List<Thjl> gettdh() {  // 方法名必须一致
+        return baseMapper.gettdh();
     }
+
+    @Override
+    public List<Thjl> getth(String returnNo ){
+        return baseMapper.getth(returnNo);
+    }
+}
 
 
 

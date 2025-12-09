@@ -18,7 +18,6 @@ var idd;
 function initTitleInputs() {
     // 初始化标题输入框的代码
     console.log("initTitleInputs 函数被调用");
-    // 具体的初始化逻辑...
 }
 
 function getList() {
@@ -49,6 +48,8 @@ function getList() {
 $(function () {
     getList();
 
+    loadReturnNos();
+
     $('#goto-return-btn').click(function(e) {
         e.preventDefault();
         console.log('跳转到出库单按钮被点击');
@@ -57,9 +58,30 @@ $(function () {
 
     initReturnOrder();
 
-
     // 初始化标题输入框
     initTitleInputs();
+
+    // 绑定查询按钮事件 - 放在这里
+    $('#sle-row-btn').click(function() {
+        // 获取选择的退货单号
+        var selectedReturnNo = $('#return-no-select').val();
+
+        if (!selectedReturnNo || selectedReturnNo === '') {
+            swal("提示", "请先选择退货单号", "info");
+            return;
+        }
+
+        // 显示加载状态
+        var $btn = $(this);
+        var originalText = $btn.html();
+        $btn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> 查询中...');
+
+        // 查询退货单
+        searchReturnOrder(selectedReturnNo, function() {
+            // 查询完成后恢复按钮状态
+            $btn.prop('disabled', false).html(originalText);
+        });
+    });
 
 
 
@@ -1724,9 +1746,9 @@ function bindReturnOrderEvents() {
     $('#select-all').click(function() {
         $('.row-select').prop('checked', this.checked);
     });
-// 保存退货单按钮点击事件
-    $("#save-return-btn").click(function () {
 
+    // 保存退货单按钮点击事件
+    $("#save-return-btn").click(function () {
         // 检测必填字段
         var returnCustomer = $('#return-customer').val();
         var returnDate = $('#return-date').val();
@@ -1751,95 +1773,35 @@ function bindReturnOrderEvents() {
             return;
         }
 
-        var $btn = $(this);
-        if ($btn.data('submitting')) {
-            return;
-        }
-        $btn.data('submitting', true);
-        $btn.prop('disabled', true);
 
-        var originalText = $btn.html();
-        $btn.html('<i class="bi bi-arrow-clockwise icon"></i>提交中...');
+        //------------------------
 
-        // 直接收集所有明细行的数据
-        var details = [];
-        $('#return-detail-table tbody tr').each(function(index) {
-            var $row = $(this);
-            var detail = {
-                // 共用信息
-                f: $('#return-no').val(),
-                c: $('#return-customer').val(),
-                d: $('#return-phone').val(),
-                r: $('#company-address').val() ,
-                t: $('#company-phone').val(),
-                e: $('#return-date').val(),
-                s: $('#customer-signature').val(),
-                // 明细特有信息
-                q: $row.find('input[name="returnReason"]').val(),
-                g: $row.find('input[name="contractNo"]').val(),
-                h: $row.find('input[name="taskNo"]').val(),
-                i: $row.find('input[name="productName"]').val(),
-                j: $row.find('input[name="drawingNo"]').val(),
-                k: $row.find('input[name="unit"]').val(),
-                l: $row.find('input[name="quantity"]').val(),
-                m: $row.find('input[name="unitPrice"]').val(),
-                n: $row.find('input[name="amount"]').val(),
-                o: $row.find('input[name="material"]').val(),
-                p: $row.find('input[name="weight"]').val(),
-                w: $row.find('input[name="returnDate"]').val(),
-                u: $row.find('input[name="remark"]').val(),
-                v: $row.data('original-id') || ''  // 从data属性获取原表id
-            };
+        // 先检查退货单号是否已存在
+        checkReturnNoExists(returnNo, function(exists, count) {
+            if (exists) {
+                // 使用alert对话框提示用户
+                var userChoice = confirm(`退货单号 ${returnNo} 在数据库中已有 ${count} 条记录\n\n是否要删除原有数据并保存新数据？`);
 
-
-            details.push(detail);
-
-        });
-
-        console.log('要保存的退货单数据:', details);
-
-        // 遍历发送每个明细
-        var successCount = 0;
-        var totalCount = details.length;
-
-        details.forEach(function(detail, index) {
-            $ajax({
-                type: 'post',
-                url: '/htjl/save',
-                data: JSON.stringify(detail),
-                dataType: 'json',
-                contentType: 'application/json;charset=utf-8'
-            }, false, '', function (res) {
-                successCount++;
-
-                if (successCount === totalCount) {
-                    $btn.data('submitting', false);
-                    $btn.prop('disabled', false);
-                    $btn.html(originalText);
-
-                    if (res.code == 200) {
-                        swal("", "保存成功，共插入 " + successCount + " 条数据", "success");
-                        // 清空表单
-                        $('#return-customer').val('');
-                        $('#return-phone').val('');
-                        $('#return-reason').val('');
-                        $('#customer-signature').val('');
-                        $('#return-detail-table tbody').empty();
-                        addReturnRow();
-                        calculateTotalAmount();
-                        getList();
-                    } else {
-                        swal("", res.msg, "error");
-                    }
+                if (userChoice) {
+                    // 用户点击"确定" - 先删除已有数据，再保存新数据
+                    deleteExistingReturnOrder(returnNo, function() {
+                        // 删除成功后保存新数据
+                        saveReturnOrderData();
+                    });
+                } else {
+                    // 用户点击"取消" - 清空页面表格
+                    clearReturnForm();
+                    alert("已清空页面表格，请重新填写数据");
                 }
-            }, function(xhr, status, error) {
-                $btn.data('submitting', false);
-                $btn.prop('disabled', false);
-                $btn.html(originalText);
-                swal("", "请求失败: " + error, "error");
-            });
+            } else {
+                // 直接保存数据
+                saveReturnOrderData();
+            }
         });
     });
+
+    //-------------------------------------
+
     $('#add-row-btn').click(function() {
         addReturnRow();
     });
@@ -1851,10 +1813,10 @@ function bindReturnOrderEvents() {
     $('#generate-btn').click(function() {
         generateReturnOrder();
     });
+
     $('#baocun-btn').click(function() {
         tuihuojilu();
     });
-
 
     $(document).on('input', 'input[name="quantity"], input[name="unitPrice"]', function() {
         calculateRowAmount($(this).closest('tr'));
@@ -2099,3 +2061,398 @@ function getCurrentDate() {
     var day = String(now.getDate()).padStart(2, '0');
     return year + '-' + month + '-' + day;
 }
+
+
+// 加载退货单号下拉框
+function loadReturnNos() {
+    console.log('开始加载退货单号...');
+
+    $ajax({
+        type: 'post',
+        url: '/htjl/gettdh',
+        contentType: 'application/json',
+        dataType: 'json'
+    }, false, '', function(res) {
+        if (res.code == 200) {
+            console.log('获取退货单号成功:', res);
+
+            var $select = $('#return-no-select');
+            $select.empty(); // 清空现有选项
+
+            // 添加默认选项
+            $select.append('<option value="">请选择退货单号</option>');
+
+            // 检查数据结构，确保有数据
+            if (res.data && Array.isArray(res.data)) {
+                // 去重并排序
+                var uniqueReturnNos = [...new Set(res.data.map(item => item.f || ''))].filter(Boolean).sort();
+
+                // 添加选项
+                uniqueReturnNos.forEach(function(returnNo) {
+                    if (returnNo) {
+                        $select.append('<option value="' + returnNo + '">' + returnNo + '</option>');
+                    }
+                });
+
+                console.log('已加载 ' + uniqueReturnNos.length + ' 个退货单号');
+
+            } else if (typeof res.data === 'string') {
+                // 如果返回的是单个字符串
+                $select.append('<option value="' + res.data + '">' + res.data + '</option>');
+            } else {
+                console.warn('退货单号数据格式异常:', res.data);
+                $select.append('<option value="">暂无数据</option>');
+            }
+
+            // 触发change事件（如果有默认选择）
+            $select.trigger('change');
+
+        } else {
+            console.error('获取退货单号失败:', res.msg);
+            $('#return-no-select').html('<option value="">加载失败</option>');
+        }
+    });
+}
+
+
+// 查询特定退货单
+function searchReturnOrder(returnNo, callback) {
+    console.log('开始查询退货单:', returnNo);
+
+
+    $ajax({
+        type: 'post',
+        url: '/htjl/searchReturnOrder',
+        data: {
+            returnNo: returnNo
+        },
+        dataType: 'json'
+    }, false, '', function(res) {
+
+        if (callback && typeof callback === 'function') {
+            callback();
+        }
+
+        if (res.code == 200) {
+            console.log('查询退货单成功:', res.data);
+
+            if (res.data && res.data.length > 0) {
+                // 填充退货单数据到表格
+                fillReturnTable(res.data);
+
+                // 设置退货单信息
+                if (res.data[0]) {
+                    var firstRecord = res.data[0];
+                    $('#return-no').val(firstRecord.f || returnNo);
+                    $('#return-customer').val(firstRecord.c || '');
+                    $('#return-phone').val(firstRecord.d || '');
+                    $('#return-date').val(firstRecord.e || getCurrentDate());
+                    $('#company-address').val(firstRecord.r || '');
+                    $('#company-phone').val(firstRecord.t || '');
+                    $('#customer-signature').val(firstRecord.s || '');
+                }
+
+                swal("查询成功", "找到 " + res.data.length + " 条退货记录", "success");
+
+                // 显示退货单模态框
+                $('#return-modal').modal('show');
+            } else {
+                swal("查询结果", "未找到退货单号为 " + returnNo + " 的记录", "info");
+            }
+        } else {
+            swal("查询失败", res.msg || "查询退货单失败", "error");
+        }
+    });
+}
+
+// 查询所有退货单
+function searchAllReturnOrders() {
+    swal("请输入退货单号");
+    return;
+    showLoading();
+
+    $ajax({
+        type: 'post',
+        url: '/htjl/getAllReturnOrders',
+        contentType: 'application/json',
+        dataType: 'json'
+    }, false, '', function(res) {
+
+        if (res.code == 200) {
+            console.log('查询所有退货单成功:', res.data);
+
+            if (res.data && res.data.length > 0) {
+                swal("查询结果", "共找到 " + res.data.length + " 条退货记录", "info");
+
+                // 可以在这里显示所有退货单的统计信息
+                displayReturnStatistics(res.data);
+            } else {
+                swal("查询结果", "暂无退货记录", "info");
+            }
+        } else {
+            swal("查询失败", res.msg || "查询退货单失败", "error");
+        }
+    });
+}
+
+
+// 填充退货单表格
+function fillReturnTable(data) {
+    // 清空现有表格
+    $('#return-detail-table tbody').empty();
+
+    // 添加数据行
+    data.forEach(function(item, index) {
+        var rowHtml = `
+            <tr data-original-id="${item.v || ''}">
+                <td><input type="checkbox" class="row-select"></td>
+                <td>${index + 1}</td>
+                <td><input type="text" class="form-control form-control-sm" name="contractNo" value="${item.g || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="taskNo" value="${item.h || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="productName" value="${item.i || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="drawingNo" value="${item.j || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="unit" value="${item.k || ''}"></td>
+                <td><input type="number" class="form-control form-control-sm" name="quantity" value="${item.l || ''}"></td>
+                <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="${item.m || ''}"></td>
+                <td><input type="number" class="form-control form-control-sm" name="amount" value="${item.n || ''}" readonly></td>
+                <td><input type="text" class="form-control form-control-sm" name="material" value="${item.o || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="weight" value="${item.p || ''}"></td>
+                <td><input type="date" class="form-control form-control-sm" name="returnDate" value="${item.w || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="returnReason" value="${item.q || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="remark" value="${item.u || ''}"></td>
+            </tr>
+        `;
+        $('#return-detail-table tbody').append(rowHtml);
+    });
+
+    // 计算总金额
+    calculateTotalAmount();
+}
+
+// 显示退货单统计信息
+function displayReturnStatistics(data) {
+    var statisticsHtml = `
+        <div class="alert alert-info">
+            <h5>退货单统计信息</h5>
+            <p>总记录数: ${data.length}</p>
+            <p>涉及的退货单号: ${[...new Set(data.map(item => item.f || ''))].filter(Boolean).join(', ')}</p>
+            <p>退货总金额: ${calculateTotalReturnAmount(data).toFixed(2)}</p>
+        </div>
+    `;
+
+    // 这里可以根据需要将统计信息显示在页面的适当位置
+    console.log('退货单统计:', statisticsHtml);
+}
+
+
+// 计算退货总金额
+function calculateTotalReturnAmount(data) {
+    return data.reduce(function(total, item) {
+        var amount = parseFloat(item.n) || 0;
+        return total + amount;
+    }, 0);
+}
+
+// 添加刷新按钮事件（如果需要刷新退货单号列表）
+function addRefreshReturnNoEvent() {
+    $('#refresh-return-nos-btn').click(function() {
+        loadReturnNos();
+        swal("刷新成功", "退货单号列表已刷新", "success");
+    });
+}
+
+
+//------------------------------------------------------------
+// 检查退货单号是否已存在的函数
+function checkReturnNoExists(returnNo, callback) {
+    console.log('检查退货单号是否存在:', returnNo);
+
+    $ajax({
+        type: 'post',
+        url: '/htjl/searchReturnOrder',
+        data: {
+            returnNo: returnNo
+        },
+        dataType: 'json'
+    }, false, '', function(res) {
+        if (res.code == 200) {
+            var exists = res.data && res.data.length > 0;
+            var count = exists ? res.data.length : 0;
+            console.log('检查结果: 存在=' + exists + ', 数量=' + count);
+            if (callback) callback(exists, count);
+        } else {
+            console.error('检查退货单号失败:', res.msg);
+            if (callback) callback(false, 0);
+        }
+    });
+}
+
+// 删除已有退货单数据的函数
+function deleteExistingReturnOrder(returnNo, callback) {
+    console.log('开始删除已有退货单数据:', returnNo);
+
+    $ajax({
+        type: 'post',
+        url: '/htjl/deleteReturnOrderByNo',
+        data: {
+            returnNo: returnNo
+        },
+        dataType: 'json'
+    }, false, '', function(res) {
+        if (res.code == 200) {
+            console.log('删除已有数据成功');
+            if (callback) callback();
+        } else {
+            console.error('删除失败:', res.msg);
+            swal("删除失败", "无法删除已有数据，保存已取消", "error");
+        }
+    });
+}
+
+
+// 保存退货单数据的函数
+function saveReturnOrderData() {
+    var $btn = $("#save-return-btn");
+    if ($btn.data('submitting')) {
+        return;
+    }
+    $btn.data('submitting', true);
+    $btn.prop('disabled', true);
+
+    var originalText = $btn.html();
+    $btn.html('<i class="bi bi-arrow-clockwise icon"></i>提交中...');
+
+    // 收集所有明细行的数据
+    var details = [];
+    $('#return-detail-table tbody tr').each(function(index) {
+        var $row = $(this);
+        var detail = {
+            // 共用信息
+            f: $('#return-no').val(),
+            c: $('#return-customer').val(),
+            d: $('#return-phone').val(),
+            r: $('#company-address').val() ,
+            t: $('#company-phone').val(),
+            e: $('#return-date').val(),
+            s: $('#customer-signature').val(),
+            // 明细特有信息
+            q: $row.find('input[name="returnReason"]').val(),
+            g: $row.find('input[name="contractNo"]').val(),
+            h: $row.find('input[name="taskNo"]').val(),
+            i: $row.find('input[name="productName"]').val(),
+            j: $row.find('input[name="drawingNo"]').val(),
+            k: $row.find('input[name="unit"]').val(),
+            l: $row.find('input[name="quantity"]').val(),
+            m: $row.find('input[name="unitPrice"]').val(),
+            n: $row.find('input[name="amount"]').val(),
+            o: $row.find('input[name="material"]').val(),
+            p: $row.find('input[name="weight"]').val(),
+            w: $row.find('input[name="returnDate"]').val(),
+            u: $row.find('input[name="remark"]').val(),
+            v: $row.data('original-id') || ''  // 从data属性获取原表id
+        };
+
+        details.push(detail);
+    });
+
+    console.log('要保存的退货单数据:', details);
+
+    if (details.length === 0) {
+        swal("保存失败", "没有需要保存的数据", "error");
+        $btn.data('submitting', false);
+        $btn.prop('disabled', false);
+        $btn.html(originalText);
+        return;
+    }
+
+    // 遍历发送每个明细
+    var successCount = 0;
+    var totalCount = details.length;
+    var hasError = false;
+
+    details.forEach(function(detail, index) {
+        $ajax({
+            type: 'post',
+            url: '/htjl/save',
+            data: JSON.stringify(detail),
+            dataType: 'json',
+            contentType: 'application/json;charset=utf-8'
+        }, false, '', function (res) {
+            successCount++;
+
+            if (successCount === totalCount) {
+                $btn.data('submitting', false);
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+
+                if (!hasError && res.code == 200) {
+                    swal("保存成功", "共插入 " + successCount + " 条数据", "success");
+                    // 保存成功后清空表单
+                    clearReturnForm();
+                    getList();
+                } else if (hasError) {
+                    swal("保存部分成功", "共插入 " + successCount + " 条数据，部分数据保存失败", "warning");
+                } else {
+                    swal("保存失败", res.msg || "保存失败", "error");
+                }
+            }
+        }, function(xhr, status, error) {
+            successCount++;
+            hasError = true;
+
+            if (successCount === totalCount) {
+                $btn.data('submitting', false);
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                swal("保存部分成功", "共插入 " + successCount + " 条数据，部分数据保存失败", "warning");
+            }
+        });
+    });
+}
+
+// 清空退货单表单的函数
+function clearReturnForm() {
+    // 清空输入字段
+    $('#return-customer').val('');
+    $('#return-phone').val('');
+    $('#return-reason').val('');
+    $('#customer-signature').val('');
+    $('#company-address').val('');
+    $('#company-phone').val('');
+
+    // 重新生成新的退货单号
+    generateReturnNo();
+
+    // 清空表格，只保留第一行
+    $('#return-detail-table tbody tr:gt(0)').remove();
+    if ($('#return-detail-table tbody tr').length === 0) {
+        addReturnRow(); // 确保至少有一行
+    } else {
+        // 清空第一行的数据
+        var $firstRow = $('#return-detail-table tbody tr:first');
+        $firstRow.find('input[name="contractNo"]').val('');
+        $firstRow.find('input[name="taskNo"]').val('');
+        $firstRow.find('input[name="productName"]').val('');
+        $firstRow.find('input[name="drawingNo"]').val('');
+        $firstRow.find('input[name="unit"]').val('');
+        $firstRow.find('input[name="quantity"]').val('1');
+        $firstRow.find('input[name="unitPrice"]').val('0');
+        $firstRow.find('input[name="amount"]').val('0');
+        $firstRow.find('input[name="material"]').val('');
+        $firstRow.find('input[name="weight"]').val('');
+        $firstRow.find('input[name="returnDate"]').val('');
+        $firstRow.find('input[name="returnReason"]').val('');
+        $firstRow.find('input[name="remark"]').val('');
+        $firstRow.removeData('original-id'); // 移除原表id
+    }
+
+    // 设置当前日期
+    $('#return-date').val(getCurrentDate());
+
+    // 重新计算总金额
+    calculateTotalAmount();
+
+    console.log('退货单表单已清空');
+}
+
+

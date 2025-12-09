@@ -25,33 +25,48 @@ public interface ThjlMapper extends BaseMapper<Thjl> {
             "  <if test=\"jsrq != null and jsrq != ''\">" +
             "    AND (" +
             "      CASE " +
-            "        WHEN ISDATE(e) = 1 AND ISDATE(#{ksrq}) = 1 AND ISDATE(#{jsrq}) = 1 " +
+            "        WHEN ISDATE(w) = 1 AND ISDATE(#{ksrq}) = 1 AND ISDATE(#{jsrq}) = 1 " +  // 修正：e改为w，查询回厂日期
             "        THEN " +
-            "          CASE WHEN CONVERT(DATETIME, e) BETWEEN CONVERT(DATETIME, #{ksrq}, 111) AND CONVERT(DATETIME, #{jsrq}, 111) " +
+            "          CASE WHEN CONVERT(DATETIME, w) BETWEEN CONVERT(DATETIME, #{ksrq}, 111) AND CONVERT(DATETIME, #{jsrq}, 111) " +
             "          THEN 1 ELSE 0 END " +
             "        ELSE 0 " +
             "      END = 1" +
             "    ) " +
             "  </if>" +
             "</if>" +
-            "AND CONVERT(NVARCHAR(MAX), h) LIKE '%' + #{h} + '%' " +
-            "AND CONVERT(NVARCHAR(MAX), i) LIKE '%' + #{i} + '%' " +
-            "AND CONVERT(NVARCHAR(MAX), k) LIKE '%' + #{k} + '%' " +
-            "AND CONVERT(NVARCHAR(MAX), r) LIKE '%' + #{r} + '%'" +
+            "<if test=\"h != null and h != ''\">" +
+            "  AND CONVERT(NVARCHAR(MAX), g) LIKE '%' + #{h} + '%' " +  // h参数对应数据库g字段（合同号）
+            "</if>" +
+            "<if test=\"i != null and i != ''\">" +
+            "  AND CONVERT(NVARCHAR(MAX), h) LIKE '%' + #{i} + '%' " +  // i参数对应数据库h字段（任务号）
+            "</if>" +
+            "<if test=\"k != null and k != ''\">" +
+            "  AND CONVERT(NVARCHAR(MAX), j) LIKE '%' + #{k} + '%' " +  // k参数对应数据库j字段（图号）
+            "</if>" +
+            "<if test=\"r != null and r != ''\">" +
+            "  AND CONVERT(NVARCHAR(MAX), q) LIKE '%' + #{r} + '%'" +   // r参数对应数据库q字段（退货原因）
+            "</if>" +
             "</script>")
     List<Thjl> queryList(String ksrq, String jsrq, String h, String i, String k, String r);
 
 
-    @Update("UPDATE tuihuo SET c = #{c}, d = #{d}, e = #{e}, f = #{f}, g = #{g}, h = #{h}, i = #{i}, j = #{j}, k = #{k}, l = #{l}, m = #{m}, n = #{n}, o = #{o}, p = #{p}, q = #{q}, r = #{r}, s = #{s}, t = #{t}, u = #{u}, v = #{v} WHERE id = #{id}")
+    @Update("UPDATE tuihuo SET c = #{c},w = #{w}, d = #{d}, e = #{e}, f = #{f}, g = #{g}, h = #{h}, i = #{i}, j = #{j}, k = #{k}, l = #{l}, m = #{m}, n = #{n}, o = #{o}, p = #{p}, q = #{q}, r = #{r}, s = #{s}, t = #{t}, u = #{u}, v = #{v} WHERE id = #{id}")
     boolean update(Thjl thjl);
 
-    @Insert("INSERT INTO tuihuo (c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v) " +
-            "VALUES (#{c}, #{d}, #{e}, #{f}, #{g}, #{h}, #{i}, #{j}, #{k}, #{l}, #{m}, #{n}, #{o}, #{p}, #{q}, #{r}, #{s}, #{t}, #{u}, #{v})")
+    @Insert("INSERT INTO tuihuo (w,c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v) " +
+            "VALUES (#{w},#{c}, #{d}, #{e}, #{f}, #{g}, #{h}, #{i}, #{j}, #{k}, #{l}, #{m}, #{n}, #{o}, #{p}, #{q}, #{r}, #{s}, #{t}, #{u}, #{v})")
     boolean add(Thjl thjl);
 
 
     @Delete("delete from tuihuo where id=#{id}")
     boolean delete(int id);
 
+
+    @Select("SELECT F FROM tuihuo GROUP BY F")
+    List<Thjl> gettdh();
+
+    // Mapper接口
+    @Select("SELECT * FROM tuihuo WHERE F = #{returnNo}")
+    List<Thjl> getth(@Param("returnNo") String returnNo);
 
 }

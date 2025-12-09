@@ -36,5 +36,7 @@ public class Thjl {
     private String t;
     private String u;
     private String v;
+    private String w;
+    private String zhuangtai;
 
 }

@@ -44,4 +44,8 @@ public interface Ckd_cService extends IService<Ckd_c> {
     List<Map<String, Object>> getContractInfoByNumbers(List<String> contractNumbers);
 
     String getddh();
+
+    List<Ckd_c> getByChukudanhao(String chukudanhao);
+
+    boolean delete(List<Integer> idList);
 }

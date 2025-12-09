@@ -25,16 +25,15 @@ public class CkdImpl extends ServiceImpl<CkdMapper, Ckd> implements CkdService {
     CkdMapper ckdMapper;
 
 
-//    //出库单
-//    @Override
-//    public boolean save1(Ckd ckd) {
-//        return ckdMapper.save1(ckd);
-//    }
-//
-//    @Override
-//    public String getddh1() {  // 方法名必须一致
-//        return ckdMapper.getddh1();
-//    }
+    @Override
+    public List<Ckd> gettdh() {  // 方法名必须一致
+        return baseMapper.gettdh();
+    }
+
+    @Override
+    public List<Ckd> getth(String returnNo ){
+        return baseMapper.getth(returnNo);
+    }
 
 
 
@@ -51,26 +50,5 @@ public class CkdImpl extends ServiceImpl<CkdMapper, Ckd> implements CkdService {
 
 
 
-//    @Override
-//    @Transactional
-//    public boolean saveReturnOrder(Ckd ckd) {
-//        try {
-//            // 只设置创建时间，其他字段从前端获取
-//            ckd.setCreateTime(LocalDateTime.now());
-//
-//            // 处理明细关系
-//            if (ckd.getDetails() != null) {
-//                for (CkdDetail detail : ckd.getDetails()) {
-//                    detail.setCkd(ckd);
-//                }
-//            }
-//
-//            ckdMainRepository.save(ckdMain);
-//            log.info("出库单保存成功，包含 {} 条明细", ckdMain.getDetails().size());
-//            return true;
-//        } catch (Exception e) {
-//            log.error("保存出库单失败：{}", e.getMessage());
-//            throw new RuntimeException("保存出库单失败");
-//        }
-//    }
+
 }

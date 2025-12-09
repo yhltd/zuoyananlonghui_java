@@ -28,10 +28,9 @@ public interface CkdService extends IService<Ckd> {
     List<Ckd> getByIds(List<String> ids);
 
 
+    List<Ckd> gettdh();
 
-//
-//    /**
-//     * 保存出库单
-//     */
-//    boolean saveReturnOrder(Ckd ckd);
+    List<Ckd> getth(String returnNo );
+
+
 }

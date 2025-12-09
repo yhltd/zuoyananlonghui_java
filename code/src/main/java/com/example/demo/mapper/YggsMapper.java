@@ -36,23 +36,25 @@ public interface YggsMapper extends BaseMapper<Yggs> {
             "SELECT id, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V " +
             "FROM gongyi_guicheng WITH(NOLOCK) " +
             "WHERE 1=1 " +
+            "AND N IS NOT NULL AND N != '' " +
+            "AND ISDATE(N) = 1 " +
             "<if test=\"ksrq != null and ksrq != ''\">" +
             "  <if test=\"jsrq != null and jsrq != ''\">" +
             "    AND CONVERT(DATE, N) BETWEEN #{ksrq} AND #{jsrq} " +
             "  </if>" +
-                    "  <if test=\"jsrq == null or jsrq == ''\">" +
-                    "    AND CONVERT(DATE, N) >= #{ksrq} " +
-                    "  </if>" +
-                    "</if>" +
-                    "<if test=\"jsrq != null and jsrq != ''\">" +
-                    "  <if test=\"ksrq == null or ksrq == ''\">" +
-                    "    AND CONVERT(DATE, N) &lt;= #{jsrq} " +
-                    "  </if>" +
-                    "</if>" +
-                    "<if test=\"m != null and m != ''\">" +
-                    "  AND (M LIKE #{m} + '%' OR M = #{m}) " +
+            "  <if test=\"jsrq == null or jsrq == ''\">" +
+            "    AND CONVERT(DATE, N) >= #{ksrq} " +
+            "  </if>" +
             "</if>" +
-                    "ORDER BY N DESC " +
+            "<if test=\"jsrq != null and jsrq != ''\">" +
+            "  <if test=\"ksrq == null or ksrq == ''\">" +
+            "    AND CONVERT(DATE, N) &lt;= #{jsrq} " +
+            "  </if>" +
+            "</if>" +
+            "<if test=\"m != null and m != ''\">" +
+            "  AND (M LIKE #{m} + '%' OR M = #{m}) " +
+            "</if>" +
+            "ORDER BY N DESC " +
             "OPTION(RECOMPILE) " +
             "</script>")
     List<Yggs> queryList(String ksrq, String jsrq, String m);
@@ -85,21 +87,22 @@ public interface YggsMapper extends BaseMapper<Yggs> {
             "    WHERE M IS NOT NULL AND M != '' " +
             "      AND L IS NOT NULL AND L != '' " +
             "      AND ISNUMERIC(L) = 1 " +
+            "      AND N IS NOT NULL AND N != '' " +
             "      <if test=\"ksrq1 != null and ksrq1 != ''\">" +
-                    "        AND CONVERT(DATE, N) >= #{ksrq1} " +
+            "        AND CONVERT(DATE, N) >= #{ksrq1} " +
             "      </if>" +
-                    "      <if test=\"jsrq1 != null and jsrq1 != ''\">" +
-                    "        AND CONVERT(DATE, N) &lt;= #{jsrq1} " +
-                    "      </if>" +
-                    ") " +
-                    "SELECT " +
-                    "    M as m, " +
-                    "    SUM(CAST(L AS DECIMAL(18,2))) as l " +
+            "      <if test=\"jsrq1 != null and jsrq1 != ''\">" +
+            "        AND CONVERT(DATE, N) &lt;= #{jsrq1} " +
+            "      </if>" +
+            ") " +
+            "SELECT " +
+            "    M as m, " +
+            "    SUM(CAST(L AS DECIMAL(18,2))) as l " +
             "FROM ValidData " +
-                    "GROUP BY M " +
-                    "HAVING SUM(CAST(L AS DECIMAL(18,2))) > 0 " +
+            "GROUP BY M " +
+            "HAVING SUM(CAST(L AS DECIMAL(18,2))) > 0 " +
             "ORDER BY l DESC " +
-                    "OPTION(RECOMPILE, MAXDOP 1) " +
+            "OPTION(RECOMPILE, MAXDOP 1) " +
             "</script>")
     List<Yggs> queryList1(String ksrq1, String jsrq1);
 

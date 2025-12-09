@@ -46,5 +46,10 @@ public interface ThjlService extends IService<Thjl> {
     boolean delete(List<Integer> idList);
 
 
+    List<Thjl> gettdh();
+
+    List<Thjl> getth(String returnNo );
+
+
 
 }

@@ -8,10 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @RestController
@@ -32,4 +29,36 @@ public class CkdController {
             return ResultInfo.error("查询失败!");
         }
     }
+
+
+    @RequestMapping("/gettdh")
+    public ResultInfo gettdh(HttpSession session) {
+        try {
+            List<Ckd> getList = ckdService.gettdh();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
+
+    @RequestMapping("/searchReturnOrder")
+    public ResultInfo searchReturnOrder(HttpSession session,
+                                        @RequestParam("returnNo") String returnNo) {
+        try {
+            List<Ckd> getList = ckdService.getth(returnNo);
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
+
+
+
+
+
+
 }

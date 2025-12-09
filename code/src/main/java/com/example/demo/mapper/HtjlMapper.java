@@ -16,14 +16,105 @@ import java.util.Map;
 @Repository
 public interface HtjlMapper extends BaseMapper<Htjl> {
 
+//    @Select({
+//            "<script>",
+//            "WITH guicheng_stats AS (",
+//            "    SELECT ",
+//            "        C as left_id, ",
+//            "        COUNT(CASE WHEN ISNULL(K, '') != '' THEN 1 END) as renwu_count, ",
+//            "        COUNT(CASE WHEN ISNULL(M, '') != '' THEN 1 END) as renyuan_count ",
+//            "    FROM gongyi_guicheng ",
+//            "    WHERE C IS NOT NULL ",
+//            "    GROUP BY C ",
+//            "), ",
+//            "filtered_hetong AS (",
+//            "    SELECT * FROM hetong_jilu hj ",
+//            "    WHERE ISNULL(hj.hetong_zhuangtai, '') = '' ",
+//            "      AND NOT EXISTS (",
+//            "          SELECT 1 FROM tuihuo tb WITH(NOLOCK) ",
+//            "          WHERE tb.v = hj.id ",
+//            "      )",
+//            ") ",
+//            "SELECT ",
+//            "    hj.id, ",
+//            "    ISNULL(hj.C, '') as c, ",
+//            "    ISNULL(hj.D, '') as d, ",
+//            "    ISNULL(hj.E, '') as e, ",
+//            "    ISNULL(CASE ",
+//            "        WHEN gs.renwu_count > gs.renyuan_count THEN '未完成' ",
+//            "        WHEN gs.renwu_count IS NULL THEN '未创建' ",
+//            "        ELSE '已完成' ",
+//            "    END, '未创建') as zhuangtai, ",
+//            "    ISNULL(hj.G, '') as g, ",
+//            "    ISNULL(hj.H, '') as h, ",
+//            "    ISNULL(hj.I, '') as i, ",
+//            "    ISNULL(hj.J, '') as j, ",
+//            "    ISNULL(hj.K, '') as k, ",
+//            "    ISNULL(hj.L, '') as l, ",
+//            "    ISNULL(hj.AU, '') as au, ",
+//            "    ISNULL(hj.AV, '') as av, ",
+//            "    ISNULL(hj.AW, '') as aw, ",
+//            "    ISNULL(hj.AX, '') as ax, ",
+//            "    ISNULL(hj.M, '') as m, ",
+//            "    ISNULL(hj.N, '') as n, ",
+//            "    ISNULL(hj.O, '') as o, ",
+//            "    ISNULL(hj.P, '') as p, ",
+//            "    ISNULL(hj.Q, '') as q, ",
+//            "    ISNULL(hj.R, '') as r, ",
+//            "    ISNULL(hj.S, '') as s, ",
+//            "    ISNULL(hj.T, '') as t, ",
+//            "    ISNULL(hj.U, '') as u, ",
+//            "    ISNULL(hj.V, '') as v, ",
+//            "    ISNULL(hj.W, '') as w, ",
+//            "    ISNULL(hj.X, '') as x, ",
+//            "    ISNULL(hj.Y, '') as y, ",
+//            "    ISNULL(hj.Z, '') as z, ",
+//            "    ISNULL(hj.[AA], '') as aa, ",
+//            "    ISNULL(hj.[AB], '') as ab, ",
+//            "    ISNULL(hj.[AC], '') as ac, ",
+//            "    ISNULL(hj.[AD], '') as ad, ",
+//            "    ISNULL(hj.[AE], '') as ae, ",
+//            "    ISNULL(hj.[AF], '') as af, ",
+//            "    ISNULL(hj.[AG], '') as ag, ",
+//            "    ISNULL(hj.[AH], '') as ah, ",
+//            "    ISNULL(hj.[AI], '') as ai, ",
+//            "    ISNULL(hj.[AJ], '') as aj, ",
+//            "    ISNULL(hj.[AK], '') as ak, ",
+//            "    ISNULL(hj.[AL], '') as al, ",
+//            "    ISNULL(hj.[AM], '') as am, ",
+//            "    ISNULL(hj.[AN], '') as an, ",
+//            "    ISNULL(hj.[AO], '') as ao, ",
+//            "    ISNULL(hj.[AP], '') as ap, ",
+//            "    ISNULL(hj.[AY], '') as ay, ",
+//            "    ISNULL(hj.[AQ], '') as aq, ",
+//            "    ISNULL(hj.[AR], '') as ar, ",
+//            "    ISNULL(hj.[AS], '') as aas, ",
+//            "    ISNULL(hj.[AT], '') as at, ",
+//            "    ISNULL(hj.hetong_zhuangtai, '') as hetongzhuangtai, ",
+//            "    ISNULL(hj.riqi, '') as riqi ",
+//            "FROM filtered_hetong hj ",
+//            "LEFT JOIN guicheng_stats gs ON hj.id = gs.left_id ",
+//            "OPTION (RECOMPILE)",
+//            "</script>"
+//    })
+//    List<Htjl> getListExcludeThjl();
+
     @Select({
             "<script>",
+            "WITH filtered_hetong AS (",
+            "    SELECT * FROM hetong_jilu hj ",
+            "    WHERE ISNULL(hj.hetong_zhuangtai, '') = '' ",
+            "      AND NOT EXISTS (",
+            "          SELECT 1 FROM tuihuo tb WITH(NOLOCK) ",
+            "          WHERE tb.v = hj.id ",
+            "      )",
+            ") ",
             "SELECT ",
             "    hj.id, ",
             "    ISNULL(hj.C, '') as c, ",
             "    ISNULL(hj.D, '') as d, ",
             "    ISNULL(hj.E, '') as e, ",
-            "    ISNULL(guicheng.zhuangtai, '未创建') as zhuangtai, ",
+            "    ISNULL(hj.zhuangtai, '') as zhuangtai, ",
             "    ISNULL(hj.G, '') as g, ",
             "    ISNULL(hj.H, '') as h, ",
             "    ISNULL(hj.I, '') as i, ",
@@ -71,28 +162,14 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "    ISNULL(hj.[AT], '') as at, ",
             "    ISNULL(hj.hetong_zhuangtai, '') as hetongzhuangtai, ",
             "    ISNULL(hj.riqi, '') as riqi ",
-            "FROM hetong_jilu hj ",
-            "LEFT JOIN (",
-            "    SELECT ",
-            "        C as left_id, ",
-            "        CASE WHEN renwu > renyuan THEN '未完成' ELSE '已完成' END as zhuangtai ",
-            "    FROM (",
-            "        SELECT ",
-            "            C, ",
-            "            SUM(CASE WHEN ISNULL(K, '') != '' THEN 1 ELSE 0 END) as renwu, ",
-            "            SUM(CASE WHEN ISNULL(M, '') != '' THEN 1 ELSE 0 END) as renyuan ",
-            "        FROM gongyi_guicheng ",
-            "        GROUP BY C",
-            "    ) as guicheng",
-            ") as guicheng ON hj.id = guicheng.left_id ",
-            "WHERE ISNULL(hj.hetong_zhuangtai, '') = '' ",
-            "  AND NOT EXISTS (",
-            "      SELECT 1 FROM tuihuo tb ",
-            "      WHERE tb.v = hj.id ",
-            "  )",
+            "FROM filtered_hetong hj ",
+            "OPTION (RECOMPILE)",
             "</script>"
     })
     List<Htjl> getListExcludeThjl();
+
+
+
 
     @Update("UPDATE hetong_jilu SET " +
             "c = #{c}, d = #{d}, e = #{e}, f = #{f}, g = #{g}, h = #{h}, i = #{i}, j = #{j}, " +
@@ -107,8 +184,8 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
 
 
 
-    @Insert("INSERT INTO hetong_jilu (c, d, e, hetong_zhuangtai, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, [aa], [ab], [ac], [ad], [ae], [af], [ag], [ah], [ai], [aj], [ak], [al], [am], [an], [ao], [ap], [aq], [ar], [as], [at], [au], [av], [aw], [ax]) " +
-            "VALUES (#{c}, #{d}, #{e}, #{hetongzhuangtai}, #{g}, #{h}, #{i}, #{j}, #{k}, #{l}, #{m}, #{n}, #{o}, #{p}, #{q}, #{r}, #{s}, #{t}, #{u}, #{v}, #{w}, #{x}, #{y}, #{z}, #{aa}, #{ab}, #{ac}, #{ad}, #{ae}, #{af}, #{ag}, #{ah}, #{ai}, #{aj}, #{ak}, #{al}, #{am}, #{an}, #{ao}, #{ap}, #{aq}, #{ar}, #{aas}, #{at}, #{au}, #{av}, #{aw}, #{ax})")
+    @Insert("INSERT INTO hetong_jilu (c, d, e, hetong_zhuangtai, zhuangtai, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, [aa], [ab], [ac], [ad], [ae], [af], [ag], [ah], [ai], [aj], [ak], [al], [am], [an], [ao], [ap], [aq], [ar], [as], [at], [au], [av], [aw], [ax]) " +
+            "VALUES (#{c}, #{d}, #{e}, #{hetongzhuangtai}, '未创建', #{g}, #{h}, #{i}, #{j}, #{k}, #{l}, #{m}, #{n}, #{o}, #{p}, #{q}, #{r}, #{s}, #{t}, #{u}, #{v}, #{w}, #{x}, #{y}, #{z}, #{aa}, #{ab}, #{ac}, #{ad}, #{ae}, #{af}, #{ag}, #{ah}, #{ai}, #{aj}, #{ak}, #{al}, #{am}, #{an}, #{ao}, #{ap}, #{aq}, #{ar}, #{aas}, #{at}, #{au}, #{av}, #{aw}, #{ax})")
     boolean add(Htjl htjl);
 
     @Delete("delete from hetong_jilu where id=#{id}")
@@ -299,4 +376,35 @@ boolean save(Htjl htjl);
 
     @Select("SELECT num FROM gongxu WHERE name = #{name}")
     String getGongxuNumByName(String name);
+
+
+
+
+
+
+    @Update("UPDATE ht SET ht.zhuangtai = '未完成' " +
+            "FROM hetong_jilu ht " +
+            "INNER JOIN ( " +
+            "    SELECT C, COUNT(*) as total_count, " +
+            "           COUNT(CASE WHEN ISNULL(M, '') != '' THEN 1 END) as m_count " +
+            "    FROM gongyi_guicheng " +
+            "    WHERE C IS NOT NULL " +
+            "    GROUP BY C " +
+            "    HAVING COUNT(*) > COUNT(CASE WHEN ISNULL(M, '') != '' THEN 1 END) " +
+            ") gg ON ht.id = gg.C " +
+            "WHERE ISNULL(ht.hetong_zhuangtai, '') = ''")
+    int updateZhuangtaiForUnfinished();
+
+    @Update("UPDATE ht SET ht.zhuangtai = '已完成' " +
+            "FROM hetong_jilu ht " +
+            "INNER JOIN ( " +
+            "    SELECT C, COUNT(*) as total_count, " +
+            "           COUNT(CASE WHEN ISNULL(M, '') != '' THEN 1 END) as m_count " +
+            "    FROM gongyi_guicheng " +
+            "    WHERE C IS NOT NULL " +
+            "    GROUP BY C " +
+            "    HAVING COUNT(*) <= COUNT(CASE WHEN ISNULL(M, '') != '' THEN 1 END) " +
+            ") gg ON ht.id = gg.C " +
+            "WHERE ISNULL(ht.hetong_zhuangtai, '') = ''")
+    int updateZhuangtaiForCompleted();
 }

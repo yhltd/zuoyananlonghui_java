@@ -24,27 +24,6 @@ public interface CkdMapper extends BaseMapper<Ckd> {
     String  getddh1();
 
 
-
-
-
-
-
-
-
-
-
-
-//    @Select({
-//            "<script>",
-//            "SELECT * FROM hetong_jilu WHERE id IN",
-//            "<foreach collection='ids' item='id' open='(' separator=',' close=')'>",
-//            "#{id}",
-//            "</foreach>",
-//            " AND id = '1739'",  // 添加固定条件
-//            "</script>"
-//    })
-//    List<Ckd> getByIds(@Param("ids") List<String> ids);
-
     @Select({
             "<script>",
             "SELECT * FROM hetong_jilu WHERE id IN",
@@ -54,6 +33,16 @@ public interface CkdMapper extends BaseMapper<Ckd> {
             "</script>"
     })
     List<Ckd> getByIds(@Param("ids") List<String> ids);
+
+
+    @Select("SELECT E FROM chuku GROUP BY E")
+    List<Ckd> gettdh();
+
+    // Mapper接口
+    @Select("SELECT * FROM chuku WHERE E = #{returnNo}")
+    List<Ckd> getth(@Param("returnNo") String returnNo);
+
+
 
 
 }

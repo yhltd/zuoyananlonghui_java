@@ -2,16 +2,14 @@ package com.example.demo.controller;
 
 import com.example.demo.entity.*;
 import com.example.demo.service.HtjlService;
+import com.example.demo.service.ThjlService;
 import com.example.demo.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @RestController
@@ -19,6 +17,9 @@ import java.util.Map;
 public class HtjlController {
     @Autowired
     private HtjlService htjlService;
+
+    @Autowired
+    private ThjlService thjlService;
 
 
     /**
@@ -290,5 +291,72 @@ public class HtjlController {
             return ResultInfo.error("查询失败!");
         }
     }
+
+
+
+    @RequestMapping("/gettdh")
+    public ResultInfo gettdh(HttpSession session) {
+        try {
+            List<Thjl> getList = thjlService.gettdh();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
+
+    @RequestMapping("/searchReturnOrder")
+    public ResultInfo searchReturnOrder(HttpSession session,
+                                        @RequestParam("returnNo") String returnNo) {
+        try {
+            List<Thjl> getList = thjlService.getth(returnNo);
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
+
+
+
+
+    @RequestMapping("/deleteReturnOrderByNo")
+    public ResultInfo deleteReturnOrderByNo(@RequestParam("returnNo") String returnNo, HttpSession session) {
+        try {
+            // 先查询该退货单的所有记录
+            List<Thjl> thjlList = thjlService.getth(returnNo);
+
+            if (thjlList == null || thjlList.isEmpty()) {
+                return ResultInfo.success("未找到相关数据");
+            }
+
+            // 提取ID列表（根据实际数据结构调整）
+            List<Integer> idList = new ArrayList<>();
+            for (Thjl thjl : thjlList) {
+                // 根据实际ID字段调整，这里假设ID在某个字段中
+                // 如果Thjl有getId()方法，使用它
+                if (thjl.getId() != null) {
+                    idList.add(thjl.getId());
+                }
+            }
+
+            // 调用删除服务
+            boolean result = thjlService.delete(idList);
+
+            if (result) {
+                return ResultInfo.success("删除成功，共删除 " + idList.size() + " 条记录");
+            } else {
+                return ResultInfo.error("删除失败");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("删除退货单失败：{}", e.getMessage());
+            return ResultInfo.error("删除失败!");
+        }
+    }
+
+
 
 }

@@ -27,19 +27,41 @@ public class Ckd_cImpl extends ServiceImpl<Ckd_cMapper, Ckd_c> implements Ckd_cS
     @Autowired
     Ckd_cMapper ckd_cMapper;
 
+    // 在ChukuServiceImpl中实现
+    @Override
+    public List<Ckd_c> getByChukudanhao(String chukudanhao) {
+        // 根据出库单号查询
+        return ckd_cMapper.getByChukudanhao(chukudanhao);
+    }
+
+    @Override
+    public boolean delete(List<Integer> idList) {
+        if (idList == null || idList.isEmpty()) {
+            return false;
+        }
+        return removeByIds(idList);
+    }
+
+
 
     @Override
     public boolean saveReturnOrder(Map<String, Object> formData) {
         try {
+            // 添加日志打印前端数据
+            System.out.println("=== 接收到前端数据 ===");
+            System.out.println("formData: " + formData);
+
             // 转换数据
             Ckd_c ckd = convertToCkd_c(formData);
 
             // 保存到数据库
             boolean success = this.save(ckd);
+            System.out.println("保存结果: " + success);
 
             return success;
 
         } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }
@@ -50,77 +72,56 @@ public class Ckd_cImpl extends ServiceImpl<Ckd_cMapper, Ckd_c> implements Ckd_cS
     private Ckd_c convertToCkd_c(Map<String, Object> formData) {
         Ckd_c ckd = new Ckd_c();
 
-        // 设置往来单位 (c字段)
-        ckd.setC(getStringValue(formData, "customer"));
+        try {
 
-        // 处理明细数据 - 取第一条数据的主要字段
-        List<Map<String, Object>> details = (List<Map<String, Object>>) formData.get("details");
-        if (details != null && !details.isEmpty()) {
-            Map<String, Object> firstDetail = details.get(0);
+            // 基础信息
+            ckd.setC(getStringValue(formData, "c"));        // C: 往来单位 (前端c字段)
+            ckd.setD(getStringValue(formData, "d"));        // D: 出库日期 (前端e字段)
+            ckd.setE(getStringValue(formData, "e"));        // E: 出库单号 (前端f字段)
 
-//            // 设置各个字段（根据你的表格字段映射）
-//            ckd.setC(getStringValue(firstDetail, "contractNo"));    // 合同号
-//            ckd.setD(getStringValue(firstDetail, "taskNo"));        // 任务号
-//            ckd.setE(getStringValue(firstDetail, "gongxu"));        // 加工工序
-//            ckd.setF(getStringValue(firstDetail, "productName"));   // 产品名称
-//            ckd.setG(getStringValue(firstDetail, "drawingNo"));     // 图号
-//            ckd.setH(getStringValue(firstDetail, "unit"));          // 单位
-//            ckd.setI(getStringValue(firstDetail, "quantity"));      // 数量
-//            ckd.setL(getStringValue(firstDetail, "material"));      // 材质
-//            ckd.setM(getStringValue(firstDetail, "weight"));        // 重量
-//            ckd.setN(getStringValue(firstDetail, "remark"));        // 备注
-//
-//            // 设置人员字段（对应r到u字段）
-//            ckd.setR(getStringValue(formData, "zhidanren"));    // 制单人 (r字段)
-//            ckd.setS(getStringValue(formData, "shenheren"));    // 审核人 (s字段)
-//            ckd.setT(getStringValue(formData, "songhuoren"));   // 送货人 (t字段)
-//            ckd.setU(getStringValue(formData, "shouhuoren"));   // 收货人 (u字段)
-//            ckd.setO(getStringValue(formData, "customer")); //往来单位
-//            ckd.setP(getStringValue(formData, "chukuriqi")); //出库日期
-//
-//            // 设置计算字段
-//            ckd.setJ(getStringValue(firstDetail, "unitPrice"));     // 单价
-//            ckd.setK(getStringValue(firstDetail, "amount"));        // 金额
+            // 产品信息 - 从前端数据获取
+            ckd.setF(getStringValue(formData, "i"));        // F: 产品名称 (前端g字段)
+            ckd.setG(getStringValue(formData, "j"));        // G: 图号 (前端h字段)
+            ckd.setH(getStringValue(formData, "k"));        // H: 单位 (前端i字段)
+            ckd.setI(getStringValue(formData, "l"));        // I: 数量 (前端l字段)
 
+            // 价格信息
+            ckd.setJ(getStringValue(formData, "m"));        // J: 单价 (前端j字段)
+            ckd.setK(getStringValue(formData, "n"));        // K: 金额 (前端k字段)
 
-            ckd.setC(getStringValue(formData, "customer"));        // C: 往来单位
-            ckd.setD(getStringValue(formData, "chukuriqi"));       // D: 出库日期
-            ckd.setE(getStringValue(formData, "chukudanhao"));     // E: 出库单号 (必须添加)
+            // 物料信息
+            ckd.setL(getStringValue(formData, "o"));        // L: 材质 (前端m字段)
+            ckd.setM(getStringValue(formData, "p"));        // M: 重量 (前端n字段)
+            ckd.setN(getStringValue(formData, "q"));        // N: 备注 (前端q字段)
 
-            ckd.setF(getStringValue(firstDetail, "productName"));  // F: 产品名称
-            ckd.setG(getStringValue(firstDetail, "drawingNo"));    // G: 图号
-            ckd.setH(getStringValue(firstDetail, "unit"));         // H: 单位
-            ckd.setI(getStringValue(firstDetail, "quantity"));     // I: 数量
-            ckd.setJ(getStringValue(firstDetail, "unitPrice"));    // J: 单价
-            ckd.setK(getStringValue(firstDetail, "amount"));       // K: 金额
+            // 合同信息
+            ckd.setO(getStringValue(formData, "f"));        // O: 合同号 (前端o字段)
+            ckd.setP(getStringValue(formData, "g"));        // P: 任务号 (前端p字段)
+            ckd.setQ(getStringValue(formData, "h"));        // Q: 加工工序 (前端g字段 - 注意：这里可能不对，需要确认)
 
-            ckd.setL(getStringValue(firstDetail, "material"));     // L: 材质
-            ckd.setM(getStringValue(firstDetail, "weight"));       // M: 重量
-            ckd.setN(getStringValue(firstDetail, "remark"));       // N: 备注
+            // 人员信息
+            ckd.setR(getStringValue(formData, "r"));        // R: 制单人 (前端r字段)
+            ckd.setS(getStringValue(formData, "s"));        // S: 审核人 (前端s字段)
+            ckd.setT(getStringValue(formData, "t"));        // T: 送货人 (前端t字段)
+            ckd.setU(getStringValue(formData, "u"));        // U: 收货人 (前端u字段)
 
-            ckd.setO(getStringValue(firstDetail, "contractNo"));   // O: 合同号
-            ckd.setP(getStringValue(firstDetail, "taskNo"));       // P: 任务号
-            ckd.setQ(getStringValue(firstDetail, "gongxu"));       // Q: 加工工序
-
-// 设置人员字段
-            ckd.setR(getStringValue(formData, "zhidanren"));       // R: 制单人
-            ckd.setS(getStringValue(formData, "shenheren"));       // S: 审核人
-            ckd.setT(getStringValue(formData, "songhuoren"));      // T: 送货人
-            ckd.setU(getStringValue(formData, "shouhuoren"));      // U: 收货人
-
-
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("转换数据时出错: " + e.getMessage());
         }
 
         return ckd;
     }
 
+
     /**
      * 安全获取字符串值
      */
     private String getStringValue(Map<String, Object> map, String key) {
-        if (map == null) return "";
-        Object value = map.get(key);
-        return value != null ? value.toString().trim() : "";
+        if (map == null || map.get(key) == null) {
+            return "";
+        }
+        return map.get(key).toString().trim();
     }
 
 

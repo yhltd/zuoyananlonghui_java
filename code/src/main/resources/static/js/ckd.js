@@ -50,6 +50,8 @@ function initTitleInputs() {
 
 // ==================== 出库单初始化函数 ====================
 function initReturnOrder1() {
+
+    loadOrderNumbers();
     // 设置当前日期
     $('#return-date1').val(getCurrentDate1());
 
@@ -525,134 +527,6 @@ function calculateAmount(rowData, unitPrice) {
     return '0.00';
 }
 
-// ==================== 出库单保存函数 ====================
-// function saveReturnOrder1() {
-//     // 检测必填字段
-//     var returnCustomer1 = $('#return-customer1').val();
-//     var returnDate1 = $('#return-date1').val();
-//     var returnNo1 = $('#return-no1').val();
-//
-//     if (!returnCustomer1) {
-//         swal("保存失败", "请填写往来单位", "error");
-//         return;
-//     }
-//     if (!returnDate1) {
-//         swal("保存失败", "请选择出库日期", "error");
-//         return;
-//     }
-//     if (!returnNo1) {
-//         swal("保存失败", "请生成出库单号", "error");
-//         return;
-//     }
-//
-//     var $btn = $("#save-return-btn1");
-//     if ($btn.data('submitting')) {
-//         return;
-//     }
-//     $btn.data('submitting', true);
-//     $btn.prop('disabled', true);
-//
-//     var originalText = $btn.html();
-//     $btn.html('<i class="bi bi-arrow-clockwise icon"></i>提交中...');
-//
-//     // 收集所有明细行的数据
-//     var details = [];
-//     $('#return-detail-table1 tbody tr').each(function(index) {
-//         var $row = $(this);
-//         var detail = {
-//             // 头部信息
-//             f: $('#return-no1').val(),                    // 出库单号
-//             c: $('#return-customer1').val(),              // 往来单位
-//             e: $('#return-date1').val(),                  // 出库日期
-//             r: $('#company-address1').val(),              // 地址
-//             t: $('#company-phone1').val(),                // 电话
-//             s: $('#customer-signature1').val(),           // 客户签字
-//
-//             // 表格明细信息
-//             d: $row.find('input[name="contractNo"]').val(),      // 合同号
-//             g: $row.find('input[name="taskNo"]').val(),          // 任务号
-//             h: $row.find('input[name="gongxu"]').val(),          // 加工工序
-//             i: $row.find('input[name="productName"]').val(),     // 产品名称
-//             j: $row.find('input[name="drawingNo"]').val(),       // 图号
-//             k: $row.find('input[name="unit"]').val(),            // 单位
-//             l: $row.find('input[name="quantity"]').val(),        // 数量
-//             m: $row.find('input[name="unitPrice"]').val(),       // 单价
-//             n: $row.find('input[name="amount"]').val(),          // 金额
-//             o: $row.find('input[name="material"]').val(),        // 材质
-//             p: $row.find('input[name="weight"]').val(),          // 重量
-//             ax: $row.find('input[name="remark"]').val(),         // 备注
-//
-//             v: $row.data('original-id') || ''              // 原表ID
-//         };
-//         details.push(detail);
-//     });
-//
-//     console.log('要保存的出库单数据:', details);
-//
-//     // 发送数据到后端
-//     var successCount = 0;
-//     var totalCount = details.length;
-//
-//     if (totalCount === 0) {
-//         swal("保存失败", "没有出库明细数据", "error");
-//         $btn.data('submitting', false);
-//         $btn.prop('disabled', false);
-//         $btn.html(originalText);
-//         return;
-//     }
-//
-//     details.forEach(function(detail, index) {
-//         $ajax({
-//             type: 'post',
-//             url: '/htjl/save1',
-//             data: JSON.stringify(detail),
-//             dataType: 'json',
-//             contentType: 'application/json;charset=utf-8'
-//         }, false, '', function (res) {
-//             successCount++;
-//
-//             if (successCount === totalCount) {
-//                 $btn.data('submitting', false);
-//                 $btn.prop('disabled', false);
-//                 $btn.html(originalText);
-//
-//                 if (res.code == 200) {
-//                     swal("", "保存成功，共插入 " + successCount + " 条数据", "success");
-//                     // 清空表单
-//                     $('#return-customer1').val('');
-//                     $('#return-phone1').val('');
-//                     $('#return-detail-table1 tbody').empty();
-//                     addReturnRow1();
-//                     calculateTotalAmount1();
-//                 } else {
-//                     swal("", res.msg, "error");
-//                 }
-//             }
-//         }, function(xhr, status, error) {
-//             $btn.data('submitting', false);
-//             $btn.prop('disabled', false);
-//             $btn.html(originalText);
-//             swal("", "请求失败: " + error, "error");
-//         });
-//     });
-// }
-
-// ==================== 生成出库单号 ====================
-// function generateReturnNo1(callback) {
-//     console.log('生成出库单号...');
-//
-//     // 简单的单号生成逻辑
-//     var now = new Date();
-//     var dateStr = now.getFullYear() +
-//         String(now.getMonth() + 1).padStart(2, '0') +
-//         String(now.getDate()).padStart(2, '0');
-//     var timestamp = Date.now().toString().slice(-4);
-//     var newReturnNo = "LH-" + dateStr + timestamp;
-//
-//     if (callback && typeof callback === 'function') {
-//         callback(newReturnNo);
-//     }
-// }
 
 // 生成出库单号
 function generateReturnNo1() {
@@ -691,40 +565,42 @@ function generateReturnNo1() {
 
 
 
-// 保存出库单数据（使用新的保存逻辑）
-// 保存出库单数据（修改后版本）
-// 修改 saveReturnOrder 函数中的ID收集部分
-// 保存出库单数据（使用新的保存逻辑）
+// ==================== 出库单保存函数（修正字段映射） ====================
 function saveReturnOrder() {
     console.log('开始保存出库单数据...');
 
-    // 1. 收集表单数据
+    // 1. 收集表单数据 - 根据数据库实际字段名
     var formData = {
-        customer: $('#return-customer1').val(),  // 往来单位 (c字段)
-        zhidanren: $('#company-address1').val(), // 制单人 (r字段)
-        shenheren: $('#company-phone1').val(),   // 审核人 (s字段)
-        songhuoren: $('#songhuoren').val(),      // 送货人 (t字段)
-        shouhuoren: $('#shouhuoren').val(),      // 收货人 (u字段)
-        chukuriqi: $('#return-date1').val(),     // 出库日期 (p字段)
-        chukudanhao: $('#return-no1').val(),     // 出库单号 (e字段)
+        // 头部信息 - 对应chuku表字段
+        c: $('#return-customer1').val() || '',     // 往来单位 (c字段)
+        e: $('#return-date1').val() || '',         // 出库日期 (e字段)
+        f: $('#return-no1').val() || '',           // 出库单号 (f字段)
+
+        // 底部信息
+        r: $('#company-address1').val() || '',     // 地址/制单人 (r字段)
+        s: $('#company-phone1').val() || '',       // 电话/审核人 (s字段)
+        t: $('#songhuoren').val() || '',           // 送货人 (t字段)
+        u: $('#shouhuoren').val() || '',           // 收货人 (u字段)
+
+        // 明细信息 - 每条记录都要保存的字段
         details: []
     };
 
-    console.log('表单数据:', formData);
+    console.log('表单头部数据:', formData);
 
     // 验证必填字段
-    if (!formData.chukudanhao || formData.chukudanhao.trim() === '') {
-        swal("保存失败", "出库单号不能为空", "error");
+    if (!formData.f || formData.f.trim() === '') {
+        alert("出库单号不能为空");
         return;
     }
 
-    if (!formData.customer || formData.customer.trim() === '') {
-        swal("保存失败", "往来单位不能为空", "error");
+    if (!formData.c || formData.c.trim() === '') {
+        alert("往来单位不能为空");
         return;
     }
 
-    if (!formData.chukuriqi || formData.chukuriqi.trim() === '') {
-        swal("保存失败", "出库日期不能为空", "error");
+    if (!formData.e || formData.e.trim() === '') {
+        alert("出库日期不能为空");
         return;
     }
 
@@ -743,37 +619,44 @@ function saveReturnOrder() {
             contractIds.push(processedId);
         }
 
-        var contractNo = $row.find('input[name="contractNo"]').val();
-        if (contractNo && contractNo.trim() !== '') {
-            var rowData = {
-                xuhao: (index + 1).toString(),
-                contractNo: contractNo,
-                taskNo: $row.find('input[name="taskNo"]').val() || '',
-                gongxu: $row.find('input[name="gongxu"]').val() || '',
-                productName: $row.find('input[name="productName"]').val() || '',
-                drawingNo: $row.find('input[name="drawingNo"]').val() || '',
-                unit: $row.find('input[name="unit"]').val() || '',
-                quantity: $row.find('input[name="quantity"]').val() || '',
-                unitPrice: $row.find('input[name="unitPrice"]').val() || '',
-                amount: $row.find('input[name="amount"]').val() || '',
-                material: $row.find('input[name="material"]').val() || '',
-                weight: $row.find('input[name="weight"]').val() || '',
-                remark: $row.find('input[name="remark"]').val() || '',
-                originalId: processedId || '' // 将原始ID也包含在行数据中
-            };
+        // 收集每行数据 - 根据查询返回的字段映射
+        var rowData = {
+            // 基础字段
+            id: processedId || '',  // 原始ID（如果有）
+
+            // 表格中的字段映射到数据库字段
+            o: $row.find('input[name="contractNo"]').val() || '',        // 合同号 (o字段)
+            p: $row.find('input[name="taskNo"]').val() || '',            // 任务号 (p字段)
+            q: $row.find('input[name="gongxu"]').val() || '',            // 工序 (q字段)
+            f: $row.find('input[name="productName"]').val() || '',       // 产品名称 (f字段)
+            g: $row.find('input[name="drawingNo"]').val() || '',         // 图号 (g字段)
+            h: $row.find('input[name="unit"]').val() || '',              // 单位 (h字段)
+            i: $row.find('input[name="quantity"]').val() || '',          // 数量 (i字段)
+            j: $row.find('input[name="unitPrice"]').val() || '0.00',     // 单价 (j字段)
+            k: $row.find('input[name="amount"]').val() || '0.00',        // 金额 (k字段)
+            l: $row.find('input[name="material"]').val() || '',          // 材质 (l字段)
+            m: $row.find('input[name="weight"]').val() || '',            // 重量 (m字段)
+            n: $row.find('input[name="remark"]').val() || ''             // 备注 (n字段)
+        };
+
+        console.log(`第${index + 1}行数据:`, rowData);
+
+        // 只要有任意一个字段有值，就认为有数据
+        if (rowData.o || rowData.p || rowData.f || rowData.i) {
             formData.details.push(rowData);
             hasData = true;
         }
     });
 
     if (!hasData) {
-        swal("保存失败", "没有要保存的数据", "error");
+        alert("没有要保存的明细数据");
         return;
     }
 
     console.log('收集到的原始ID:', contractIds);
     console.log('要保存的完整数据:', formData);
 
+    // 防止重复提交
     var $btn = $("#save-return-btn1");
     if ($btn.data('submitting')) {
         return;
@@ -781,45 +664,47 @@ function saveReturnOrder() {
     $btn.data('submitting', true);
     $btn.prop('disabled', true);
 
-    var originalText = $btn.html();
-    $btn.html('<i class="bi bi-arrow-clockwise icon"></i>提交中...');
-
-    // 发送到后端
-    $ajax({
-        type: 'post',
-        url: '/ckd_c/saveReturnOrder',
-        data: JSON.stringify(formData),
-        contentType: 'application/json',
-    }, false, '', function(res) {
-        console.log('保存响应:', res);
-
-        if (res.code == 200) {
-            // 如果有原始ID，调用更新合同状态接口
-            if (contractIds.length > 0) {
-                updateContractStatus(contractIds, formData.chukuriqi, formData.chukudanhao, $btn, originalText);
-            } else {
-                // 没有原始ID，直接完成
-                $btn.data('submitting', false);
-                $btn.prop('disabled', false);
-                $btn.html(originalText);
-                swal("保存成功", "出库单已保存到数据库", "success");
-                // 可选：保存成功后清空表单
-                // clearForm();
-            }
-        } else {
+    // 先检查出库单号是否已存在
+    checkChukudanhaoExists(formData.f, function(exists, count, existingData) {
+        if (exists) {
+            // 先恢复按钮状态
             $btn.data('submitting', false);
             $btn.prop('disabled', false);
-            $btn.html(originalText);
-            swal("保存失败", res.msg, "error");
+
+            // 使用confirm对话框提示用户
+            var userChoice = confirm(`出库单号 ${formData.f} 在数据库中已有 ${count} 条记录\n\n是否要删除原有数据并保存新数据？\n\n点击"确定"删除原有数据并保存\n点击"取消"清空页面表格`);
+
+            if (userChoice) {
+                // 用户点击"确定" - 先删除已有数据，再保存新数据
+                $btn.data('submitting', true);
+                $btn.prop('disabled', true);
+
+                deleteExistingChukudan(formData.f, function() {
+                    // 删除成功后保存新数据
+                    saveChukudanData(formData, contractIds, $btn);
+                }, function(errorMsg) {
+                    // 删除失败的处理
+                    $btn.data('submitting', false);
+                    $btn.prop('disabled', false);
+                    alert("删除失败: " + errorMsg);
+                });
+            } else {
+                // 用户点击"取消" - 清空页面表格
+                clearChukuForm();
+                alert("已清空页面表格，请重新填写数据");
+            }
+        } else {
+            // 直接保存数据
+            saveChukudanData(formData, contractIds, $btn);
         }
-    }, function(xhr, status, error) {
-        console.error('保存失败:', error);
+    }, function(errorMsg) {
+        // 检查失败的处理
         $btn.data('submitting', false);
         $btn.prop('disabled', false);
-        $btn.html(originalText);
-        swal("保存失败", "网络错误: " + error, "error");
+        alert("检查出库单号失败: " + errorMsg);
     });
 }
+
 
 // 清空表单（可选）
 function clearForm() {
@@ -890,12 +775,16 @@ $(document).ready(function() {
         addNewRow();
     });
 
+    // 查询按钮点击事件
+    $('#sle-row-btn').off('click').on('click', function() {
+        searchByOrderNumber();
+    });
+
     $('#remove-row-btn1').off('click').on('click', function() {
         removeSelectedRows();
     });
 });
 
-// 添加新行函数
 // 修改 addNewRow 函数
 function addNewRow() {
     var tableBody = $('#return-detail-table1 tbody');
@@ -905,18 +794,18 @@ function addNewRow() {
         <tr>
             <td><input type="checkbox" class="row-select1"></td>
             <td>${currentRows + 1}</td>
-            <td><input type="text" class="form-control form-control-sm" name="contractNo"></td>
-            <td><input type="text" class="form-control form-control-sm" name="taskNo"></td>
-            <td><input type="text" class="form-control form-control-sm" name="gongxu"></td>
-            <td><input type="text" class="form-control form-control-sm" name="productName"></td>
-            <td><input type="text" class="form-control form-control-sm" name="drawingNo"></td>
-            <td><input type="text" class="form-control form-control-sm" name="unit"></td>
-            <td><input type="number" class="form-control form-control-sm" name="quantity" value="1"></td>
-            <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="0"></td>
-            <td><input type="number" class="form-control form-control-sm" name="amount" value="0" readonly></td>
-            <td><input type="text" class="form-control form-control-sm" name="material"></td>
-            <td><input type="text" class="form-control form-control-sm" name="weight"></td>
-            <td><input type="text" class="form-control form-control-sm" name="remark"></td>
+            <td><input type="text" class="form-control form-control-sm" name="contractNo" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="taskNo" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="gongxu" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="productName" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="drawingNo" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="unit" contenteditable="false"></td>
+            <td><input type="number" class="form-control form-control-sm" name="quantity" value="1" contenteditable="false"></td>
+            <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="0" contenteditable="false"></td>
+            <td><input type="number" class="form-control form-control-sm" name="amount" value="0" contenteditable="false" readonly></td>
+            <td><input type="text" class="form-control form-control-sm" name="material" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="weight" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="remark" contenteditable="false"></td>
         </tr>
     `;
 
@@ -940,4 +829,446 @@ function removeSelectedRows() {
         calculateTotalAmount1();
         console.log('成功删除选中的行');
     }
+}
+
+
+
+
+
+// ==================== 加载订单号到下拉框 ====================
+function loadOrderNumbers() {
+    console.log('开始加载订单号...');
+
+    $ajax({
+        type: 'post',
+        url: '/ckd/gettdh',
+        dataType: 'json'
+    }, false, '', function(res) {
+        console.log('订单号加载响应:', res);
+
+        if (res.code == 200 && res.data && res.data.length > 0) {
+            populateOrderSelect(res.data);
+        } else {
+            console.warn('未获取到订单号数据:', res.msg);
+            // 可以显示提示信息
+            showWarning('未获取到订单号数据');
+        }
+    }, function(xhr, status, error) {
+        console.error('加载订单号失败:', error);
+        showError('加载订单号失败: ' + error);
+    });
+}
+
+// 填充下拉框选项
+function populateOrderSelect(orderList) {
+    var selectElement = $('#return-no-select');
+
+    // 清空现有选项（保留"请选择出库单号"）
+    selectElement.find('option:not(:first)').remove();
+
+    // 去重处理，只显示不同的订单号
+    var uniqueOrderNos = {};
+    var optionCount = 0;
+
+    orderList.forEach(function(order) {
+        if (order && order.e && !uniqueOrderNos[order.e]) {
+            uniqueOrderNos[order.e] = true;
+
+            var option = $('<option>', {
+                value: order.e,
+                text: order.e
+            });
+            selectElement.append(option);
+            optionCount++;
+        }
+    });
+
+    console.log('下拉框已填充，共添加', optionCount, '个不同的订单号选项');
+}
+
+
+// ==================== 根据订单号查询 ====================
+function searchByOrderNumber() {
+    var selectedOrderNo = $('#return-no-select').val();
+
+    if (!selectedOrderNo || selectedOrderNo.trim() === '') {
+        showWarning('请选择出库单号');
+        return;
+    }
+
+    console.log('开始查询订单号:', selectedOrderNo);
+
+    $ajax({
+        type: 'post',
+        url: '/ckd/searchReturnOrder',
+        data: {
+            returnNo: selectedOrderNo
+        },
+        dataType: 'json'
+    }, false, '', function(res) {
+        console.log('查询响应:', res);
+
+        if (res.code == 200 && res.data && res.data.length > 0) {
+            // 将查询结果填充到表单
+            fillFormWithData(res.data);
+            showSuccess('查询成功，共找到 ' + res.data.length + ' 条记录');
+        } else {
+            showError('未找到相关数据');
+            // 清空表单
+            clearFormData();
+        }
+    }, function(xhr, status, error) {
+        console.error('查询失败:', error);
+        showError('查询失败: ' + error);
+    });
+}
+
+// ==================== 将数据填充到表单 ====================
+function fillFormWithData(dataList) {
+    console.log('开始填充表单数据，共', dataList.length, '条记录');
+
+    // 1. 填充头部信息（使用第一条数据）
+    if (dataList.length > 0) {
+        var firstItem = dataList[0];
+
+        // 填充头部信息
+        $('#return-customer1').val(firstItem.c || '');      // 往来单位
+        $('#return-no1').val(firstItem.e || '');            // 出库单号
+        $('#return-date1').val(firstItem.d || '');          // 出库日期
+
+        // 填充底部信息
+        $('#company-address1').val(firstItem.r || '');      // 制单人
+        $('#company-phone1').val(firstItem.s || '');        // 审核人
+        $('#songhuoren').val(firstItem.t || '');            // 送货人
+        $('#shouhuoren').val(firstItem.u || '');            // 收货人
+    }
+
+    // 2. 先清空表格
+    var tableBody = $('#return-detail-table1 tbody');
+    tableBody.empty();
+
+    // 3. 填充表格数据
+    dataList.forEach(function(item, index) {
+        // 根据返回的字段结构重新映射
+        var rowData = {
+            id: item.id || '',
+            d: item.o || '',      // 合同号 (对应返回的o字段)
+            e: item.p || '',      // 任务号 (对应返回的p字段)
+            g: item.q || '',      // 工序 (对应返回的q字段)
+            h: item.f || '',      // 产品名称 (对应返回的f字段)
+            i: item.g || '',      // 图号 (对应返回的g字段)
+            j: item.h || '',      // 单位 (对应返回的h字段)
+            k: item.i || '',      // 数量 (对应返回的i字段)
+            l: item.l || '',      // 材质 (对应返回的l字段)
+            n: item.m || '',      // 重量 (对应返回的m字段)
+            ax: item.n || '',     // 备注 (对应返回的n字段)
+            unitPrice: item.j || '0.00',   // 单价
+            amount: item.k || '0.00'       // 金额
+        };
+
+        var row = `
+            <tr data-original-id="${rowData.id}">
+                <td><input type="checkbox" class="row-select1"></td>
+                <td>${index + 1}</td>
+                <td><input type="text" class="form-control form-control-sm" name="contractNo" value="${rowData.d || ''}" contenteditable="false"></td>
+                <td><input type="text" class="form-control form-control-sm" name="taskNo" value="${rowData.e || ''}" contenteditable="false"></td>
+                <td><input type="text" class="form-control form-control-sm" name="gongxu" value="${rowData.g || ''}" contenteditable="false"></td>
+                <td><input type="text" class="form-control form-control-sm" name="productName" value="${rowData.h || ''}" contenteditable="false"></td>
+                <td><input type="text" class="form-control form-control-sm" name="drawingNo" value="${rowData.i || ''}" contenteditable="false"></td>
+                <td><input type="text" class="form-control form-control-sm" name="unit" value="${rowData.j || ''}" contenteditable="false"></td>
+                <td><input type="number" class="form-control form-control-sm" name="quantity" value="${rowData.k || '1'}" contenteditable="false"></td>
+                <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="${rowData.unitPrice}" contenteditable="false"></td>
+                <td><input type="number" class="form-control form-control-sm" name="amount" value="${rowData.amount}" contenteditable="false" readonly></td>
+                <td><input type="text" class="form-control form-control-sm" name="material" value="${rowData.l || ''}" contenteditable="false"></td>
+                <td><input type="text" class="form-control form-control-sm" name="weight" value="${rowData.n || ''}" contenteditable="false"></td>
+                <td><input type="text" class="form-control form-control-sm" name="remark" value="${rowData.ax || ''}" contenteditable="false"></td>
+            </tr>
+        `;
+
+        tableBody.append(row);
+    });
+
+    // 4. 如果没有数据，添加一个空行
+    if (dataList.length === 0) {
+        addNewRow();
+    }
+
+    // 5. 更新行号和总金额
+    updateRowNumbers1();
+    calculateTotalAmount1();
+
+    // 6. 如果查询到的单号已经存在，则使用查询到的单号（而不是生成新的）
+    if (dataList.length > 0 && dataList[0].e) {
+        $('#return-no1').val(dataList[0].e);
+        console.log('使用查询到的出库单号:', dataList[0].e);
+    }
+
+    console.log('表单数据填充完成');
+}
+
+
+
+// ==================== 清空表单数据 ====================
+function clearFormData() {
+    // 清空表格
+    $('#return-detail-table1 tbody').empty();
+
+    // 添加一个空行
+    addNewRow();
+
+    // 清空往来单位
+    $('#return-customer1').val('');
+
+    // 重置总金额
+    calculateTotalAmount1();
+}
+
+// ==================== 消息提示函数 ====================
+function showSuccess(message) {
+    swal("成功", message, "success");
+}
+
+function showWarning(message) {
+    swal("提示", message, "warning");
+}
+
+function showError(message) {
+    swal("错误", message, "error");
+}
+
+
+// ==================== 检查出库单号是否存在的函数 ====================
+function checkChukudanhaoExists(chukudanhao, successCallback, errorCallback) {
+    console.log('检查出库单号是否存在:', chukudanhao);
+
+    $ajax({
+        type: 'post',
+        url: '/ckd/searchReturnOrder',
+        data: {
+            returnNo: chukudanhao
+        },
+        dataType: 'json'
+    }, false, '', function(res) {
+        if (res.code == 200) {
+            var exists = res.data && res.data.length > 0;
+            var count = exists ? res.data.length : 0;
+            console.log('检查结果: 存在=' + exists + ', 数量=' + count);
+            if (successCallback) successCallback(exists, count, res.data);
+        } else {
+            console.error('检查出库单号失败:', res.msg);
+            if (errorCallback) errorCallback(res.msg || '查询失败');
+        }
+    });
+}
+
+// ==================== 删除已有出库单数据的函数 ====================
+function deleteExistingChukudan(chukudanhao, successCallback, errorCallback) {
+    console.log('开始删除已有出库单数据:', chukudanhao);
+
+    // 方式1：使用专门的删除接口
+    $ajax({
+        type: 'post',
+        url: '/ckd_c/deleteByChukudanhao',
+        data: {
+            chukudanhao: chukudanhao
+        },
+        dataType: 'json'
+    }, false, '', function(res) {
+        if (res.code == 200) {
+            console.log('删除已有数据成功');
+            if (successCallback) successCallback();
+        } else {
+            console.error('删除失败:', res.msg);
+            if (errorCallback) errorCallback(res.msg || '删除失败');
+        }
+    });
+}
+
+// ==================== 保存出库单数据的函数 ====================
+// ==================== 保存出库单数据的函数 ====================
+function saveChukudanData(formData, contractIds, $btn) {
+    var originalText = $btn.html();
+    $btn.html('<i class="bi bi-arrow-clockwise icon"></i>提交中...');
+
+    console.log('开始保存出库单数据...', formData);
+
+    // 准备要保存的数据数组
+    var saveDataArray = [];
+
+    // 将明细数据转换为后端期望的格式
+    formData.details.forEach(function(detail, index) {
+        var saveData = {
+            c: formData.c || '',          // 往来单位 (c字段)
+            d: formData.e || '',          // 出库日期 (d字段) - 注意：前端传e，对应数据库d
+            e: formData.f || '',          // 出库单号 (e字段) - 注意：前端传f，对应数据库e
+
+            // 明细信息 - 对应查询返回的字段名
+            f: detail.o || '',            // 产品名称 (f字段) - 合同号映射到产品名称
+            g: detail.p || '',            // 图号 (g字段) - 任务号映射到图号
+            h: detail.q || '',            // 单位 (h字段) - 工序映射到单位
+            i: detail.f || '',            // 数量 (i字段) - 产品名称映射到数量
+            j: detail.g || '',            // 单价 (j字段) - 图号映射到单价
+            k: detail.h || '',            // 金额 (k字段) - 单位映射到金额
+            l: detail.i || '',            // 材质 (l字段) - 数量映射到材质
+            m: detail.j || '0.00',        // 重量 (m字段) - 单价映射到重量
+            n: detail.k || '0.00',        // 备注 (n字段) - 金额映射到备注
+
+            o: detail.l || '',            // 合同号 (o字段) - 材质映射到合同号
+            p: detail.m || '',            // 任务号 (p字段) - 重量映射到任务号
+            q: detail.n || '',            // 工序 (q字段) - 备注映射到工序
+
+            // 人员信息
+            r: formData.r || '',          // 制单人 (r字段)
+            s: formData.s || '',          // 审核人 (s字段)
+            t: formData.t || '',          // 送货人 (t字段)
+            u: formData.u || ''           // 收货人 (u字段)
+        };
+
+        // 如果有原始ID，也传过去（用于更新操作）
+        if (detail.id) {
+            saveData.id = detail.id;
+        }
+
+        saveDataArray.push(saveData);
+    });
+
+    console.log('要保存的数据数组:', saveDataArray);
+
+    // 如果只有一条数据，直接发送
+    if (saveDataArray.length === 1) {
+        $ajax({
+            type: 'post',
+            url: '/ckd_c/saveReturnOrder',
+            data: JSON.stringify(saveDataArray[0]),
+            contentType: 'application/json',
+        }, false, '', function(res) {
+            handleSaveResponse(res, contractIds, formData, $btn, originalText);
+        }, function(xhr, status, error) {
+            handleSaveError(error, $btn, originalText);
+        });
+    } else {
+        // 批量保存
+        var successCount = 0;
+        var totalCount = saveDataArray.length;
+        var hasError = false;
+
+        saveDataArray.forEach(function(data, index) {
+            $ajax({
+                type: 'post',
+                url: '/ckd_c/saveReturnOrder',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+            }, false, '', function(res) {
+                successCount++;
+
+                if (res.code == 200) {
+                    console.log(`第${index + 1}条数据保存成功`);
+                } else {
+                    console.error(`第${index + 1}条数据保存失败:`, res.msg);
+                    hasError = true;
+                }
+
+                // 所有请求都完成
+                if (successCount === totalCount) {
+                    if (!hasError) {
+                        handleSaveResponse({code: 200, msg: "保存成功"}, contractIds, formData, $btn, originalText);
+                    } else {
+                        $btn.data('submitting', false);
+                        $btn.prop('disabled', false);
+                        $btn.html(originalText);
+                        alert("部分数据保存失败，请检查后重试");
+                    }
+                }
+            }, function(xhr, status, error) {
+                successCount++;
+                hasError = true;
+                console.error(`第${index + 1}条数据保存失败:`, error);
+
+                if (successCount === totalCount) {
+                    $btn.data('submitting', false);
+                    $btn.prop('disabled', false);
+                    $btn.html(originalText);
+                    alert("部分数据保存失败，请检查后重试");
+                }
+            });
+        });
+    }
+}
+
+// ==================== 清空出库单表单的函数 ====================
+function clearChukuForm() {
+    // 清空输入字段
+    $('#return-customer1').val('');
+    $('#company-address1').val('');
+    $('#company-phone1').val('');
+    $('#songhuoren').val('');
+    $('#shouhuoren').val('');
+    $('#return-date1').val('');
+
+    // 重新生成新的出库单号
+    generateReturnNo1();
+
+    // 清空表格，只保留第一行
+    $('#return-detail-table1 tbody tr:gt(0)').remove();
+    if ($('#return-detail-table1 tbody tr').length === 0) {
+        addReturnRow1(); // 确保至少有一行
+    } else {
+        // 清空第一行的数据
+        var $firstRow = $('#return-detail-table1 tbody tr:first');
+        $firstRow.find('input[name="contractNo"]').val('');
+        $firstRow.find('input[name="taskNo"]').val('');
+        $firstRow.find('input[name="gongxu"]').val('');
+        $firstRow.find('input[name="productName"]').val('');
+        $firstRow.find('input[name="drawingNo"]').val('');
+        $firstRow.find('input[name="unit"]').val('');
+        $firstRow.find('input[name="quantity"]').val('1');
+        $firstRow.find('input[name="unitPrice"]').val('0');
+        $firstRow.find('input[name="amount"]').val('0');
+        $firstRow.find('input[name="material"]').val('');
+        $firstRow.find('input[name="weight"]').val('');
+        $firstRow.find('input[name="remark"]').val('');
+        $firstRow.removeData('original-id'); // 移除原表id
+    }
+
+    // 设置当前日期
+    $('#return-date1').val(getCurrentDate1());
+
+    // 重新计算总金额
+    calculateTotalAmount1();
+
+    console.log('出库单表单已清空');
+}
+
+// 处理保存响应
+function handleSaveResponse(res, contractIds, formData, $btn, originalText) {
+    console.log('保存响应:', res);
+
+    if (res.code == 200) {
+        // 如果有原始ID，调用更新合同状态接口
+        if (contractIds.length > 0) {
+            updateContractStatus(contractIds, formData.e, formData.f, $btn, originalText);
+        } else {
+            // 没有原始ID，直接完成
+            $btn.data('submitting', false);
+            $btn.prop('disabled', false);
+            $btn.html(originalText);
+            alert("保存成功，出库单已保存到数据库");
+            // 保存成功后清空表单
+            clearChukuForm();
+        }
+    } else {
+        $btn.data('submitting', false);
+        $btn.prop('disabled', false);
+        $btn.html(originalText);
+        alert("保存失败: " + (res.msg || "未知错误"));
+    }
+}
+
+// 处理保存错误
+function handleSaveError(error, $btn, originalText) {
+    console.error('保存失败:', error);
+    $btn.data('submitting', false);
+    $btn.prop('disabled', false);
+    $btn.html(originalText);
+    alert("保存失败，网络错误: " + error);
 }
