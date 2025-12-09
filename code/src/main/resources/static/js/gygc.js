@@ -620,6 +620,34 @@ function populateTable(data) {
             }
         });
 
+        // 使用jQuery添加移动端双击支持
+        $(row).on('touchstart', function(e) {
+            e.preventDefault();
+
+            // 使用jQuery的data存储点击次数
+            let tapCount = $(this).data('tapCount') || 0;
+            tapCount++;
+            $(this).data('tapCount', tapCount);
+
+            if (tapCount === 1) {
+                // 第一次触摸，设置计时器
+                setTimeout(() => {
+                    $(this).data('tapCount', 0);
+                }, 300);
+            } else if (tapCount === 2) {
+                // 第二次触摸（双击）
+                $(this).data('tapCount', 0);
+
+                // 触发双击事件
+                const itemId = item.id || item.ID;
+                if (itemId) {
+                    queryListById(itemId);
+                } else {
+                    swal("提示", "该行数据没有ID", "warning");
+                }
+            }
+        });
+
         resultsBody.appendChild(row);
     });
 }

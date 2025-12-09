@@ -1,5 +1,6 @@
 package com.example.demo.mapper;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.demo.entity.*;
 import org.apache.ibatis.annotations.*;
@@ -167,6 +168,100 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "</script>"
     })
     List<Htjl> getListExcludeThjl();
+
+
+
+    @Select("<script>" +
+            "WITH filtered_hetong AS (" +
+            "    SELECT * FROM hetong_jilu hj " +
+            "    WHERE ISNULL(hj.hetong_zhuangtai, '') = '' " +
+            "      AND NOT EXISTS (" +
+            "          SELECT 1 FROM tuihuo tb WITH(NOLOCK) " +
+            "          WHERE tb.v = hj.id " +
+            "      )" +
+            "    <if test='ew != null'>" +
+            "        <trim prefix=' AND ' prefixOverrides='AND |OR '>" +
+            "            ${ew.sqlSegment}" +
+            "        </trim>" +
+            "    </if>" +
+            ") " +
+            "SELECT * FROM (" +
+            "    SELECT ROW_NUMBER() OVER (ORDER BY id ASC) as rn, " +
+            "           hj.id, " +
+            "           ISNULL(hj.C, '') as c, " +
+            "           ISNULL(hj.D, '') as d, " +
+            "           ISNULL(hj.E, '') as e, " +
+            "           ISNULL(hj.zhuangtai, '') as zhuangtai, " +
+            "           ISNULL(hj.G, '') as g, " +
+            "           ISNULL(hj.H, '') as h, " +
+            "           ISNULL(hj.I, '') as i, " +
+            "           ISNULL(hj.J, '') as j, " +
+            "           ISNULL(hj.K, '') as k, " +
+            "           ISNULL(hj.L, '') as l, " +
+            "           ISNULL(hj.AU, '') as au, " +
+            "           ISNULL(hj.AV, '') as av, " +
+            "           ISNULL(hj.AW, '') as aw, " +
+            "           ISNULL(hj.AX, '') as ax, " +
+            "           ISNULL(hj.M, '') as m, " +
+            "           ISNULL(hj.N, '') as n, " +
+            "           ISNULL(hj.O, '') as o, " +
+            "           ISNULL(hj.P, '') as p, " +
+            "           ISNULL(hj.Q, '') as q, " +
+            "           ISNULL(hj.R, '') as r, " +
+            "           ISNULL(hj.S, '') as s, " +
+            "           ISNULL(hj.T, '') as t, " +
+            "           ISNULL(hj.U, '') as u, " +
+            "           ISNULL(hj.V, '') as v, " +
+            "           ISNULL(hj.W, '') as w, " +
+            "           ISNULL(hj.X, '') as x, " +
+            "           ISNULL(hj.Y, '') as y, " +
+            "           ISNULL(hj.Z, '') as z, " +
+            "           ISNULL(hj.[AA], '') as aa, " +
+            "           ISNULL(hj.[AB], '') as ab, " +
+            "           ISNULL(hj.[AC], '') as ac, " +
+            "           ISNULL(hj.[AD], '') as ad, " +
+            "           ISNULL(hj.[AE], '') as ae, " +
+            "           ISNULL(hj.[AF], '') as af, " +
+            "           ISNULL(hj.[AG], '') as ag, " +
+            "           ISNULL(hj.[AH], '') as ah, " +
+            "           ISNULL(hj.[AI], '') as ai, " +
+            "           ISNULL(hj.[AJ], '') as aj, " +
+            "           ISNULL(hj.[AK], '') as ak, " +
+            "           ISNULL(hj.[AL], '') as al, " +
+            "           ISNULL(hj.[AM], '') as am, " +
+            "           ISNULL(hj.[AN], '') as an, " +
+            "           ISNULL(hj.[AO], '') as ao, " +
+            "           ISNULL(hj.[AP], '') as ap, " +
+            "           ISNULL(hj.[AY], '') as ay, " +
+            "           ISNULL(hj.[AQ], '') as aq, " +
+            "           ISNULL(hj.[AR], '') as ar, " +
+            "           ISNULL(hj.[AS], '') as aas, " +
+            "           ISNULL(hj.[AT], '') as at, " +
+            "           ISNULL(hj.hetong_zhuangtai, '') as hetongzhuangtai, " +
+            "           ISNULL(hj.riqi, '') as riqi " +
+            "    FROM filtered_hetong hj " +
+            ") temp " +
+            "WHERE temp.rn BETWEEN #{start} + 1 AND #{start} + #{end} " +
+            "OPTION (RECOMPILE)" +  // 注意：前面有空格，没有分号
+            "</script>")
+    List<Map<String, Object>> selectDistinctByDdhForPage(@Param("start") long start,
+                                                         @Param("end") long end,
+                                                         @Param("ew") Wrapper<Map<String, Object>> wrapper);
+
+    @Select("<script>" +
+            "SELECT COUNT(*) FROM hetong_jilu hj " +
+            "WHERE ISNULL(hj.hetong_zhuangtai, '') = '' " +
+            "  AND NOT EXISTS (" +
+            "      SELECT 1 FROM tuihuo tb WITH(NOLOCK) " +
+            "      WHERE tb.v = hj.id " +
+            "  )" +
+            "  <if test='ew != null'>" +
+            "      <trim prefix=' AND ' prefixOverrides='AND |OR '>" +
+            "          ${ew.sqlSegment}" +
+            "      </trim>" +
+            "  </if>" +
+            "</script>")
+    Long selectDistinctCount(@Param("ew") Wrapper<Map<String, Object>> wrapper);
 
 
 

@@ -1,104 +1,202 @@
 var idd;
-function getList() {
-    $('#rwh').val("");
-    $('#th').val("");
-    $('#thyy').val("");
-    $('#hth').val("");
-    $('#jsrq').val("");
-    $('#ksrq').val("");
+var currentPage = 1;
+var pageSize = 20; // 与 bootstrap-table 的 pageSize 保持一致
+var totalCount = 0;
+var totalPages = 0;
+
+function getList(page) {
+    // 如果有传入页码参数，更新当前页码
+    if (page) {
+        currentPage = page;
+    }
+
+    // 获取查询条件（不再清空表单值）
+    var ksrq = $('#ksrq').val() || '';
+    var jsrq = $('#jsrq').val() || '';
+    var h = $('#hth').val() || '';
+    var i = $('#rwh').val() || '';
+    var k = $('#th').val() || '';
+    var r = $('#thyy').val() || '';
+
+    console.log('查询条件:', {
+        pageNum: currentPage,
+        pageSize: pageSize,
+        ksrq: ksrq,
+        jsrq: jsrq,
+        h: h,
+        i: i,
+        k: k,
+        r: r
+    });
+
+    // 构建查询参数
+    var params = {
+        pageNum: currentPage,
+        pageSize: pageSize
+    };
+
+    // 如果有查询条件，添加到参数中
+    if (ksrq || jsrq || h || i || k || r) {
+        params.ksrq = ksrq;
+        params.jsrq = jsrq;
+        params.h = h;
+        params.i = i;
+        params.k = k;
+        params.r = r;
+    }
+
     $ajax({
         type: 'post',
         url: '/thjl/getList',
+        contentType: 'application/json',
+        data: JSON.stringify(params),
+        dataType: 'json'
     }, false, '', function (res) {
         console.log('=== 调试信息开始 ===');
         console.log('API响应状态:', res.code);
         console.log('API响应消息:', res.msg);
         console.log('完整响应数据:', res);
+
         if (res.code == 200) {
-            setTable(res.data);
-            $("#userTable").colResizable({
-                liveDrag: true,
-                gripInnerHtml: "<div class='grip'></div>",
-                draggingClass: "dragging",
-                resizeMode: 'fit'
-            });
-            for (i=0;i<=res.data.id;i++){
+            // 从响应中获取分页数据
+            var data = res.data.records || res.data.list || res.data;
+            totalCount = res.data.total || 0;
+            totalPages = res.data.totalPages || res.data.pages || 1;
+
+            // setTable(data);
+            setTableSimple(data);
+
+            // 更新分页信息显示
+            updatePagination();
+
+            // 添加列可调整功能
+            if ($("#userTable").data('colResizable')) {
+                $("#userTable").colResizable({
+                    liveDrag: true,
+                    gripInnerHtml: "<div class='grip'></div>",
+                    draggingClass: "dragging",
+                    resizeMode: 'fit'
+                });
+            }
+
+            // 保留原有的 id 处理逻辑
+            for (i=0; i<=res.data.id; i++){
                 idd=i;
             }
+
+            // 如果有查询条件，显示查询结果提示
+            if (ksrq || jsrq || h || i || k || r) {
+                console.log('查询完成，找到 ' + totalCount + ' 条记录');
+            }
         }
-    })
+    });
 }
+
+function getSelectedRows() {
+    var selectedRows = [];
+    $('#userTable tbody tr.selected').each(function() {
+        var rowId = $(this).data('id');
+        var rowData = {
+            id: rowId,
+            data: {
+                id: rowId
+            }
+        };
+
+        // 获取所有单元格数据
+        $(this).find('td').each(function(index) {
+            var cellText = $(this).text().trim();
+            // 根据列索引映射字段名
+            var fieldMap = {
+                1: 'c',   // 退货客户
+                2: 'd',   // 退货电话
+                3: 'e',   // 退货日期
+                4: 'f',   // 退货单号
+                5: 'w',   // 回厂日期
+                6: 'g',   // 合同号
+                7: 'h',   // 任务号
+                8: 'i',   // 产品名称
+                9: 'j',   // 图号
+                10: 'k',  // 单位
+                11: 'l',  // 数量
+                12: 'm',  // 单价
+                13: 'n',  // 金额
+                14: 'o',  // 材质
+                15: 'p',  // 重量
+                16: 'q',  // 退货原因
+                17: 'r',  // 地址
+                18: 's',  // 客户签字
+                19: 't',  // 电话
+                20: 'u'   // 备注
+            };
+
+            if (fieldMap[index]) {
+                rowData.data[fieldMap[index]] = cellText;
+            }
+        });
+
+        selectedRows.push(rowData);
+    });
+    return selectedRows;
+}
+
+function getTableSelection(tableId) {
+    // 如果是简单表格，使用新的选择逻辑
+    if ($('#userTable').is(':not(.bootstrap-table)')) {
+        return getSelectedRows();
+    }
+    // 否则使用原来的 bootstrap-table 逻辑（保持兼容性）
+    return []; // 这里可以保留原来的 bootstrap-table 选择逻辑
+}
+
+
 
 $(function () {
     getList();
 
-    $(function () {
-        getList();
+    // 设置默认日期（保持 yyyy-MM-dd 格式）
+    var date = new Date();
+    date.setMonth(date.getMonth() - 3);
+    var year = date.getFullYear();
+    var month = ('0' + (date.getMonth() + 1)).slice(-2);
+    var day = ('0' + date.getDate()).slice(-2);
+    var ks = year + '-' + month + '-' + day;
+    document.getElementById("ksrq").value ="";
 
-        // 设置默认日期（保持 yyyy-MM-dd 格式）
-        var date = new Date();
-        date.setMonth(date.getMonth() - 3);
-        var year = date.getFullYear();
-        var month = ('0' + (date.getMonth() + 1)).slice(-2);
-        var day = ('0' + date.getDate()).slice(-2);
-        var ks = year + '-' + month + '-' + day;
-        document.getElementById("ksrq").value ="";
+    var jsDate = new Date();
+    jsDate.setMonth(jsDate.getMonth() + 1);
+    var jsyear = jsDate.getFullYear();
+    var jsmonth = ('0' + (jsDate.getMonth() + 1)).slice(-2);
+    var jsday = ('0' + jsDate.getDate()).slice(-2);
+    var js = jsyear + '-' + jsmonth + '-' + jsday;
+    document.getElementById("jsrq").value = "";
 
-        var jsDate = new Date();
-        jsDate.setMonth(jsDate.getMonth() + 1);
-        var jsyear = jsDate.getFullYear();
-        var jsmonth = ('0' + (jsDate.getMonth() + 1)).slice(-2);
-        var jsday = ('0' + jsDate.getDate()).slice(-2);
-        var js = jsyear + '-' + jsmonth + '-' + jsday;
-        document.getElementById("jsrq").value = "";
+    // 修改查询按钮事件，使用统一的 getList 方法
+    $('#select-btn').click(function () {
+        // 重置为第一页
+        currentPage = 1;
+        getList(currentPage);
+    });
 
-        $('#select-btn').click(function () {
-            var ksrq = $('#ksrq').val();
-            var jsrq = $('#jsrq').val();
-            var h = $('#hth').val();
-            var i = $('#rwh').val();
-            var k = $('#th').val();
-            var r = $('#thyy').val();
+    // 清空按钮（如果需要）
+    $('#clear-btn').click(function () {
+        // 清空查询条件
+        $('#ksrq').val('');
+        $('#jsrq').val('');
+        $('#hth').val('');
+        $('#rwh').val('');
+        $('#th').val('');
+        $('#thyy').val('');
 
-            console.log('查询条件:', {
-                ksrq: ksrq,
-                jsrq: jsrq,
-                h: h,
-                i: i,
-                k: k,
-                r: r
-            });
-
-            ksrq = ksrq || '';
-            jsrq = jsrq || '';
-
-            $ajax({
-                type: 'post',
-                url: '/thjl/queryList',
-                data: {
-                    ksrq: ksrq,
-                    jsrq: jsrq,
-                    h: h || '',
-                    i: i || '',
-                    k: k || '',
-                    r: r || ''
-                }
-            }, true, '查询中...', function (res) {
-                console.log('查询响应:', res);
-                if (res.code == 200) {
-                    console.log('查询到的数据:', res.data);
-                    setTable(res.data);
-                    swal("查询成功", "找到 " + res.data.length + " 条记录", "success");
-                } else {
-                    swal("查询失败", res.msg, "error");
-                }
-            })
-        });
+        // 重置为第一页并重新加载
+        currentPage = 1;
+        getList(currentPage);
     });
 
     $("#refresh-btn").click(function () {
-        getList();
-        swal("刷新成功", "已显示所有数据", "success");
+        currentPage = 1;
+        getList(currentPage);
+        swal("刷新成功", "已刷新数据", "success");
     });
 
     $("#add-btn").click(function () {
@@ -169,7 +267,7 @@ $(function () {
             if (res.code == 200) {
                 swal("", res.msg, "success");
                 $('#add-form')[0].reset();
-                getList();
+                getList(currentPage);
                 $('#add-modal').modal('hide');
             } else {
                 swal("", res.msg, "error");
@@ -189,8 +287,12 @@ $(function () {
     });
 
     $('#update-btn').click(function () {
-        let rows = getTableSelection('#userTable');
-        if (rows.length > 1 || rows.length == 0) {
+        let rows = getSelectedRows(); // 使用新的选择函数
+        if (rows.length > 1) {
+            swal('请只选择一条数据修改!');
+            return;
+        }
+        if (rows.length == 0) {
             swal('请选择一条数据修改!');
             return;
         }
@@ -322,7 +424,7 @@ $(function () {
                         swal("", res.msg, "success");
                         $('#update-modal').modal('hide');
                         $('#update-form')[0].reset();
-                        getList();
+                        getList(currentPage);
                     } else {
                         swal("", res.msg || "修改失败", "error");
                     }
@@ -343,14 +445,14 @@ $(function () {
     $('#delete-btn').click(function () {
         var msg = confirm("确认要删除吗？");
         if (msg) {
-            let rows = getTableSelection("#userTable");
+            let rows = getSelectedRows(); // 使用新的选择函数
             if (rows.length == 0) {
                 swal('请选择要删除的数据！');
                 return;
             }
             let idList = [];
             $.each(rows, function (index, row) {
-                idList.push(row.data.id)
+                idList.push(row.id)
             });
             $ajax({
                 type: 'post',
@@ -363,7 +465,7 @@ $(function () {
             }, false, '', function (res) {
                 if (res.code == 200) {
                     swal("", res.msg, "success");
-                    getList();
+                    getList(currentPage);
                 } else if(res.code == 403){
                     swal("删除失败,权限不足,管理员权限可以删除");
                 }else {
@@ -371,8 +473,138 @@ $(function () {
                 }
             })
         }
-    })
+    });
 });
+
+function setTableSimple(data) {
+    console.log('使用简单表格更新，数据长度:', data ? data.length : 0);
+
+    var $table = $('#userTable');
+    if (!$table.length) return;
+
+    // 清空表格
+    $table.empty();
+
+
+    // 构建表头 - 添加居中样式
+    var thead = '<thead>' +
+        '<tr>' +
+        // 添加单选列
+        '<th width="70" style=" padding: 8px; text-align: center;">选择</th>' +
+        '<th width="120" style=" padding: 8px; text-align: center;">退货客户</th>' +
+        '<th width="120" style=" padding: 8px; text-align: center;">退货电话</th>' +
+        '<th width="120" style=" padding: 8px; text-align: center;">退货日期</th>' +
+        '<th width="150" style=" padding: 8px; text-align: center;">退货单号</th>' +
+        '<th width="120" style=" padding: 8px; text-align: center;">回厂日期</th>' +
+        '<th width="150" style=" padding: 8px; text-align: center;">合同号</th>' +
+        '<th width="120" style=" padding: 8px; text-align: center;">任务号</th>' +
+        '<th width="120" style=" padding: 8px; text-align: center;">产品名称</th>' +
+        '<th width="120" style=" padding: 8px; text-align: center;">图号</th>' +
+        '<th width="100" style=" padding: 8px; text-align: center;">单位</th>' +
+        '<th width="100" style=" padding: 8px; text-align: center;">数量</th>' +
+        '<th width="100" style=" padding: 8px; text-align: center;">单价</th>' +
+        '<th width="100" style=" padding: 8px; text-align: center;">金额</th>' +
+        '<th width="100" style=" padding: 8px; text-align: center;">材质</th>' +
+        '<th width="100" style=" padding: 8px; text-align: center;">重量</th>' +
+        '<th width="180" style=" padding: 8px; text-align: center;">退货原因</th>' +
+        '<th width="180" style=" padding: 8px; text-align: center;">地址</th>' +
+        '<th width="120" style=" padding: 8px; text-align: center;">客户签字</th>' +
+        '<th width="120" style=" padding: 8px; text-align: center;">电话</th>' +
+        '<th width="180" style=" padding: 8px; text-align: center;">备注</th>' +
+        '</tr>' +
+        '</thead>';
+
+    // 构建表格内容
+    var tbody = '<tbody>';
+
+    if (!data || data.length === 0) {
+        tbody += '<tr>' +
+            '<td colspan="21" style="border: 1px solid #ddd; padding: 20px; text-align: center;">暂无数据</td>' +
+            '</tr>';
+    } else {
+        for (var i = 0; i < data.length; i++) {
+            var item = data[i];
+            tbody += '<tr data-id="' + (item.id || '') + '" style="border: 1px solid #ddd;">' +
+                // 单选列 - 使用单选按钮，添加居中
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' +
+                '<input type="radio" name="rowSelection" class="row-radio" data-id="' + (item.id || '') + '" value="' + (item.id || '') + '" style="margin: 0 auto;">' +
+                '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.c || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.d || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.e || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.f || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.w || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.g || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.h || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.i || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.j || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.k || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.l || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.m || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.n || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.o || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.p || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.q || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.r || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.s || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.t || '') + '</td>' +
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.u || '') + '</td>' +
+                '</tr>';
+        }
+    }
+
+    tbody += '</tbody>';
+
+    $table.html(thead + tbody);
+
+    // 为表格整体添加容器样式（可选）
+    $table.wrap('<div style="border: 1px solid #ddd; border-radius: 4px; overflow: hidden; margin: 10px 0;"></div>');
+
+    // 绑定单选按钮点击事件
+    $table.find('.row-radio').click(function(e) {
+        e.stopPropagation(); // 阻止事件冒泡
+
+        // 移除所有行的选中状态
+        $table.find('tr').removeClass('selected');
+
+        // 为当前行添加选中状态
+        $(this).closest('tr').addClass('selected');
+
+        // 选中当前单选按钮
+        $table.find('.row-radio').prop('checked', false);
+        $(this).prop('checked', true);
+    });
+
+    // 绑定行点击事件（点击行时选中该行）
+    $table.find('tbody tr').click(function(e) {
+        // 如果点击的是单选按钮，不重复处理
+        if ($(e.target).is('input[type="radio"]')) {
+            return;
+        }
+
+        // 移除所有行的选中状态
+        $table.find('tr').removeClass('selected');
+
+        // 为当前行添加选中状态
+        $(this).addClass('selected');
+
+        // 选中当前行的单选按钮
+        $table.find('.row-radio').prop('checked', false);
+        $(this).find('.row-radio').prop('checked', true);
+    });
+
+    // 为选中行添加样式
+    $('head').append('<style>' +
+        '.selected { background-color: #e6f7ff !important; }' +
+        'table { border-collapse: collapse; }' +
+        'td { border: 1px solid #ddd; padding: 8px; text-align: center; }' +
+        '</style>');
+
+    console.log('简单表格更新完成');
+}
+
+
+
 
 function setTable(data) {
     if ($('#userTable').length === 0) {
@@ -380,52 +612,264 @@ function setTable(data) {
         return;
     }
 
+    console.log('setTable 被调用，数据长度:', data ? data.length : 0);
+    console.log('数据示例:', data && data.length > 0 ? data[0] : '空数据');
+
+    // 检查表格是否已经初始化
     if ($('#userTable').hasClass('bootstrap-table')) {
+        // 表格已初始化，直接更新数据
+        console.log('表格已初始化，使用 bootstrapTable("load") 更新数据');
+
+        // 先销毁表格然后重新初始化，确保数据完全更新
         $('#userTable').bootstrapTable('destroy');
+
+        // 重新初始化表格
+        $('#userTable').bootstrapTable({
+            data: data,
+            sortStable: true,
+            classes: 'table table-hover table-bordered',
+            idField: 'id',
+            pagination: false, // 禁用 bootstrap-table 自带的分页，使用自定义分页
+            pageSize: pageSize,
+            clickToSelect: true,
+            locale: 'zh-CN',
+            columns: [
+                { field: 'c', title: '退货客户', align: 'center', sortable: true, width: 100 },
+                { field: 'd', title: '退货电话', align: 'center', sortable: true, width: 100 },
+                { field: 'e', title: '退货日期', align: 'center', sortable: true, width: 100 },
+                { field: 'f', title: '退货单号', align: 'center', sortable: true, width: 100 },
+                { field: 'w', title: '回厂日期', align: 'center', sortable: true, width: 100 },
+                { field: 'g', title: '合同号', align: 'center', sortable: true, width: 100 },
+                { field: 'h', title: '任务号', align: 'center', sortable: true, width: 100 },
+                { field: 'i', title: '产品名称', align: 'center', sortable: true, width: 100 },
+                { field: 'j', title: '图号', align: 'center', sortable: true, width: 100 },
+                { field: 'k', title: '单位', align: 'center', sortable: true, width: 100 },
+                { field: 'l', title: '数量', align: 'center', sortable: true, width: 100 },
+                { field: 'm', title: '单价', align: 'center', sortable: true, width: 100 },
+                { field: 'n', title: '金额', align: 'center', sortable: true, width: 100 },
+                { field: 'o', title: '材质', align: 'center', sortable: true, width: 100 },
+                { field: 'p', title: '重量', align: 'center', sortable: true, width: 100 },
+                { field: 'q', title: '退货原因', align: 'center', sortable: true, width: 100 },
+                { field: 'r', title: '地址', align: 'center', sortable: true, width: 100 },
+                { field: 's', title: '客户签字', align: 'center', sortable: true, width: 100 },
+                { field: 't', title: '电话', align: 'center', sortable: true, width: 100 },
+                { field: 'u', title: '备注', align: 'center', sortable: true, width: 100 }
+            ],
+            onClickRow: function (row, el) {
+                let isSelect = $(el).hasClass('selected')
+                if (isSelect) {
+                    $(el).removeClass('selected')
+                } else {
+                    $(el).addClass('selected')
+                }
+            }
+        });
+
+        console.log('表格更新完成');
+    } else {
+        // 表格未初始化，初始化表格
+        console.log('表格未初始化，创建新表格');
+
+        $('#userTable').bootstrapTable({
+            data: data,
+            sortStable: true,
+            classes: 'table table-hover table-bordered',
+            idField: 'id',
+            pagination: false, // 禁用 bootstrap-table 自带的分页，使用自定义分页
+            pageSize: pageSize,
+            clickToSelect: true,
+            locale: 'zh-CN',
+            columns: [
+                { field: 'c', title: '退货客户', align: 'center', sortable: true, width: 100 },
+                { field: 'd', title: '退货电话', align: 'center', sortable: true, width: 100 },
+                { field: 'e', title: '退货日期', align: 'center', sortable: true, width: 100 },
+                { field: 'f', title: '退货单号', align: 'center', sortable: true, width: 100 },
+                { field: 'w', title: '回厂日期', align: 'center', sortable: true, width: 100 },
+                { field: 'g', title: '合同号', align: 'center', sortable: true, width: 100 },
+                { field: 'h', title: '任务号', align: 'center', sortable: true, width: 100 },
+                { field: 'i', title: '产品名称', align: 'center', sortable: true, width: 100 },
+                { field: 'j', title: '图号', align: 'center', sortable: true, width: 100 },
+                { field: 'k', title: '单位', align: 'center', sortable: true, width: 100 },
+                { field: 'l', title: '数量', align: 'center', sortable: true, width: 100 },
+                { field: 'm', title: '单价', align: 'center', sortable: true, width: 100 },
+                { field: 'n', title: '金额', align: 'center', sortable: true, width: 100 },
+                { field: 'o', title: '材质', align: 'center', sortable: true, width: 100 },
+                { field: 'p', title: '重量', align: 'center', sortable: true, width: 100 },
+                { field: 'q', title: '退货原因', align: 'center', sortable: true, width: 100 },
+                { field: 'r', title: '地址', align: 'center', sortable: true, width: 100 },
+                { field: 's', title: '客户签字', align: 'center', sortable: true, width: 100 },
+                { field: 't', title: '电话', align: 'center', sortable: true, width: 100 },
+                { field: 'u', title: '备注', align: 'center', sortable: true, width: 100 }
+            ],
+            onClickRow: function (row, el) {
+                let isSelect = $(el).hasClass('selected')
+                if (isSelect) {
+                    $(el).removeClass('selected')
+                } else {
+                    $(el).addClass('selected')
+                }
+            }
+        });
+    }
+}
+
+// 更新分页控件
+function updatePagination() {
+    // 移除现有的分页控件
+    $('#customPaginationContainer').remove();
+
+    var paginationHtml = `
+        <div id="customPaginationContainer" class="pagination-container">
+            <div class="pagination-info">
+                共 <span class="total-count">${totalCount}</span> 条记录，
+                第 <span class="current-page">${currentPage}</span> 页 / 共 <span class="total-pages">${totalPages}</span> 页
+            </div>
+            <div class="pagination-controls">
+                <button class="pagination-btn first-page" ${currentPage === 1 ? 'disabled' : ''}>
+                    <i class="bi bi-chevron-double-left"></i> 首页
+                </button>
+                <button class="pagination-btn prev-page" ${currentPage === 1 ? 'disabled' : ''}>
+                    <i class="bi bi-chevron-left"></i> 上一页
+                </button>
+                <div class="page-numbers">`;
+
+    var startPage = Math.max(1, currentPage - 2);
+    var endPage = Math.min(totalPages, currentPage + 2);
+
+    for (var i = startPage; i <= endPage; i++) {
+        if (i === currentPage) {
+            paginationHtml += `<button class="page-number active">${i}</button>`;
+        } else {
+            paginationHtml += `<button class="page-number">${i}</button>`;
+        }
     }
 
-    $('#userTable').bootstrapTable({
-        data: data,
-        sortStable: true,
-        classes: 'table table-hover table-bordered',
-        idField: 'id',
-        pagination: true,
-        pageSize: 15,
-        clickToSelect: true,
-        locale: 'zh-CN',
-        columns: [
-            { field: 'c', title: '退货客户', align: 'center', sortable: true, width: 100 },
-            { field: 'd', title: '退货电话', align: 'center', sortable: true, width: 100 },
-            { field: 'e', title: '退货日期', align: 'center', sortable: true, width: 100 },
-            { field: 'f', title: '退货单号', align: 'center', sortable: true, width: 100 },
-            { field: 'w', title: '回厂日期', align: 'center', sortable: true, width: 100 },
-            { field: 'g', title: '合同号', align: 'center', sortable: true, width: 100 },
-            { field: 'h', title: '任务号', align: 'center', sortable: true, width: 100 },
-            { field: 'i', title: '产品名称', align: 'center', sortable: true, width: 100 },
-            { field: 'j', title: '图号', align: 'center', sortable: true, width: 100 },
-            { field: 'k', title: '单位', align: 'center', sortable: true, width: 100 },
-            { field: 'l', title: '数量', align: 'center', sortable: true, width: 100 },
-            { field: 'm', title: '单价', align: 'center', sortable: true, width: 100 },
-            { field: 'n', title: '金额', align: 'center', sortable: true, width: 100 },
-            { field: 'o', title: '材质', align: 'center', sortable: true, width: 100 },
-            { field: 'p', title: '重量', align: 'center', sortable: true, width: 100 },
-            { field: 'q', title: '退货原因', align: 'center', sortable: true, width: 100 },
-            { field: 'r', title: '地址', align: 'center', sortable: true, width: 100 },
-            { field: 's', title: '客户签字', align: 'center', sortable: true, width: 100 },
-            { field: 't', title: '电话', align: 'center', sortable: true, width: 100 },
-            { field: 'u', title: '备注', align: 'center', sortable: true, width: 100 }
-        ],
-        onClickRow: function (row, el) {
-            let isSelect = $(el).hasClass('selected')
-            if (isSelect) {
-                $(el).removeClass('selected')
-            } else {
-                $(el).addClass('selected')
-            }
+    paginationHtml += `
+                </div>
+                <button class="pagination-btn next-page" ${currentPage === totalPages ? 'disabled' : ''}>
+                    下一页 <i class="bi bi-chevron-right"></i>
+                </button>
+                <button class="pagination-btn last-page" ${currentPage === totalPages ? 'disabled' : ''}>
+                    末页 <i class="bi bi-chevron-double-right"></i>
+                </button>
+                <div class="page-size-selector">
+                    <select class="page-size-select form-control form-control-sm" style="width: auto; display: inline-block;">
+                        <option value="10" ${pageSize === 10 ? 'selected' : ''}>10条/页</option>
+                        <option value="15" ${pageSize === 15 ? 'selected' : ''}>15条/页</option>
+                        <option value="20" ${pageSize === 20 ? 'selected' : ''}>20条/页</option>
+                        <option value="50" ${pageSize === 50 ? 'selected' : ''}>50条/页</option>
+                        <option value="100" ${pageSize === 100 ? 'selected' : ''}>100条/页</option>
+                    </select>
+                </div>
+            </div>
+        </div>`;
+
+    // 确保表格容器存在
+    if ($('.fixed-table-container').length > 0) {
+        // 将分页控件添加到 bootstrap-table 分页位置
+        $('.fixed-table-container').after(paginationHtml);
+    } else if ($('#userTable').parent().hasClass('bootstrap-table')) {
+        // 或者添加到表格父元素后面
+        $('#userTable').closest('.bootstrap-table').after(paginationHtml);
+    } else {
+        // 最后添加到表格后面
+        $('#userTable').after(paginationHtml);
+    }
+
+    // 绑定分页事件
+    bindPaginationEvents();
+}
+
+// 绑定分页事件 - 使用事件委托确保新创建的元素也能绑定事件
+function bindPaginationEvents() {
+    // 使用事件委托，绑定到 document 上
+    $(document).off('click', '.first-page').on('click', '.first-page', function(e) {
+        e.preventDefault();
+        if (!$(this).prop('disabled')) {
+            getList(1);
         }
     });
 
-    $('#userTable').bootstrapTable('load', data);
-    $('#userTable').bootstrapTable('resetView');
+    $(document).off('click', '.prev-page').on('click', '.prev-page', function(e) {
+        e.preventDefault();
+        if (!$(this).prop('disabled')) {
+            getList(currentPage - 1);
+        }
+    });
+
+    $(document).off('click', '.next-page').on('click', '.next-page', function(e) {
+        e.preventDefault();
+        if (!$(this).prop('disabled')) {
+            getList(currentPage + 1);
+        }
+    });
+
+    $(document).off('click', '.last-page').on('click', '.last-page', function(e) {
+        e.preventDefault();
+        if (!$(this).prop('disabled')) {
+            getList(totalPages);
+        }
+    });
+
+    $(document).off('click', '.page-number').on('click', '.page-number', function(e) {
+        e.preventDefault();
+        var page = parseInt($(this).text());
+        if (page !== currentPage) {
+            getList(page);
+        }
+    });
+
+    $(document).off('change', '.page-size-select').on('change', '.page-size-select', function(e) {
+        e.preventDefault();
+        var newPageSize = parseInt($(this).val());
+        if (newPageSize !== pageSize) {
+            pageSize = newPageSize;
+            currentPage = 1; // 重置到第一页
+
+            // 如果有查询条件，保持查询条件
+            var ksrq = $('#ksrq').val();
+            var jsrq = $('#jsrq').val();
+            var h = $('#hth').val();
+            var i = $('#rwh').val();
+            var k = $('#th').val();
+            var r = $('#thyy').val();
+
+            // 检查是否有查询条件
+            if (ksrq || jsrq || h || i || k || r) {
+                // 有查询条件，使用查询
+                $ajax({
+                    type: 'post',
+                    url: '/thjl/queryList',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        pageNum: currentPage,
+                        pageSize: pageSize,
+                        ksrq: ksrq || '',
+                        jsrq: jsrq || '',
+                        h: h || '',
+                        i: i || '',
+                        k: k || '',
+                        r: r || ''
+                    }),
+                    dataType: 'json'
+                }, true, '查询中...', function (res) {
+                    if (res.code == 200) {
+                        var data = res.data.records || res.data.list || res.data;
+                        totalCount = res.data.total || 0;
+                        totalPages = res.data.totalPages || res.data.pages || 1;
+                        setTable(data);
+                        updatePagination();
+                    }
+                });
+            } else {
+                // 没有查询条件，直接获取列表
+                getList(currentPage);
+            }
+        }
+    });
 }
 
+function clearSelection() {
+    $('#userTable').find('.row-radio').prop('checked', false);
+    $('#userTable').find('tr').removeClass('selected');
+}

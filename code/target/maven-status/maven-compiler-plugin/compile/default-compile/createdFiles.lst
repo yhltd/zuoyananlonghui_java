@@ -1,6 +1,7 @@
 com\example\demo\controller\YggsController.class
 com\example\demo\entity\Bgd.class
 com\example\demo\entity\Login.class
+com\example\demo\util\PageRequest.class
 com\example\demo\controller\BgdController.class
 com\example\demo\util\IntTypeAdapter.class
 com\example\demo\util\GsonUtil$3.class
@@ -57,12 +58,14 @@ com\example\demo\service\QxglService.class
 com\example\demo\service\Ckd_cService.class
 com\example\demo\service\LcdService.class
 com\example\demo\service\impl\LoginImpl.class
+com\example\demo\util\ThjlPageRequest.class
 com\example\demo\mapper\YwcMapper.class
 com\example\demo\service\PowerService.class
 com\example\demo\mapper\ThjlMapper.class
 com\example\demo\configuration\LoginConfig.class
 com\example\demo\controller\LoginController.class
 com\example\demo\mapper\GygcMapper.class
+com\example\demo\util\YwcPageRequest.class
 com\example\demo\entity\Power.class
 com\example\demo\util\AuthUtil.class
 com\example\demo\service\LoginService.class
@@ -85,6 +88,7 @@ com\example\demo\util\OrderUtil.class
 com\example\demo\mapper\LoginMapper.class
 com\example\demo\util\GsonUtil$2.class
 com\example\demo\service\HtjlService.class
+com\example\demo\util\PageResult.class
 com\example\demo\mapper\Ckd_cMapper.class
 com\example\demo\service\KphtService.class
 com\example\demo\controller\UserInfoController.class

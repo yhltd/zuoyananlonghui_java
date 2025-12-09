@@ -1,5 +1,6 @@
 package com.example.demo.mapper;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.demo.entity.Thjl;
 import org.apache.ibatis.annotations.*;
@@ -15,8 +16,56 @@ import java.util.List;
 @Repository
 public interface ThjlMapper extends BaseMapper<Thjl> {
 
-    @Select("select * from tuihuo")
-    List<Thjl> getList();
+//    @Select("select * from tuihuo")
+//    List<Thjl> getList();
+
+
+    @Select("<script>" +
+            "SELECT * FROM (" +
+            "   SELECT ROW_NUMBER() OVER (ORDER BY id DESC) as row_num, " +
+            "          t.* " +
+            "   FROM tuihuo t " +
+            "   <where>" +
+            "     1=1 " +
+            "     <if test='ew != null and ew.sqlSegment != null and ew.sqlSegment != \"\"'>" +
+            "       <choose>" +
+            "         <when test='ew.sqlSegment.contains(\"WHERE\")'>" +
+            "           AND ${ew.sqlSegment.replace(\"WHERE\", \"\").trim()}" +
+            "         </when>" +
+            "         <otherwise>" +
+            "           AND ${ew.sqlSegment}" +
+            "         </otherwise>" +
+            "       </choose>" +
+            "     </if>" +
+            "   </where>" +
+            ") as temp " +
+            "WHERE row_num BETWEEN #{start} AND #{end}" +
+            "</script>")
+    List<Thjl> selectForPage(@Param("start") long start,
+                             @Param("end") long end,
+                             @Param("ew") Wrapper<Thjl> wrapper);
+
+    @Select("<script>" +
+            "SELECT COUNT(*) " +
+            "FROM tuihuo " +
+            "<where>" +
+            "  1=1 " +
+            "  <if test='ew != null and ew.sqlSegment != null and ew.sqlSegment != \"\"'>" +
+            "    <choose>" +
+            "      <when test='ew.sqlSegment.contains(\"WHERE\")'>" +
+            "        AND ${ew.sqlSegment.replace(\"WHERE\", \"\").trim()}" +
+            "      </when>" +
+            "      <otherwise>" +
+            "        AND ${ew.sqlSegment}" +
+            "      </otherwise>" +
+            "    </choose>" +
+            "  </if>" +
+            "</where>" +
+            "</script>")
+    Long selectCountForPage(@Param("ew") Wrapper<Thjl> wrapper);
+
+
+
 
 
     @Select("<script>" +

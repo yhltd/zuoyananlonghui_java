@@ -14,23 +14,40 @@ var currentTableData = [];
 
 
 var idd;
+var currentPage = 1;
+var pageSize = 20;
+var totalCount = 0;
+var totalPages = 0;
 // 在 htjl.js 文件中添加
 function initTitleInputs() {
     // 初始化标题输入框的代码
     console.log("initTitleInputs 函数被调用");
 }
 
-function getList() {
+function getList(page, size, searchParams) {
     $('#name').val("");
     $('#power').val("");
+    currentPage = page || currentPage;
+    pageSize = size || pageSize;
+    searchParams = searchParams || {};
     $ajax({
         type: 'post',
         url: '/htjl/getListExcludeThjl',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            pageNum: currentPage,
+            pageSize: pageSize,
+            C: searchParams.C || '',
+            zhuangtai:searchParams.zhuangtai|| ''// 订单号（后端需要但前端没有，传空）
+        }),
+        dataType: 'json'
     }, false, '', function (res) {
-        if (res.code == 200) {
+        if (res.code === 200) {
             // 保存数据到全局变量
-            currentTableData = res.data;
-            setTable(currentTableData);
+            setTable(res.data.records);
+            totalCount = res.data.total;
+            totalPages = res.data.pages;
+            updatePagination();
             $("#userTable").colResizable({
                 liveDrag: true,
                 gripInnerHtml: "<div class='grip'></div>",
@@ -60,6 +77,10 @@ $(function () {
 
     // 初始化标题输入框
     initTitleInputs();
+    // 绑定搜索事件
+    $('#select-btn').off('click').on('click', function() {
+        searchDdmx();
+    });
 
     // 绑定查询按钮事件 - 放在这里
     $('#sle-row-btn').click(function() {
@@ -85,26 +106,26 @@ $(function () {
 
 
 
-    // 修改查询按钮点击事件
-    $('#select-btn').click(function() {
-        var name = $('#name').val().trim();
-        var processStatus = $('#department').val().trim(); // 改为 processStatus
-
-        console.log('查询条件 - 业务单位:', name, '工艺规程状态:', processStatus);
-
-        if (currentTableData.length === 0) {
-            swal("提示", "请先加载数据", "info");
-            return;
-        }
-
-        // 前端过滤数据
-        var filteredData = filterTableData(name, processStatus);
-        console.log('过滤后的数据:', filteredData);
-
-        // 更新表格
-        setTable(filteredData);
-        swal("查询成功", "找到 " + filteredData.length + " 条记录", "success");
-    });
+    // // 修改查询按钮点击事件
+    // $('#select-btn').click(function() {
+    //     var name = $('#name').val().trim();
+    //     var processStatus = $('#department').val().trim(); // 改为 processStatus
+    //
+    //     console.log('查询条件 - 业务单位:', name, '工艺规程状态:', processStatus);
+    //
+    //     if (currentTableData.length === 0) {
+    //         swal("提示", "请先加载数据", "info");
+    //         return;
+    //     }
+    //
+    //     // 前端过滤数据
+    //     var filteredData = filterTableData(name, processStatus);
+    //     console.log('过滤后的数据:', filteredData);
+    //
+    //     // 更新表格
+    //     setTable(filteredData);
+    //     swal("查询成功", "找到 " + filteredData.length + " 条记录", "success");
+    // });
 
 
     // 修复过滤函数
@@ -133,6 +154,9 @@ $(function () {
             return matchName && matchStatus;
         });
     }
+
+
+
 
     // 添加状态计算函数（与表格格式化函数保持一致）
     function calculateProcessStatus(row) {
@@ -585,8 +609,7 @@ function setTable(data) {
         sortStable: true,
         classes: 'table table-hover table-bordered',
         idField: 'id',
-        pagination: true,
-        pageSize: 15,
+        pagination: false, // 关键修改：禁用分页
         clickToSelect: false, // 禁用默认的点击选择
         locale: 'zh-CN',
         rowAttributes: function(row, index) {
@@ -2408,6 +2431,125 @@ function saveReturnOrderData() {
             }
         });
     });
+}
+
+function updatePagination() {
+    $('#paginationContainer').remove();
+
+    var paginationHtml = `
+        <div id="paginationContainer" class="pagination-container">
+            <div class="pagination-info">
+                共 <span class="total-count">${totalCount}</span> 条记录，
+                第 <span class="current-page">${currentPage}</span> 页 / 共 <span class="total-pages">${totalPages}</span> 页
+            </div>
+            <div class="pagination-controls">
+                <button class="pagination-btn first-page" ${currentPage === 1 ? 'disabled' : ''}>首页</button>
+                <button class="pagination-btn prev-page" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>
+                <div class="page-numbers">`;
+
+    var startPage = Math.max(1, currentPage - 2);
+    var endPage = Math.min(totalPages, currentPage + 2);
+
+    for (var i = startPage; i <= endPage; i++) {
+        if (i === currentPage) {
+            paginationHtml += `<button class="page-number active">${i}</button>`;
+        } else {
+            paginationHtml += `<button class="page-number">${i}</button>`;
+        }
+    }
+
+    paginationHtml += `
+                </div>
+                <button class="pagination-btn next-page" ${currentPage === totalPages ? 'disabled' : ''}>下一页</button>
+                <button class="pagination-btn last-page" ${currentPage === totalPages ? 'disabled' : ''}>末页</button>
+                <div class="page-size-selector">
+                    <select class="page-size-select">
+                        <option value="10" ${pageSize === 10 ? 'selected' : ''}>10条/页</option>
+                        <option value="20" ${pageSize === 20 ? 'selected' : ''}>20条/页</option>
+                        <option value="50" ${pageSize === 50 ? 'selected' : ''}>50条/页</option>
+                        <option value="100" ${pageSize === 100 ? 'selected' : ''}>100条/页</option>
+                    </select>
+                </div>
+            </div>
+        </div>`;
+
+    $('#table1').after(paginationHtml);
+    bindPaginationEvents();
+}
+
+// 绑定分页事件
+function bindPaginationEvents() {
+    $('.first-page').click(function() {
+        if (!$(this).prop('disabled')) {
+            currentPage = 1;
+            getList(currentPage, pageSize, getSearchParams());
+        }
+    });
+
+    $('.prev-page').click(function() {
+        if (!$(this).prop('disabled')) {
+            currentPage--;
+            getList(currentPage, pageSize, getSearchParams());
+        }
+    });
+
+    $('.next-page').click(function() {
+        if (!$(this).prop('disabled')) {
+            currentPage++;
+            getList(currentPage, pageSize, getSearchParams());
+        }
+    });
+
+    $('.last-page').click(function() {
+        if (!$(this).prop('disabled')) {
+            currentPage = totalPages;
+            getList(currentPage, pageSize, getSearchParams());
+        }
+    });
+
+    $('.page-number').click(function() {
+        var page = parseInt($(this).text());
+        if (page !== currentPage) {
+            currentPage = page;
+            getList(currentPage, pageSize, getSearchParams());
+        }
+    });
+
+    $('.page-size-select').change(function() {
+        pageSize = parseInt($(this).val());
+        currentPage = 1;
+        getList(currentPage, pageSize, getSearchParams());
+    });
+
+    $('.jump-btn').click(function() {
+        var targetPage = parseInt($('.page-jump-input').val());
+        if (targetPage && targetPage >= 1 && targetPage <= totalPages) {
+            currentPage = targetPage;
+            getList(currentPage, pageSize, getSearchParams());
+        } else {
+            swal('请输入有效的页码（1-' + totalPages + '）');
+        }
+    });
+
+    $('.page-jump-input').keypress(function(e) {
+        if (e.which === 13) {
+            $('.jump-btn').click();
+        }
+    });
+}
+
+// 获取搜索参数
+function getSearchParams() {
+    return {
+        C: $('#name').val() || '',    // 订单号
+        zhuangtai: $('#department').val() || '',
+    };
+}
+
+function searchDdmx() {
+    var searchParams = getSearchParams();
+    currentPage = 1;
+    getList(currentPage, pageSize, searchParams);
 }
 
 // 清空退货单表单的函数

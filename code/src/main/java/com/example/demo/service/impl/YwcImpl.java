@@ -1,5 +1,6 @@
 package com.example.demo.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.entity.*;
@@ -8,6 +9,9 @@ import com.example.demo.mapper.HtjlMapper;
 import com.example.demo.mapper.YwcMapper;
 import com.example.demo.service.HtjlService;
 import com.example.demo.service.YwcService;
+import com.example.demo.util.PageResult;
+import com.example.demo.util.StringUtils;
+import com.example.demo.util.YwcPageRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,9 +32,49 @@ public class YwcImpl extends ServiceImpl<YwcMapper, Ywc> implements YwcService {
     YwcMapper ywcMapper;
 
 
+//    @Override
+//    public List<Ywc> getList() {  // 方法名必须一致
+//        return ywcMapper.getList();
+//    }
+
     @Override
-    public List<Ywc> getList() {  // 方法名必须一致
-        return ywcMapper.getList();
+    public PageResult<Ywc> getYwcPage(YwcPageRequest request) {
+        try {
+            // 计算分页范围（SQL Server ROW_NUMBER 从1开始）
+            long start = (long) (request.getPageNum() - 1) * request.getPageSize() + 1;
+            long end = (long) request.getPageNum() * request.getPageSize();
+            int pageSize = request.getPageSize();
+
+            // 构建查询条件
+            LambdaQueryWrapper<Ywc> wrapper = new LambdaQueryWrapper<>();
+
+            // 添加查询条件
+            if (StringUtils.isNotBlank(request.getName())) {
+                wrapper.like(Ywc::getC, request.getName());  // 业务单位
+            }
+            if (StringUtils.isNotBlank(request.getHetongHao())) {
+                wrapper.like(Ywc::getD, request.getHetongHao());  // 合同号
+            }
+            if (StringUtils.isNotBlank(request.getRenwuHao())) {
+                wrapper.like(Ywc::getE, request.getRenwuHao());  // 任务号
+            }
+
+            // 注意：不在wrapper中添加排序，使用SQL中的ROW_NUMBER排序
+
+            // 使用分页查询数据
+            List<Ywc> records = ywcMapper.selectForPage(start, end, wrapper);
+
+            // 查询总记录数
+            Long totalCount = ywcMapper.selectCountForPage(wrapper);
+
+            // 计算总页数
+            Long totalPages = (totalCount + pageSize - 1) / pageSize;
+
+            return new PageResult<>(records, totalCount, totalPages);
+        } catch (Exception e) {
+            log.error("已完成合同分页查询失败", e);
+            throw new RuntimeException("查询失败: " + e.getMessage());
+        }
     }
 
 

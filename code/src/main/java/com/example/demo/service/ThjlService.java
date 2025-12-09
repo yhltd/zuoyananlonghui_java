@@ -2,6 +2,8 @@ package com.example.demo.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.demo.entity.Thjl;
+import com.example.demo.util.PageResult;
+import com.example.demo.util.ThjlPageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,7 +18,8 @@ public interface ThjlService extends IService<Thjl> {
     /**
      * 查询所有
      */
-    List<Thjl> getList();
+//    List<Thjl> getList();
+    PageResult<Thjl> getThjlPage(ThjlPageRequest request);
 
 
 

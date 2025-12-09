@@ -31,17 +31,66 @@ public class ThjlController {
      * @return ResultInfo
      */
     @RequestMapping("/getList")
-    public ResultInfo getList(HttpSession session) {
-//        Thjl thjl = GsonUtil.toEntity(SessionUtil.getToken(session), Thjl.class);
+    public ResultInfo getThjlPage(HttpSession session, @RequestBody Map<String, Object> params) {
         try {
-            List<Thjl> getList = thjlService.getList();
-            return ResultInfo.success("获取成功", getList);
+            // 提取分页参数
+            Integer pageNum = (Integer) params.get("pageNum");
+            Integer pageSize = (Integer) params.get("pageSize");
+
+            // 提取查询条件
+            String ksrq = (String) params.get("ksrq");
+            String jsrq = (String) params.get("jsrq");
+            String h = (String) params.get("h");
+            String i = (String) params.get("i");
+            String k = (String) params.get("k");
+            String r = (String) params.get("r");
+
+            // 创建分页请求对象
+            ThjlPageRequest request = new ThjlPageRequest();
+            request.setPageNum(pageNum != null ? pageNum : 1);
+            request.setPageSize(pageSize != null ? pageSize : 15);
+
+            // 设置查询条件到请求对象中
+            if (ksrq != null && !ksrq.trim().isEmpty()) {
+                request.setKsrq(convertToSqlServerDate(ksrq));
+            }
+            if (jsrq != null && !jsrq.trim().isEmpty()) {
+                request.setJsrq(convertToSqlServerDate(jsrq));
+            }
+            if (h != null && !h.trim().isEmpty()) {
+                request.setH(h);
+            }
+            if (i != null && !i.trim().isEmpty()) {
+                request.setI(i);
+            }
+            if (k != null && !k.trim().isEmpty()) {
+                request.setK(k);
+            }
+            if (r != null && !r.trim().isEmpty()) {
+                request.setR(r);
+            }
+
+            // 调用服务层方法
+            PageResult<Thjl> pageResult = thjlService.getThjlPage(request);
+
+            return ResultInfo.success("获取成功", pageResult);
         } catch (Exception e) {
-            e.printStackTrace();
-            log.error("获取失败：{}", e.getMessage());
-            return ResultInfo.error("错误!");
+            log.error("获取退货记录分页失败：{}", e.getMessage(), e);
+            return ResultInfo.error("查询失败: " + e.getMessage());
         }
     }
+
+//    public ResultInfo getList(HttpSession session) {
+////        Thjl thjl = GsonUtil.toEntity(SessionUtil.getToken(session), Thjl.class);
+//        try {
+//            List<Thjl> getList = thjlService.getList();
+//            return ResultInfo.success("获取成功", getList);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            log.error("获取失败：{}", e.getMessage());
+//            return ResultInfo.error("错误!");
+//        }
+//    }
 
 
 

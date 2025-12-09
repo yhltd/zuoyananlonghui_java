@@ -2,6 +2,8 @@ package com.example.demo.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.demo.entity.*;
+import com.example.demo.util.PageResult;
+import com.example.demo.util.YwcPageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,7 +19,8 @@ public interface YwcService extends IService<Ywc> {
     /**
      * 查询所有
      */
-    List<Ywc> getList();
+//    List<Ywc> getList();
+    PageResult<Ywc> getYwcPage(YwcPageRequest request);
 
 
 

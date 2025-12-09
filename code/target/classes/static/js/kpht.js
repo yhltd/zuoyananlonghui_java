@@ -1,59 +1,52 @@
 var idd;
-function getList() {
+var currentPage = 1;
+var pageSize = 20;
+var totalCount = 0;
+var totalPages = 0;
+function getList(page, size, searchParams) {
     $('#name').val("");
     $('#power').val("");
-    $.ajax({
-        type: 'post',
-        url: '/kpht/getList',
-        success: function (res) {
-            console.log('=== 调试信息开始 ===');
-            console.log('API响应状态:', res.code);
-            console.log('API响应消息:', res.msg);
-            console.log('完整响应数据:', res);
-            if (res.code == 200) {
-                setTable(res.data);
-                $("#userTable").colResizable({
-                    liveDrag: true,
-                    gripInnerHtml: "<div class='grip'></div>",
-                    draggingClass: "dragging",
-                    resizeMode: 'fit'
-                });
-                if (res.data && res.data.length > 0) {
-                    let maxId = Math.max(...res.data.map(item => item.id));
-                    idd = maxId;
-                }
+    currentPage = page || currentPage;
+    pageSize = size || pageSize;
+    searchParams = searchParams || {};
+    $ajax({
+            type: 'post',
+            url: '/kpht/getList',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                pageNum: currentPage,
+                pageSize: pageSize,
+                C: searchParams.C || '',    // 订单号（后端需要但前端没有，传空）
+            }),
+            dataType: 'json'
+        }, false, '', function (res) {
+        if (res.code === 200) {
+            setTable(res.data.records);
+            totalCount = res.data.total;
+            totalPages = res.data.pages;
+            updatePagination();
+            $("#userTable").colResizable({
+                liveDrag: true,
+                gripInnerHtml: "<div class='grip'></div>",
+                draggingClass: "dragging",
+                resizeMode: 'fit'
+            });
+            if (res.data && res.data.length > 0) {
+                let maxId = Math.max(...res.data.map(item => item.id));
+                idd = maxId;
             }
-        },
-        error: function (xhr, status, error) {
-            console.error('请求失败:', error);
+        } else {
+            console.error("查询失败:", res.message);
         }
     });
 }
 
 $(function () {
-    getList();
+    getList(currentPage, pageSize, {});
 
-    //条件查询
-    $('#select-btn').click(function () {
-        var name = $('#name').val();
-        console.log('查询条件 - 姓名:', name);
-
-        $ajax({
-            type: 'post',
-            url: '/kpht/queryList',
-            data: {
-                name: name  // 只传递姓名参数
-            }
-        }, true, '', function (res) {
-            console.log('查询响应:', res);
-            if (res.code == 200) {
-                console.log('查询到的数据:', res.data);
-                setTable(res.data);
-                swal("查询成功", "找到 " + res.data.length + " 条记录", "success");
-            } else {
-                swal("查询失败", res.msg, "error");
-            }
-        })
+    // 绑定搜索事件
+    $('#select-btn').off('click').on('click', function() {
+        searchDdmx();
     });
 
     //刷新
@@ -335,8 +328,7 @@ function setTable(data) {
         sortStable: true,
         classes: 'table table-hover table-bordered',
         idField: 'id',
-        pagination: true,
-        pageSize: 15,
+        pagination: false, // 关键修改：禁用分页
         clickToSelect: true,
         locale: 'zh-CN',
         rowAttributes: function(row, index) {
@@ -793,6 +785,125 @@ function renderGongxuTable(data) {
     } else {
         tbody.append('<tr><td colspan="4" class="text-center">暂无数据</td></tr>');
     }
+}
+
+// 更新分页控件
+function updatePagination() {
+    $('#paginationContainer').remove();
+
+    var paginationHtml = `
+        <div id="paginationContainer" class="pagination-container">
+            <div class="pagination-info">
+                共 <span class="total-count">${totalCount}</span> 条记录，
+                第 <span class="current-page">${currentPage}</span> 页 / 共 <span class="total-pages">${totalPages}</span> 页
+            </div>
+            <div class="pagination-controls">
+                <button class="pagination-btn first-page" ${currentPage === 1 ? 'disabled' : ''}>首页</button>
+                <button class="pagination-btn prev-page" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>
+                <div class="page-numbers">`;
+
+    var startPage = Math.max(1, currentPage - 2);
+    var endPage = Math.min(totalPages, currentPage + 2);
+
+    for (var i = startPage; i <= endPage; i++) {
+        if (i === currentPage) {
+            paginationHtml += `<button class="page-number active">${i}</button>`;
+        } else {
+            paginationHtml += `<button class="page-number">${i}</button>`;
+        }
+    }
+
+    paginationHtml += `
+                </div>
+                <button class="pagination-btn next-page" ${currentPage === totalPages ? 'disabled' : ''}>下一页</button>
+                <button class="pagination-btn last-page" ${currentPage === totalPages ? 'disabled' : ''}>末页</button>
+                <div class="page-size-selector">
+                    <select class="page-size-select">
+                        <option value="10" ${pageSize === 10 ? 'selected' : ''}>10条/页</option>
+                        <option value="20" ${pageSize === 20 ? 'selected' : ''}>20条/页</option>
+                        <option value="50" ${pageSize === 50 ? 'selected' : ''}>50条/页</option>
+                        <option value="100" ${pageSize === 100 ? 'selected' : ''}>100条/页</option>
+                    </select>
+                </div>
+            </div>
+        </div>`;
+
+    $('#userTable11').after(paginationHtml);
+    bindPaginationEvents();
+}
+
+// 绑定分页事件
+function bindPaginationEvents() {
+    $('.first-page').click(function() {
+        if (!$(this).prop('disabled')) {
+            currentPage = 1;
+            getList(currentPage, pageSize, getSearchParams());
+        }
+    });
+
+    $('.prev-page').click(function() {
+        if (!$(this).prop('disabled')) {
+            currentPage--;
+            getList(currentPage, pageSize, getSearchParams());
+        }
+    });
+
+    $('.next-page').click(function() {
+        if (!$(this).prop('disabled')) {
+            currentPage++;
+            getList(currentPage, pageSize, getSearchParams());
+        }
+    });
+
+    $('.last-page').click(function() {
+        if (!$(this).prop('disabled')) {
+            currentPage = totalPages;
+            getList(currentPage, pageSize, getSearchParams());
+        }
+    });
+
+    $('.page-number').click(function() {
+        var page = parseInt($(this).text());
+        if (page !== currentPage) {
+            currentPage = page;
+            getList(currentPage, pageSize, getSearchParams());
+        }
+    });
+
+    $('.page-size-select').change(function() {
+        pageSize = parseInt($(this).val());
+        currentPage = 1;
+        getList(currentPage, pageSize, getSearchParams());
+    });
+
+    $('.jump-btn').click(function() {
+        var targetPage = parseInt($('.page-jump-input').val());
+        if (targetPage && targetPage >= 1 && targetPage <= totalPages) {
+            currentPage = targetPage;
+            getList(currentPage, pageSize, getSearchParams());
+        } else {
+            swal('请输入有效的页码（1-' + totalPages + '）');
+        }
+    });
+
+    $('.page-jump-input').keypress(function(e) {
+        if (e.which === 13) {
+            $('.jump-btn').click();
+        }
+    });
+}
+
+// 获取搜索参数
+function getSearchParams() {
+    return {
+        C: $('#name').val() || '',    // 订单号
+    };
+}
+
+function searchDdmx() {
+    var searchParams = getSearchParams();
+    currentPage = 1;
+    getList(currentPage, pageSize, searchParams);
 }
 
 // 保存工序配置

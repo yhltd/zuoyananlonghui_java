@@ -1,5 +1,6 @@
 package com.example.demo.mapper;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.demo.entity.*;
 import org.apache.ibatis.annotations.*;
@@ -15,6 +16,53 @@ import java.util.Map;
 @Mapper
 @Repository
 public interface YwcMapper extends BaseMapper<Ywc> {
+
+    @Select("<script>" +
+            "SELECT * FROM (" +
+            "   SELECT ROW_NUMBER() OVER (ORDER BY id DESC) as row_num, " +
+            "          t.id, t.C, t.D, t.E, t.F, t.G, t.H, t.I, t.J, t.K, t.L, t.M, t.N, t.O, t.P, t.Q, t.R, t.S, t.T, t.U, t.V, t.W, t.X, t.Y, t.Z, " +
+            "          t.AA, t.AB, t.AC, t.AD, t.AE, t.AF, t.AG, t.AH, t.AI, t.AJ, t.AK, t.AL, t.AM, t.AN, t.AO, t.AP, t.AQ, t.AR, " +
+            "          t.[AS] as aas, t.AT, " +
+            "          t.hetong_zhuangtai, t.AU, t.AV, t.AW, t.AX, t.AY, t.riqi " +
+            "   FROM hetong_jilu t " +
+            "   WHERE 1=1 " +
+            "   AND hetong_zhuangtai IN ('未对账', '已对账') " +
+            "   <if test='ew != null and ew.sqlSegment != null and ew.sqlSegment != \"\"'>" +
+            "     <choose>" +
+            "       <when test='ew.sqlSegment.contains(\"WHERE\")'>" +
+            "         AND ${ew.sqlSegment.replace(\"WHERE\", \"\").trim()}" +
+            "       </when>" +
+            "       <otherwise>" +
+            "         AND ${ew.sqlSegment}" +
+            "       </otherwise>" +
+            "     </choose>" +
+            "   </if>" +
+            ") as temp " +
+            "WHERE row_num BETWEEN #{start} AND #{end}" +
+            "</script>")
+    List<Ywc> selectForPage(@Param("start") long start,
+                            @Param("end") long end,
+                            @Param("ew") Wrapper<Ywc> wrapper);
+
+    @Select("<script>" +
+            "SELECT COUNT(*) " +
+            "FROM hetong_jilu " +
+            "WHERE 1=1 " +
+            "AND hetong_zhuangtai IN ('未对账', '已对账') " +
+            "<if test='ew != null and ew.sqlSegment != null and ew.sqlSegment != \"\"'>" +
+            "  <choose>" +
+            "    <when test='ew.sqlSegment.contains(\"WHERE\")'>" +
+            "      AND ${ew.sqlSegment.replace(\"WHERE\", \"\").trim()}" +
+            "    </when>" +
+            "    <otherwise>" +
+            "      AND ${ew.sqlSegment}" +
+            "    </otherwise>" +
+            "  </choose>" +
+            "</if>" +
+            "</script>")
+    Long selectCountForPage(@Param("ew") Wrapper<Ywc> wrapper);
+
+
 
     @Select("SELECT " +
             "id, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, " +

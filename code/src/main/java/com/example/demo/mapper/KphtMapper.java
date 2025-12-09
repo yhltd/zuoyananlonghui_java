@@ -1,5 +1,6 @@
 package com.example.demo.mapper;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.demo.entity.*;
 import org.apache.ibatis.annotations.*;
@@ -23,6 +24,52 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi " +
             "FROM hetong_jilu WHERE hetong_zhuangtai IN ('未开票', '已开票')")
     List<Kpht> getList();
+
+
+    @Select("<script>" +
+            "SELECT * FROM (" +
+            "    SELECT ROW_NUMBER() OVER (ORDER BY id ASC) as rn, " +
+            "           id as id, " +
+            "           C as c, D as d, E as e, F as f, G as g, H as h, I as i, J as j, K as k, " +
+            "           L as l, M as m, N as n, O as o, P as p, Q as q, R as r, S as s, T as t, " +
+            "           U as u, V as v, W as w, X as x, Y as y, Z as z, " +
+            "           AA as aa, AB as ab, AC as ac, AD as ad, AE as ae, AF as af, AG as ag, " +
+            "           AH as ah, AI as ai, AJ as aj, AK as ak, AL as al, AM as am, AN as an, " +
+            "           AO as ao, AP as ap, AQ as aq, AR as ar, " +
+            "           [AS] as aas, " +
+            "           AT as at, " +
+            "           hetong_zhuangtai as hetongzhuangtai, " +
+            "           AU as au, AV as av, AW as aw, AX as ax, AY as ay, " +
+            "           riqi as riqi " +
+            "    FROM hetong_jilu " +
+            "    <where>" +
+            "        hetong_zhuangtai IN ('未开票', '已开票')" +
+            "        <if test='ew != null'>" +
+            "            <trim prefix=' AND ' prefixOverrides='AND |OR '>" +
+            "                ${ew.sqlSegment}" +
+            "            </trim>" +
+            "        </if>" +
+            "    </where>" +
+            ") temp " +
+            "WHERE temp.rn BETWEEN #{start} + 1 AND #{start} + #{end}" +
+            "</script>")
+    List<Map<String, Object>> selectDistinctByDdhForPage(@Param("start") long start,
+                                                         @Param("end") long end,
+                                                         @Param("ew") Wrapper<Map<String, Object>> wrapper);
+
+
+    @Select("<script>" +
+            "SELECT COUNT(*) FROM hetong_jilu " +
+            "<where>" +
+            "    hetong_zhuangtai IN ('未开票', '已开票')" +
+            "    <if test='ew != null'>" +
+            "        <trim prefix=' AND ' prefixOverrides='AND |OR '>" +  // 单引号属性值
+            "            ${ew.sqlSegment}" +
+            "        </trim>" +
+            "    </if>" +
+            "</where>" +
+            "</script>")
+    Long selectDistinctCount(@Param("ew") Wrapper<Map<String, Object>> wrapper);
 
 
     @Update("UPDATE hetong_jilu SET " +

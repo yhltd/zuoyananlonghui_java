@@ -1,5 +1,7 @@
 package com.example.demo.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demo.entity.*;
 import com.example.demo.service.*;
 import com.example.demo.util.*;
@@ -26,17 +28,44 @@ public class KphtController {
      *
      * @return ResultInfo
      */
+//    @RequestMapping("/getList")
+//    public ResultInfo getList(HttpSession session) {
+////        Kpht kpht = GsonUtil.toEntity(SessionUtil.getToken(session), Kpht.class);
+//        try {
+//            // 执行查询
+//            PageResult<Xdmx> result = xdmxService.getScgdPage(request);
+//            return Result.success(result);
+//            List<Kpht> getList = kphtService.getList();
+//            return ResultInfo.success("获取成功", getList);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            log.error("获取失败：{}", e.getMessage());
+//            return ResultInfo.error("错误!");
+//        }
+//    }
     @RequestMapping("/getList")
-    public ResultInfo getList(HttpSession session) {
-//        Kpht kpht = GsonUtil.toEntity(SessionUtil.getToken(session), Kpht.class);
-        try {
-            List<Kpht> getList = kphtService.getList();
-            return ResultInfo.success("获取成功", getList);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error("获取失败：{}", e.getMessage());
-            return ResultInfo.error("错误!");
+    public Result<Page<Map<String, Object>>> distinctPage(HttpSession session, @RequestBody PageRequest pageRequest) {
+        // 创建分页对象
+        Page<Map<String, Object>> page = new Page<>(pageRequest.getPageNum(), pageRequest.getPageSize());
+
+        // 构建查询条件
+        QueryWrapper<Map<String, Object>> queryWrapper = new QueryWrapper<>();
+        System.out.println("=== 接收到的参数 ===");
+        System.out.println("pageNum: " + pageRequest.getPageNum());
+        System.out.println("pageSize: " + pageRequest.getPageSize());
+        System.out.println("C字段值: " + pageRequest.getC());
+        System.out.println("C是否为空: " + (pageRequest.getC() == null));
+        System.out.println("C是否空白: " + StringUtils.isBlank(pageRequest.getC()));
+
+        // 添加查询条件
+        if (StringUtils.isNotBlank(pageRequest.getC())) {
+            queryWrapper.like("c", pageRequest.getC());
         }
+
+        // 执行查询 - 通过Service调用
+        Page<Map<String, Object>> result = kphtService.selectDistinctByDdhPage(page,queryWrapper);
+
+        return Result.success(result);
     }
 
     @PostMapping("/updateField")

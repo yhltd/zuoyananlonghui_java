@@ -57,6 +57,61 @@
         .modal-body ul li {
             margin-bottom: 0.3rem;
         }
+
+         .pagination-container {
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+             margin-top: 15px;
+             padding: 10px;
+             background-color: #f8f9fa;
+             border-radius: 4px;
+         }
+
+        .pagination-info {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .pagination-btn, .page-number {
+            padding: 5px 10px;
+            border: 1px solid #dee2e6;
+            background-color: white;
+            color: #495057;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        .pagination-btn:hover:not(:disabled),
+        .page-number:hover:not(.active) {
+            background-color: #e9ecef;
+        }
+
+        .pagination-btn:disabled,
+        .page-number.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+            cursor: default;
+        }
+
+        .page-size-selector {
+            margin-left: 10px;
+        }
+
+        .page-size-select {
+            padding: 5px;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            font-size: 14px;
+        }
     </style>
 </head>
 

@@ -1,5 +1,7 @@
 package com.example.demo.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demo.entity.*;
 import com.example.demo.service.HtjlService;
 import com.example.demo.service.ThjlService;
@@ -27,16 +29,38 @@ public class HtjlController {
      *
      * @return ResultInfo
      */
+//    @RequestMapping("/getListExcludeThjl")
+//    public ResultInfo getListExcludeThjl(HttpSession session) {
+//        try {
+//            List<Htjl> getList = htjlService.getListExcludeThjl();
+//            return ResultInfo.success("获取成功", getList);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            log.error("获取失败：{}", e.getMessage());
+//            return ResultInfo.error("错误!");
+//        }
+//    }
+
     @RequestMapping("/getListExcludeThjl")
-    public ResultInfo getListExcludeThjl(HttpSession session) {
-        try {
-            List<Htjl> getList = htjlService.getListExcludeThjl();
-            return ResultInfo.success("获取成功", getList);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error("获取失败：{}", e.getMessage());
-            return ResultInfo.error("错误!");
+    public Result<Page<Map<String, Object>>> distinctPage(HttpSession session, @RequestBody PageRequest pageRequest) {
+        // 创建分页对象
+        Page<Map<String, Object>> page = new Page<>(pageRequest.getPageNum(), pageRequest.getPageSize());
+
+        // 构建查询条件
+        QueryWrapper<Map<String, Object>> queryWrapper = new QueryWrapper<>();
+
+        // 添加查询条件
+        if (StringUtils.isNotBlank(pageRequest.getC())) {
+            queryWrapper.like("c", pageRequest.getC());
         }
+        if (StringUtils.isNotBlank(pageRequest.getZhuangtai())) {
+            queryWrapper.like("zhuangtai", pageRequest.getZhuangtai());
+        }
+
+        // 执行查询 - 通过Service调用
+        Page<Map<String, Object>> result = htjlService.selectDistinctByDdhPage(page,queryWrapper);
+
+        return Result.success(result);
     }
 
 

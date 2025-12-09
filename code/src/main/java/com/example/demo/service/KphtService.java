@@ -1,7 +1,11 @@
 package com.example.demo.service;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.toolkit.Constants;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.demo.entity.*;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,6 +24,7 @@ public interface KphtService extends IService<Kpht> {
     List<Kpht> getList();
 
 
+    Page<Map<String, Object>> selectDistinctByDdhPage(Page<Map<String, Object>> page,@Param(Constants.WRAPPER) Wrapper<Map<String, Object>> queryWrapper);
 
     /**
      * 修改

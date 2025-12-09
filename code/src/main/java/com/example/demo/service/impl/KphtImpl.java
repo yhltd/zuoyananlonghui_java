@@ -1,5 +1,7 @@
 package com.example.demo.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.entity.*;
 
@@ -8,11 +10,13 @@ import com.example.demo.service.KphtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author hui
@@ -254,4 +258,29 @@ public class KphtImpl extends ServiceImpl<KphtMapper, Kpht> implements KphtServi
         }
         return value.setScale(2, BigDecimal.ROUND_HALF_UP).toString();
     }
+
+
+    @Override
+    public Page<Map<String, Object>> selectDistinctByDdhPage(Page<Map<String, Object>> page,
+                                                             Wrapper<Map<String, Object>> queryWrapper) {
+
+        // 计算分页参数
+        long start = (page.getCurrent() - 1) * page.getSize();
+        long end = page.getSize();
+
+        // 查询数据
+        List<Map<String, Object>> records = kphtMapper.selectDistinctByDdhForPage(start, end, queryWrapper);
+
+        // 查询总数
+        Long total = kphtMapper.selectDistinctCount(queryWrapper);
+
+        // 设置分页结果
+        page.setRecords(records);
+        page.setTotal(total);
+
+        return page;
+    }
+
+
+
 }

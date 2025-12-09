@@ -26,16 +26,47 @@ public class YwcController {
      *
      * @return ResultInfo
      */
-    @RequestMapping("/getList")
-    public ResultInfo getList(HttpSession session) {
-//        Ywc ywc = GsonUtil.toEntity(SessionUtil.getToken(session), Ywc.class);
+    @PostMapping("/getList")
+    public ResultInfo getYwcPage(@RequestBody Map<String, Object> params, HttpSession session) {
         try {
-            List<Ywc> getList = ywcService.getList();
-            return ResultInfo.success("获取成功", getList);
+            log.info("收到分页查询请求，参数：{}", params);
+
+            // 提取分页参数
+            Integer pageNum = (Integer) params.get("pageNum");
+            Integer pageSize = (Integer) params.get("pageSize");
+
+            // 提取查询条件
+            String name = (String) params.get("name");
+            String hetongZhuangtai = (String) params.get("hetongZhuangtai");
+            String hetongHao = (String) params.get("hetongHao");
+            String renwuHao = (String) params.get("renwuHao");
+
+            // 创建分页请求对象
+            YwcPageRequest request = new YwcPageRequest();
+            request.setPageNum(pageNum != null ? pageNum : 1);
+            request.setPageSize(pageSize != null ? pageSize : 15);
+
+            // 设置查询条件
+            if (name != null && !name.trim().isEmpty()) {
+                request.setName(name.trim());
+            }
+            if (hetongZhuangtai != null && !hetongZhuangtai.trim().isEmpty()) {
+                request.setHetongZhuangtai(hetongZhuangtai.trim());
+            }
+            if (hetongHao != null && !hetongHao.trim().isEmpty()) {
+                request.setHetongHao(hetongHao.trim());
+            }
+            if (renwuHao != null && !renwuHao.trim().isEmpty()) {
+                request.setRenwuHao(renwuHao.trim());
+            }
+
+            // 调用服务层方法
+            PageResult<Ywc> pageResult = ywcService.getYwcPage(request);
+
+            return ResultInfo.success("获取成功", pageResult);
         } catch (Exception e) {
-            e.printStackTrace();
-            log.error("获取失败：{}", e.getMessage());
-            return ResultInfo.error("错误!");
+            log.error("获取已完成合同分页失败：{}", e.getMessage(), e);
+            return ResultInfo.error("查询失败: " + e.getMessage());
         }
     }
 
