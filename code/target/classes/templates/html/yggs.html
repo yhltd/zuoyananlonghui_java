@@ -21,6 +21,7 @@
     <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table-zh-CN.min.js"></script>
     <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/colResizable-1.6.js"></script>
     <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table-resizable.js"></script>
+    <script type="text/javascript" src="../js/xlsx.full.min.js"></script>
 
     <link rel="stylesheet" href="../css/sweetalert.css">
     <script type="text/javascript" src="../js/sweetalert-dev.js"></script>
@@ -99,28 +100,39 @@
     <div class="search-yggs">
         <input id="jsrq1" type="date" class="form-control form-control-custom" placeholder="结束日期" autocomplete="off">
     </div>
-    <div>
+    <div style="display: flex;">
         <button id="select-btn1" class="btn btn-yggs btn-primary-custom">
             <i class="bi bi-search me-2"></i>
             查询汇总
+        </button>
+        <!-- 添加汇总数据导出按钮 -->
+        <button id="export-summary-btn" class="btn btn-custom btn-primary-custom" style="margin-left: 10px">
+            <i class="bi bi-file-earmark-excel me-2"></i>
+            导出汇总数据
         </button>
     </div>
 </div>
 
 <div class="top-toolbar row" style="box-shadow: 0 0 rgba(0,0,0,0);    border-bottom: 1px solid;">
     <div class="search-yggs">
-        <input id="ksrq" type="date" class="form-control form-control-custom" placeholder="开始日期" autocomplete="off">
+        <input id="ksrq" type="date" class="form-control form-control-custom" placeholder="开始日期" autocomplete="off" style="width: 200px;margin-left: 1px;">
     </div>
     <div class="search-yggs">
-        <input id="jsrq" type="date" class="form-control form-control-custom" placeholder="结束日期" autocomplete="off">
+        <input id="jsrq" type="date" class="form-control form-control-custom" placeholder="结束日期" autocomplete="off" style="width: 200px;margin-left: 1px;">
     </div>
     <div class="search-yggs">
-        <input id="yg" type="text" class="form-control form-control-custom" placeholder="员工姓名" autocomplete="off">
+        <select id="yg" class="form-control form-control-custom" placeholder="员工姓名">
+        </select>
     </div>
-    <div>
+    <div style="display: flex;">
         <button id="select-btn" class="btn btn-yggs btn-primary-custom">
             <i class="bi bi-search me-2"></i>
             查询
+        </button>
+
+        <button id="export-detail-btn" class="btn btn-custom btn-primary-custom" style="margin-left: 10px">
+            <i class="bi bi-file-earmark-excel me-2"></i>
+            导出详细数据
         </button>
     </div>
 </div>
@@ -247,6 +259,41 @@
                     <i class="bi bi-x-circle icon"></i>
                     关闭
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加统一的导出模态框（使用同一个模态框，动态修改标题） -->
+<div class="modal fade" id="exportModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportModalTitle">导出设置</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="export-filename">文件名：</label>
+                    <input type="text" class="form-control" id="export-filename"
+                           placeholder="请输入文件名">
+                </div>
+                <div class="form-group">
+                    <label for="export-date-format">日期格式：</label>
+                    <select class="form-control" id="export-date-format">
+                        <option value="none">不添加日期</option>
+                        <option value="YYYYMMDD" selected>YYYYMMDD</option>
+                        <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                        <option value="YYYY年MM月DD日">YYYY年MM月DD日</option>
+                    </select>
+                </div>
+                <input type="hidden" id="export-type" value="">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirm-export-btn">确认导出</button>
             </div>
         </div>
     </div>
@@ -391,11 +438,6 @@
     console.log('页面加载完成，开始绑定事件');
     $(document).ready(function() {
         console.log('jQuery ready');
-
-        // 测试按钮是否存在
-        console.log('查询汇总按钮:', $('#select-btn1').length);
-        console.log('查询员工按钮:', $('#select-btn').length);
-
         // 手动绑定事件测试
         $('#select-btn1').on('click', function() {
         });

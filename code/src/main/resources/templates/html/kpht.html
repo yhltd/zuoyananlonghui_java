@@ -18,6 +18,7 @@
     <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table-zh-CN.min.js"></script>
     <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/colResizable-1.6.js"></script>
     <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table-resizable.js"></script>
+    <script type="text/javascript" src="../js/xlsx.full.min.js"></script>
 
     <link rel="stylesheet" href="../css/sweetalert.css">
     <script type="text/javascript" src="../js/sweetalert-dev.js"></script>
@@ -157,6 +158,11 @@
                 <input id="name" type="text" class="form-control form-control-custom" placeholder="请输入业务单位名称" autocomplete="off">
             </div>
 
+            <div class="search-field">
+                <label for="hetongZhuangtai" class="form-label-custom">对账状态</label>
+                <input id="hetongZhuangtai" type="text" class="form-control form-control-custom" placeholder="请输入对账状态" autocomplete="off">
+            </div>
+
             <!-- 查询按钮 -->
             <div>
                 <label class="form-label-custom invisible">查询</label>
@@ -182,6 +188,10 @@
                 <button id="delete-btn" class="btn btn-custom btn-danger-custom">
                     <i class="bi bi-trash"></i>
                     删除
+                </button>
+                <button id="export-btn" class="btn btn-custom btn-primary-custom" >
+                    <i class="bi bi-file-earmark-excel"></i>
+                    导出Excel
                 </button>
 
                 <!-- 当前页面指示器 -->
@@ -317,6 +327,42 @@
                     <i class="bi bi-x-circle icon"></i>
                     关闭
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 导出模态框 -->
+<div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">导出设置</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="export-form">
+                    <div class="form-group">
+                        <label for="export-filename">文件名</label>
+                        <input type="text" class="form-control" id="export-filename" value="合同记录" placeholder="请输入文件名">
+                        <small class="form-text text-muted">文件将保存到桌面，扩展名自动添加 .xlsx</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="export-date-format">日期格式</label>
+                        <select class="form-control" id="export-date-format">
+                            <option value="YYYYMMDD">年月日 (20231201)</option>
+                            <option value="YYYY-MM-DD">年-月-日 (2023-12-01)</option>
+                            <option value="YYYY年MM月DD日">年月日中文 (2023年12月01日)</option>
+                            <option value="none">不添加日期</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirm-export-btn">开始导出</button>
             </div>
         </div>
     </div>

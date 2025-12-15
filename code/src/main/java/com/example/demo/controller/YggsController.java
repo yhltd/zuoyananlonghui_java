@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.entity.Htjl;
 import com.example.demo.entity.Yggs;
 import com.example.demo.service.YggsService;
 import com.example.demo.util.*;
@@ -119,7 +120,17 @@ public class YggsController {
         }
     }
 
-
+    @RequestMapping("/getygname")
+    public ResultInfo getygname(HttpSession session) {
+        try {
+            List<Yggs> getList = yggsService.getygname();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
 
 
 

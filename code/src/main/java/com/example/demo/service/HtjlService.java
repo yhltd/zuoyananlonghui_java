@@ -81,4 +81,8 @@ public interface HtjlService extends IService<Htjl> {
 
     boolean updateField(Integer id, Map<String, Object> updateFields);
 
+    Map<String, Object> importExcelData(List<Map<String, Object>> records);
+
+    List<Htjl> getCustomerList();
+
 }

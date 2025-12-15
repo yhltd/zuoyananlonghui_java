@@ -1,6 +1,7 @@
 package com.example.demo.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.demo.entity.Htjl;
 import com.example.demo.entity.Yggs;
 import com.example.demo.mapper.YggsMapper;
 import com.example.demo.service.YggsService;
@@ -37,6 +38,11 @@ public class YggsImpl extends ServiceImpl<YggsMapper, Yggs> implements YggsServi
         jsrq1 = jsrq1 != null ? jsrq1 : "";
 
         return baseMapper.queryList1(ksrq1, jsrq1);
+    }
+
+    @Override
+    public List<Yggs> getygname() {  // 方法名必须一致
+        return baseMapper.getygname();
     }
 
 }

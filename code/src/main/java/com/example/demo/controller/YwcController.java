@@ -51,7 +51,7 @@ public class YwcController {
                 request.setName(name.trim());
             }
             if (hetongZhuangtai != null && !hetongZhuangtai.trim().isEmpty()) {
-                request.setHetongZhuangtai(hetongZhuangtai.trim());
+                request.setHetongzhuangtai(hetongZhuangtai.trim());
             }
             if (hetongHao != null && !hetongHao.trim().isEmpty()) {
                 request.setHetongHao(hetongHao.trim());

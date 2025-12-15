@@ -326,4 +326,131 @@ public class HtjlImpl extends ServiceImpl<HtjlMapper, Htjl> implements HtjlServi
     }
 
 
+    @Override
+    public Map<String, Object> importExcelData(List<Map<String, Object>> records) {
+        Map<String, Object> result = new HashMap<>();
+        List<String> errors = new ArrayList<>();
+        int successCount = 0;
+        int errorCount = 0;
+
+        System.out.println("开始批量导入Excel数据，共 " + records.size() + " 条记录");
+
+        for (int i = 0; i < records.size(); i++) {
+            try {
+                Map<String, Object> record = records.get(i);
+                int recordNum = i + 1;
+
+                // 转换数据为Htjl实体
+                Htjl htjl = convertMapToHtjl(record);
+
+                if (htjl == null) {
+                    String errorMsg = "第" + recordNum + "行: 数据转换失败";
+                    errors.add(errorMsg);
+                    errorCount++;
+                    System.err.println(errorMsg);
+                    continue;
+                }
+
+                // 使用现有的add方法保存数据
+                boolean saveResult = this.add(htjl);
+
+                if (saveResult) {
+                    successCount++;
+                    System.out.println("第 " + recordNum + " 条记录导入成功");
+                } else {
+                    String errorMsg = "第" + recordNum + "行: 保存到数据库失败";
+                    errors.add(errorMsg);
+                    errorCount++;
+                    System.err.println(errorMsg);
+                }
+
+            } catch (Exception e) {
+                String errorMsg = "第" + (i+1) + "行: " + e.getMessage();
+                errors.add(errorMsg);
+                errorCount++;
+                System.err.println("导入第" + (i+1) + "条记录时出错: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        // 构建返回结果
+        result.put("successCount", successCount);
+        result.put("errorCount", errorCount);
+        result.put("totalCount", records.size());
+
+        if (errorCount > 0 && !errors.isEmpty()) {
+            // 只返回前10个错误，避免响应过大
+            result.put("errors", errors.subList(0, Math.min(10, errors.size())));
+        }
+
+        System.out.println("导入完成: 成功 " + successCount + " 条，失败 " + errorCount + " 条");
+        return result;
+    }
+
+    /**
+     * 将Map转换为Htjl实体（也可以在Controller中使用）
+     */
+    private Htjl convertMapToHtjl(Map<String, Object> record) {
+        try {
+            if (record == null || record.isEmpty()) {
+                return null;
+            }
+
+            Htjl htjl = new Htjl();
+
+            // 设置字段值 - 使用反射简化
+            Class<?> clazz = Htjl.class;
+
+            for (Map.Entry<String, Object> entry : record.entrySet()) {
+                String fieldName = entry.getKey();
+                Object value = entry.getValue();
+
+                if (value == null) {
+                    continue;
+                }
+
+                try {
+                    // 获取字段对象
+                    java.lang.reflect.Field field = null;
+                    try {
+                        field = clazz.getDeclaredField(fieldName);
+                    } catch (NoSuchFieldException e) {
+                        // 尝试处理特殊字段名
+                        if (fieldName.equals("aas")) {
+                            field = clazz.getDeclaredField("aas");
+                        } else {
+                            continue;
+                        }
+                    }
+
+                    if (field != null) {
+                        field.setAccessible(true);
+                        field.set(htjl, value.toString());
+                    }
+
+                } catch (Exception e) {
+                    System.err.println("设置字段 " + fieldName + " 失败: " + e.getMessage());
+                }
+            }
+
+            // 设置默认值
+            if (htjl.getZhuangtai() == null) {
+                htjl.setZhuangtai("未创建");
+            }
+
+            return htjl;
+
+        } catch (Exception e) {
+            System.err.println("转换Htjl实体失败: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public List<Htjl> getCustomerList() {  // 方法名必须一致
+        return baseMapper.getCustomerList();
+    }
+
+
 }

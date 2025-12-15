@@ -365,7 +365,7 @@ body {
 
 .search-yggs{
     min-width: 200px;
-    width: 300px;
+    /*width: 300px;*/
     display: flex;
     margin-left: 15px;
 }

@@ -279,8 +279,8 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
 
 
 
-    @Insert("INSERT INTO hetong_jilu (c, d, e, hetong_zhuangtai, zhuangtai, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, [aa], [ab], [ac], [ad], [ae], [af], [ag], [ah], [ai], [aj], [ak], [al], [am], [an], [ao], [ap], [aq], [ar], [as], [at], [au], [av], [aw], [ax]) " +
-            "VALUES (#{c}, #{d}, #{e}, #{hetongzhuangtai}, '未创建', #{g}, #{h}, #{i}, #{j}, #{k}, #{l}, #{m}, #{n}, #{o}, #{p}, #{q}, #{r}, #{s}, #{t}, #{u}, #{v}, #{w}, #{x}, #{y}, #{z}, #{aa}, #{ab}, #{ac}, #{ad}, #{ae}, #{af}, #{ag}, #{ah}, #{ai}, #{aj}, #{ak}, #{al}, #{am}, #{an}, #{ao}, #{ap}, #{aq}, #{ar}, #{aas}, #{at}, #{au}, #{av}, #{aw}, #{ax})")
+    @Insert("INSERT INTO hetong_jilu (c, d, e, hetong_zhuangtai, zhuangtai, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, [aa], [ab], [ac], [ad], [ae], [af], [ag], [ah], [ai], [aj], [ak], [al], [am], [an], [ao], [ap], [aq], [ar], [as], [at], [au], [av], [aw], [ax], [ay]) " +
+            "VALUES (#{c}, #{d}, #{e}, #{hetongzhuangtai}, '未创建', #{g}, #{h}, #{i}, #{j}, #{k}, #{l}, #{m}, #{n}, #{o}, #{p}, #{q}, #{r}, #{s}, #{t}, #{u}, #{v}, #{w}, #{x}, #{y}, #{z}, #{aa}, #{ab}, #{ac}, #{ad}, #{ae}, #{af}, #{ag}, #{ah}, #{ai}, #{aj}, #{ak}, #{al}, #{am}, #{an}, #{ao}, #{ap}, #{aq}, #{ar}, #{aas}, #{at}, #{au}, #{av}, #{aw}, #{ax}, #{ay})")
     boolean add(Htjl htjl);
 
     @Delete("delete from hetong_jilu where id=#{id}")
@@ -502,4 +502,15 @@ boolean save(Htjl htjl);
             ") gg ON ht.id = gg.C " +
             "WHERE ISNULL(ht.hetong_zhuangtai, '') = ''")
     int updateZhuangtaiForCompleted();
+
+
+    @Select("<script>" +
+            "SELECT DISTINCT " +
+            "    ISNULL(c, '') as c " +
+            "FROM hetong_jilu hj " +
+            "WHERE ISNULL(hj.hetong_zhuangtai, '') = '' " +
+            "  AND ISNULL(c, '') != '' " +
+            "ORDER BY c " +
+            "</script>")
+    List<Htjl> getCustomerList();
 }

@@ -81,20 +81,15 @@ function loadDataFromSessionStorage() {
                 // 直接使用传递的数据填充表格，无需再次请求后端
                 fillReturnOrderTableFromData(returnData.selectedRows);
 
-                // // 设置出库单号
-                // if (returnData.returnNo) {
-                //     $('#return-no1').val(returnData.returnNo);
-                // } else {
-                //     // 生成出库单号
-                //     generateReturnNo1(function(returnNo) {
-                //         $('#return-no1').val(returnNo);
-                //     });
-                // }
+                // 设置出库单号
                 $('#return-no1').val(generateReturnNo1());
 
-                // 设置往来单位（使用第一个数据的业务单位）
+                // 修改这里：将设置输入框值改为设置下拉框默认值
                 if (returnData.selectedRows.length > 0) {
-                    $('#return-customer1').val(returnData.selectedRows[0].c || '');
+                    var customerName = returnData.selectedRows[0].c || '';
+                    setTimeout(function() {
+                        setContactUnitDefault(customerName);
+                    }, 100);
                 }
 
                 // 设置日期为当前日期
@@ -118,8 +113,6 @@ function loadDataFromSessionStorage() {
     }
 }
 
-// 从传递的数据直接填充表格（支持多条数据）
-// 修改 fillReturnOrderTableFromData 函数
 // 从传递的数据直接填充表格（支持多条数据）
 function fillReturnOrderTableFromData(dataRows) {
     console.log('=== fillReturnOrderTableFromData 开始 ===');
@@ -235,8 +228,8 @@ function bindReturnOrderEvents1() {
     });
 
     // 打印
-    $('#print-btn1').off('click').on('click', function() {
-        printReturnOrder1();
+    $('#print-outbound-btn').off('click').on('click', function() {
+        printOutboundOrder();
     });
 
     // 实时计算金额
@@ -486,12 +479,14 @@ function fillReturnOrderTable(data) {
         tableBody.append(row);
     });
 
-    // 设置往来单位
+    // 修改这里：将设置输入框值改为设置下拉框默认值
     if (data.length > 0) {
         var firstRowData = data[0].data || data[0];
-        var customer = firstRowData.c || '';
-        $('#return-customer1').val(customer);
-        console.log('设置往来单位:', customer);
+        var customerName = firstRowData.c || '';
+        setTimeout(function() {
+            setContactUnitDefault(customerName);
+        }, 100);
+        console.log('设置往来单位:', customerName);
     }
 
     // 计算总金额
@@ -769,6 +764,26 @@ $(document).ready(function() {
 
     // 初始化出库单
     initReturnOrder1();
+    loadContactUnitList();
+
+    // 检查是否有传递过来的数据
+    var returnData = sessionStorage.getItem('currentReturnData');
+    if (returnData) {
+        try {
+            var data = JSON.parse(returnData);
+            if (data.selectedRows && data.selectedRows.length > 0) {
+                var firstRow = data.selectedRows[0];
+                var customerName = firstRow.c || '';
+
+                // 延迟设置往来单位默认值，确保下拉框已加载
+                setTimeout(function() {
+                    setContactUnitDefault(customerName);
+                }, 1000); // 增加延迟时间确保下拉框完全加载
+            }
+        } catch (e) {
+            console.error('解析传递的数据失败:', e);
+        }
+    }
 
     // 绑定额外的事件
     $('#add-row-btn').off('click').on('click', function() {
@@ -930,9 +945,16 @@ function fillFormWithData(dataList) {
     // 1. 填充头部信息（使用第一条数据）
     if (dataList.length > 0) {
         var firstItem = dataList[0];
+        var customerName = firstItem.c || '';
 
-        // 填充头部信息
-        $('#return-customer1').val(firstItem.c || '');      // 往来单位
+        // 修改：将设置输入框值改为设置下拉框默认值
+        // 原来的代码：$('#return-customer1').val(customerName);
+        // 改为：设置下拉框默认值
+        setTimeout(function() {
+            setContactUnitDefault(customerName);
+        }, 100); // 延迟100ms确保下拉框已加载
+
+        // 填充其他头部信息
         $('#return-no1').val(firstItem.e || '');            // 出库单号
         $('#return-date1').val(firstItem.d || '');          // 出库日期
 
@@ -1006,7 +1028,45 @@ function fillFormWithData(dataList) {
     console.log('表单数据填充完成');
 }
 
+// 设置往来单位下拉框默认值
+function setContactUnitDefault(customerName) {
+    if (!customerName || customerName.trim() === '') return;
 
+    var $select = $('#return-customer1');
+
+    // 检查下拉框是否已加载
+    if ($select.length === 0) {
+        console.warn('往来单位下拉框未找到');
+        return;
+    }
+
+    // 检查下拉框中是否存在该单位
+    var exists = false;
+    $select.find('option').each(function() {
+        if ($(this).val() === customerName) {
+            exists = true;
+            return false; // 退出循环
+        }
+    });
+
+    if (exists) {
+        // 如果存在，直接设置选中
+        $select.val(customerName);
+        console.log('已设置往来单位:', customerName);
+    } else {
+        // 如果不存在，先检查是否已经有默认选项
+        if ($select.find('option[value=""]').length > 0) {
+            // 如果有默认空选项，添加到下拉框并选中
+            $select.append('<option value="' + customerName + '">' + customerName + '</option>');
+            $select.val(customerName);
+            console.log('已添加并设置往来单位:', customerName);
+        } else {
+            // 没有默认选项，直接添加选中
+            $select.append('<option value="' + customerName + '" selected>' + customerName + '</option>');
+            console.log('已添加并选中往来单位:', customerName);
+        }
+    }
+}
 
 // ==================== 清空表单数据 ====================
 function clearFormData() {
@@ -1197,8 +1257,10 @@ function saveChukudanData(formData, contractIds, $btn) {
 
 // ==================== 清空出库单表单的函数 ====================
 function clearChukuForm() {
-    // 清空输入字段
+    // 修改这里：清空往来单位下拉框（选择默认空选项）
     $('#return-customer1').val('');
+
+    // 清空其他输入字段
     $('#company-address1').val('');
     $('#company-phone1').val('');
     $('#songhuoren').val('');
@@ -1272,3 +1334,354 @@ function handleSaveError(error, $btn, originalText) {
     $btn.html(originalText);
     alert("保存失败，网络错误: " + error);
 }
+
+
+// 加载往来单位列表（出库单用）
+function loadContactUnitList() {
+    console.log('开始加载往来单位列表...');
+
+    // 获取当前已设置的值
+    var currentValue = $('#return-customer1').val();
+    console.log('当前往来单位值:', currentValue);
+
+    // 使用和退货客户相同的后端接口
+    $ajax({
+        type: 'post',
+        url: '/htjl/getCustomerList',
+        contentType: 'application/json',
+        dataType: 'json'
+    }, false, '', function(res) {
+        if (res.code === 200) {
+            console.log('获取往来单位列表成功:', res.data);
+
+            var $select = $('#return-customer1');
+            var originalValue = $select.val(); // 保存当前值
+
+            // 如果当前已有值且不是空值，先保留
+            if (originalValue && originalValue.trim() !== '') {
+                console.log('当前有值，先保留:', originalValue);
+            }
+
+            // 保存原有的选中值
+            var selectedValue = $select.val();
+
+            // 添加默认选项（如果不存在）
+            if ($select.find('option[value=""]').length === 0) {
+                $select.prepend('<option value="">请选择往来单位</option>');
+            }
+
+            // 检查数据结构
+            if (res.data && Array.isArray(res.data)) {
+                // 如果是字符串数组（优化后的返回格式）
+                if (typeof res.data[0] === 'string') {
+                    // 字符串数组直接使用
+                    res.data.forEach(function(unitName) {
+                        if (unitName && unitName.trim() !== '') {
+                            // 检查是否已存在该选项
+                            var exists = $select.find('option[value="' + unitName + '"]').length > 0;
+                            if (!exists) {
+                                $select.append(
+                                    '<option value="' + unitName + '">' +
+                                    unitName +
+                                    '</option>'
+                                );
+                            }
+                        }
+                    });
+                } else if (typeof res.data[0] === 'object') {
+                    // 如果是对象数组，从c字段获取
+                    res.data.forEach(function(unit) {
+                        var unitName = unit.c || '';
+                        if (unitName && unitName.trim() !== '') {
+                            // 检查是否已存在该选项
+                            var exists = $select.find('option[value="' + unitName + '"]').length > 0;
+                            if (!exists) {
+                                $select.append(
+                                    '<option value="' + unitName + '">' +
+                                    unitName +
+                                    '</option>'
+                                );
+                            }
+                        }
+                    });
+                }
+
+                console.log('已加载 ' + res.data.length + ' 个往来单位');
+
+                // 恢复之前的值
+                if (selectedValue && selectedValue.trim() !== '') {
+                    // 检查该值是否在下拉框中存在
+                    var optionExists = $select.find('option[value="' + selectedValue + '"]').length > 0;
+                    if (optionExists) {
+                        $select.val(selectedValue);
+                        console.log('已恢复原值:', selectedValue);
+                    } else {
+                        // 如果值不存在，添加并选中
+                        $select.append('<option value="' + selectedValue + '" selected>' + selectedValue + '</option>');
+                        console.log('已添加并选中原值:', selectedValue);
+                    }
+                }
+            } else {
+                console.warn('往来单位数据格式异常:', res.data);
+            }
+        } else {
+            console.error('获取往来单位列表失败:', res.msg);
+        }
+    });
+}
+
+
+function printOutboundOrder() {
+    console.log('开始打印出库单...');
+
+    // 创建一个打印样式
+    var printStyle = `
+        <style>
+            @media print {
+                body * {
+                    visibility: hidden;
+                }
+                #outbound-print-section, #outbound-print-section * {
+                    visibility: visible;
+                }
+                #outbound-print-section {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    padding: 20px;
+                }
+                .no-print {
+                    display: none !important;
+                }
+                /* 表格样式 */
+                .print-table {
+                    border-collapse: collapse;
+                    width: 100%;
+                    margin-top: 20px;
+                }
+                .print-table th, .print-table td {
+                    border: 1px solid #000;
+                    padding: 8px;
+                    text-align: center;
+                    font-size: 12px;
+                }
+                .print-table th {
+                    background-color: #f2f2f2;
+                    font-weight: bold;
+                }
+                .print-info {
+                    margin-bottom: 15px;
+                    line-height: 2;
+                }
+                .print-title {
+                    text-align: center;
+                    font-size: 20px;
+                    font-weight: bold;
+                    margin-bottom: 20px;
+                }
+                .print-footer {
+                    margin-top: 30px;
+                    padding-top: 20px;
+                    border-top: 1px solid #000;
+                }
+                .print-footer .col-md-4 {
+                    margin-bottom: 15px;
+                }
+            }
+        </style>
+    `;
+
+    // 添加打印样式到页面
+    $('head').append(printStyle);
+
+    // 构建打印内容
+    var printContent = buildOutboundOrderPrintContent();
+
+    // 创建打印区域
+    var printSection = $('<div id="outbound-print-section"></div>').html(printContent);
+    $('body').append(printSection);
+
+    // 执行打印
+    window.print();
+
+    // 清理打印区域
+    setTimeout(function() {
+        $('#outbound-print-section').remove();
+        $('head style:last-child').remove();
+    }, 100);
+}
+
+function buildOutboundOrderPrintContent() {
+    // 构建表格行
+    var tableRows = '';
+    var rowNumber = 1;
+    var totalAmount = 0;
+
+    $('#return-detail-table1 tbody tr').each(function() {
+        var $row = $(this);
+        var contractNo = $row.find('input[name="contractNo"]').val();
+        var amount = parseFloat($row.find('input[name="amount"]').val()) || 0;
+        totalAmount += amount;
+
+        // 只显示有合同号的行
+        if (contractNo && contractNo.trim() !== '') {
+            tableRows += `
+                <tr>
+                    <td>${rowNumber++}</td>
+                    <td>${contractNo}</td>
+                    <td>${$row.find('input[name="taskNo"]').val() || ''}</td>
+                    <td>${$row.find('input[name="gongxu"]').val() || ''}</td>
+                    <td>${$row.find('input[name="productName"]').val() || ''}</td>
+                    <td>${$row.find('input[name="drawingNo"]').val() || ''}</td>
+                    <td>${$row.find('input[name="unit"]').val() || ''}</td>
+                    <td>${$row.find('input[name="quantity"]').val() || ''}</td>
+                    <td>${$row.find('input[name="unitPrice"]').val() || ''}</td>
+                    <td>${$row.find('input[name="amount"]').val() || ''}</td>
+                    <td>${$row.find('input[name="material"]').val() || ''}</td>
+                    <td>${$row.find('input[name="weight"]').val() || ''}</td>
+                    <td>${$row.find('input[name="remark"]').val() || ''}</td>
+                </tr>
+            `;
+        }
+    });
+
+    // 如果没有数据
+    if (tableRows === '') {
+        tableRows = '<tr><td colspan="13" style="text-align: center;">暂无出库明细</td></tr>';
+    }
+
+    // 数字转中文大写金额函数
+    function numberToChinese(num) {
+        if (isNaN(num) || num === 0) return "零元整";
+
+        var chineseNums = ["零", "壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖"];
+        var chineseUnits = ["", "拾", "佰", "仟"];
+        var bigUnits = ["", "万", "亿"];
+
+        var numStr = Math.round(num * 100).toString();
+        var integerPart = numStr.slice(0, -2) || "0";
+        var decimalPart = numStr.slice(-2);
+
+        var result = "";
+
+        // 处理整数部分
+        if (integerPart !== "0") {
+            var integerGroups = [];
+            for (var i = integerPart.length; i > 0; i -= 4) {
+                integerGroups.unshift(integerPart.slice(Math.max(0, i - 4), i));
+            }
+
+            integerGroups.forEach(function(group, index) {
+                var groupResult = "";
+                var zeroFlag = false;
+
+                for (var j = 0; j < group.length; j++) {
+                    var digit = parseInt(group[j]);
+                    var unit = chineseUnits[group.length - 1 - j];
+
+                    if (digit === 0) {
+                        zeroFlag = true;
+                    } else {
+                        if (zeroFlag) {
+                            groupResult += "零";
+                            zeroFlag = false;
+                        }
+                        groupResult += chineseNums[digit] + unit;
+                    }
+                }
+
+                if (groupResult !== "") {
+                    result += groupResult + bigUnits[integerGroups.length - 1 - index];
+                }
+            });
+        } else {
+            result = "零";
+        }
+
+        result += "元";
+
+        // 处理小数部分
+        if (decimalPart !== "00") {
+            var jiao = parseInt(decimalPart[0]);
+            var fen = parseInt(decimalPart[1]);
+
+            if (jiao > 0) {
+                result += chineseNums[jiao] + "角";
+            }
+            if (fen > 0) {
+                result += chineseNums[fen] + "分";
+            }
+        } else {
+            result += "整";
+        }
+
+        return result;
+    }
+
+    return `
+        <div class="print-container">
+            <div class="print-title">出库单</div>
+            
+            <div class="print-info">
+                <div><strong>往来单位：</strong>${$('#return-customer1').val() || ''}</div>
+                <div><strong>出库单号：</strong>${$('#return-no1').val() || ''}</div>
+                <div><strong>送货日期：</strong>${$('#return-date1').val() || ''}</div>
+            </div>
+            
+            <table class="print-table">
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>合同号</th>
+                        <th>任务号</th>
+                        <th>加工工序</th>
+                        <th>产品名称</th>
+                        <th>图号</th>
+                        <th>单位</th>
+                        <th>数量</th>
+                        <th>单价</th>
+                        <th>金额</th>
+                        <th>材质</th>
+                        <th>重量</th>
+                        <th>备注</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+            
+            <div class="print-info" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #000;">
+                <div><strong>合计金额(大写)：</strong>${numberToChinese(totalAmount)}</div>
+                <div><strong>合计金额：</strong>${totalAmount.toFixed(2)} 元</div>
+            </div>
+            
+            <div class="row print-footer">
+                <div class="col-md-4">
+                    <div><strong>制单人：</strong>${$('#company-address1').val() || ''}</div>
+                </div>
+                <div class="col-md-4">
+                    <div><strong>审核人：</strong>${$('#company-phone1').val() || ''}</div>
+                </div>
+                <div class="col-md-4">
+                    <div><strong>送货人：</strong>${$('#songhuoren').val() || ''}</div>
+                </div>
+                <div class="col-md-4">
+                    <div><strong>收货人：</strong>${$('#shouhuoren').val() || ''}</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// 在HTML中添加打印按钮
+// 在出库单的按钮区域添加打印按钮：
+// <button id="print-outbound-btn" class="btn btn-info btn-sm ml-2" onclick="printOutboundOrder()">
+//     <i class="bi bi-printer"></i> 打印出库单
+// </button>
+
+// 或者如果您想在现有的按钮区域添加打印按钮，可以在现有的div中添加：
+// <button id="print-btn" class="btn btn-info btn-sm ml-2" onclick="printOutboundOrder()">
+//     <i class="bi bi-printer"></i> 打印
+// </button>

@@ -52,11 +52,8 @@ public class YwcImpl extends ServiceImpl<YwcMapper, Ywc> implements YwcService {
             if (StringUtils.isNotBlank(request.getName())) {
                 wrapper.like(Ywc::getC, request.getName());  // 业务单位
             }
-            if (StringUtils.isNotBlank(request.getHetongHao())) {
-                wrapper.like(Ywc::getD, request.getHetongHao());  // 合同号
-            }
-            if (StringUtils.isNotBlank(request.getRenwuHao())) {
-                wrapper.like(Ywc::getE, request.getRenwuHao());  // 任务号
+            if (StringUtils.isNotBlank(request.getHetongzhuangtai())) {
+                wrapper.like(Ywc::getHetongzhuangtai, request.getHetongzhuangtai());  // 合同状态
             }
 
             // 注意：不在wrapper中添加排序，使用SQL中的ROW_NUMBER排序

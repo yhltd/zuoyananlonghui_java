@@ -106,7 +106,15 @@ public interface YggsMapper extends BaseMapper<Yggs> {
             "</script>")
     List<Yggs> queryList1(String ksrq1, String jsrq1);
 
-
+    @Select("<script>" +
+            "SELECT DISTINCT " +
+            "    ISNULL(m, '') as m " +
+            "FROM gongyi_guicheng " +
+            "WHERE m IS NOT NULL " +  // 确保M字段不为空
+            "  AND m != '' " +        // 确保M字段不是空字符串
+            "ORDER BY m " +           // 按M字段排序
+            "</script>")
+    List<Yggs> getygname();
 }
 
 

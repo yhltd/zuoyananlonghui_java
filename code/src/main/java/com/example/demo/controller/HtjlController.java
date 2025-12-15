@@ -24,23 +24,6 @@ public class HtjlController {
     private ThjlService thjlService;
 
 
-    /**
-     * 查询所有（排除退货记录中已存在的数据）
-     *
-     * @return ResultInfo
-     */
-//    @RequestMapping("/getListExcludeThjl")
-//    public ResultInfo getListExcludeThjl(HttpSession session) {
-//        try {
-//            List<Htjl> getList = htjlService.getListExcludeThjl();
-//            return ResultInfo.success("获取成功", getList);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            log.error("获取失败：{}", e.getMessage());
-//            return ResultInfo.error("错误!");
-//        }
-//    }
-
     @RequestMapping("/getListExcludeThjl")
     public Result<Page<Map<String, Object>>> distinctPage(HttpSession session, @RequestBody PageRequest pageRequest) {
         // 创建分页对象
@@ -378,6 +361,74 @@ public class HtjlController {
             e.printStackTrace();
             log.error("删除退货单失败：{}", e.getMessage());
             return ResultInfo.error("删除失败!");
+        }
+    }
+
+
+    /**
+     * Excel批量导入接口 - 简单版本
+     * 支持前端直接上传数据列表
+     */
+    @PostMapping("/importExcel")
+    public Result importExcel(@RequestBody Map<String, Object> request, HttpSession session) {
+        try {
+            System.out.println("=== 接收Excel批量导入请求 ===");
+
+            // 从请求中提取数据
+            Object recordsObj = request.get("records");
+
+            if (recordsObj == null) {
+                return Result.error("没有接收到数据");
+            }
+
+            List<Map<String, Object>> records;
+
+            if (recordsObj instanceof List) {
+                records = (List<Map<String, Object>>) recordsObj;
+            } else {
+                return Result.error("数据格式不正确，应为数组格式");
+            }
+
+            if (records.isEmpty()) {
+                return Result.error("数据列表为空");
+            }
+
+            System.out.println("待导入记录数: " + records.size());
+            System.out.println("第一条数据样例: " + (records.size() > 0 ? records.get(0) : "无数据"));
+
+            // 调用Service进行数据导入
+            Map<String, Object> importResult = htjlService.importExcelData(records);
+
+            int successCount = (int) importResult.getOrDefault("successCount", 0);
+            int errorCount = (int) importResult.getOrDefault("errorCount", 0);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("successCount", successCount);
+            result.put("errorCount", errorCount);
+            result.put("totalCount", records.size());
+
+            if (errorCount == 0) {
+                return Result.success("导入成功");
+            } else {
+                return Result.success("部分数据导入成功");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("Excel导入失败：{}", e.getMessage());
+            return Result.error("导入失败: " + e.getMessage());
+        }
+    }
+
+    @RequestMapping("/getCustomerList")
+    public ResultInfo getCustomerList(HttpSession session) {
+        try {
+            List<Htjl> getList = htjlService.getCustomerList();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
         }
     }
 

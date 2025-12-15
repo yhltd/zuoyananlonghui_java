@@ -66,6 +66,143 @@ $(function () {
     getList();
 
     loadReturnNos();
+    // 新增：加载客户列表
+    loadCustomerList();
+
+    // 确保导入按钮只绑定一次
+    $('#import-btn').click(function() {
+        // 重置状态
+        $('#fileInfo').hide();
+        $('#simpleImportBtn').prop('disabled', true);
+        $('#importModal').modal('show');
+    });
+
+    // 文件选择事件
+    $('#simpleExcelFile').change(function(e) {
+        var file = e.target.files[0];
+
+        if (!file) {
+            $('#fileInfo').hide();
+            $('#simpleImportBtn').prop('disabled', true);
+            return;
+        }
+
+        // 检查文件类型
+        var validTypes = [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-excel',
+            'application/excel',
+            'application/x-excel',
+            'application/x-msexcel'
+        ];
+
+        var fileExt = file.name.split('.').pop().toLowerCase();
+
+        if (!validTypes.includes(file.type) && !['xlsx', 'xls'].includes(fileExt)) {
+            swal('文件格式错误', '请选择Excel文件 (.xlsx 或 .xls)', 'error');
+            $(this).val('');
+            $('#fileInfo').hide();
+            $('#simpleImportBtn').prop('disabled', true);
+            return;
+        }
+
+        // 显示文件信息
+        $('#fileName').text(file.name);
+
+        // 格式化文件大小
+        var fileSize = file.size;
+        var sizeText = fileSize < 1024 ? fileSize + ' B' :
+            fileSize < 1024 * 1024 ? (fileSize / 1024).toFixed(1) + ' KB' :
+                (fileSize / (1024 * 1024)).toFixed(1) + ' MB';
+        $('#fileSize').text(sizeText);
+
+        $('#fileInfo').show();
+        $('#simpleImportBtn').prop('disabled', false);
+    });
+
+    // 开始导入按钮
+    $('#simpleImportBtn').click(function() {
+        var fileInput = document.getElementById('simpleExcelFile');
+
+        if (!fileInput.files[0]) {
+            swal('请先选择文件', '', 'warning');
+            return;
+        }
+
+        var file = fileInput.files[0];
+        console.log('开始导入文件:', file.name);
+
+        // 禁用按钮显示加载状态
+        var $btn = $(this);
+        var originalText = $btn.html();
+        $btn.prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>导入中...');
+
+        // 显示进度提示
+        var progressHtml = `
+        <div class="text-center py-3">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="sr-only">导入中...</span>
+            </div>
+            <h6>正在导入数据...</h6>
+            <p class="text-muted small">文件: ${file.name}</p>
+            <p class="text-muted small">请稍候，这可能需要几秒钟</p>
+        </div>
+    `;
+
+        $('.modal-body').html(progressHtml);
+
+        // 读取文件
+        var reader = new FileReader();
+
+        reader.onload = function(e) {
+            try {
+                var data = new Uint8Array(e.target.result);
+                var workbook = XLSX.read(data, { type: 'array' });
+
+                if (workbook.SheetNames.length === 0) {
+                    showImportResult(false, 'Excel文件中没有工作表');
+                    return;
+                }
+
+                // 读取第一个工作表
+                var worksheet = workbook.Sheets[workbook.SheetNames[0]];
+
+                // 转换为JSON
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                if (jsonData.length <= 1) {
+                    showImportResult(false, 'Excel文件中没有有效数据');
+                    return;
+                }
+
+                // 转换数据格式
+                var dataToImport = convertExcelData(jsonData);
+
+                if (dataToImport.length === 0) {
+                    showImportResult(false, '没有可导入的数据');
+                    return;
+                }
+
+                console.log('准备导入数据:', dataToImport.length, '条');
+
+                // 发送到服务器
+                sendImportData(dataToImport, file.name);
+
+            } catch (error) {
+                console.error('Excel解析错误:', error);
+                showImportResult(false, '文件解析失败: ' + error.message);
+            }
+        };
+
+        reader.onerror = function(error) {
+            console.error('文件读取错误:', error);
+            showImportResult(false, '文件读取失败');
+        };
+
+        reader.readAsArrayBuffer(file);
+    });
+
+
 
     $('#goto-return-btn').click(function(e) {
         e.preventDefault();
@@ -103,30 +240,6 @@ $(function () {
             $btn.prop('disabled', false).html(originalText);
         });
     });
-
-
-
-    // // 修改查询按钮点击事件
-    // $('#select-btn').click(function() {
-    //     var name = $('#name').val().trim();
-    //     var processStatus = $('#department').val().trim(); // 改为 processStatus
-    //
-    //     console.log('查询条件 - 业务单位:', name, '工艺规程状态:', processStatus);
-    //
-    //     if (currentTableData.length === 0) {
-    //         swal("提示", "请先加载数据", "info");
-    //         return;
-    //     }
-    //
-    //     // 前端过滤数据
-    //     var filteredData = filterTableData(name, processStatus);
-    //     console.log('过滤后的数据:', filteredData);
-    //
-    //     // 更新表格
-    //     setTable(filteredData);
-    //     swal("查询成功", "找到 " + filteredData.length + " 条记录", "success");
-    // });
-
 
     // 修复过滤函数
     function filterTableData(name, processStatus) {
@@ -201,6 +314,37 @@ $(function () {
         $('#add-modal').modal('show');
     });
 
+    // 导出按钮事件
+    $('#export-btn').off('click').on('click', function() {
+        console.log('导出Excel');
+        showExportModal();
+    });
+
+    // 绑定确认导出事件
+    $('#confirm-export-btn').off('click').on('click', function() {
+        var filename = $('#export-filename').val().trim();
+        var dateFormat = $('#export-date-format').val();
+
+        if (!filename) {
+            swal('请输入文件名');
+            return;
+        }
+
+        // 添加日期后缀
+        if (dateFormat !== 'none') {
+            var dateSuffix = formatDate(new Date(), dateFormat);
+            filename += '_' + dateSuffix;
+        }
+
+        // 确保文件名以.xlsx结尾
+        if (!filename.toLowerCase().endsWith('.xlsx')) {
+            filename += '.xlsx';
+        }
+
+        $('#exportModal').modal('hide');
+        exportToExcel(filename);
+    });
+
 //新增弹窗里点击关闭按钮
     $('#add-close-btn').click(function () {
         $('#add-modal').modal('hide');
@@ -219,56 +363,56 @@ $(function () {
         var originalText = $btn.html();
         $btn.html('<i class="bi bi-arrow-clockwise icon"></i>提交中...');
 
-        // 手动构建参数，包含所有字段
+        // 手动构建参数，按照表格字段对应
         let params = {
-            c: $('#add-c').val(),      // 业务单位
-            d: $('#add-d').val(),      // 合同号
-            e: $('#add-e').val(),      // 任务号
-            hetongzhuangtai: $('#add-f').val(),       // 工艺规程状态
-            g: $('#add-g').val(),      // 工序
-            h: $('#add-h').val(),      // 名称
-            i: $('#add-i').val(),      // 图号
-            j: $('#add-j').val(),      // 单位
-            k: $('#add-k').val(),      // 数量
-            l: $('#add-l').val(),      // 材质
-            m: $('#add-m').val(),      // 序合计
-            n: $('#add-n').val(),      // 重量
-            o: $('#add-o').val(),      // 工件
-            p: $('#add-p').val(),      // 单位元
-            q: $('#add-q').val(),      // 合计金额
-            r: $('#add-r').val(),      // 铣工时/40
-            s: $('#add-s').val(),      // 铣单价
-            t: $('#add-t').val(),      // 车工时/40
-            u: $('#add-u').val(),      // 车单价
-            v: $('#add-v').val(),      // 钳公式/40
-            w: $('#add-w').val(),      // 钳单位
-            x: $('#add-x').val(),      // 整件外委工时/57.6
-            y: $('#add-y').val(),      // 整件外委单位
-            z: $('#add-z').val(),      // 外委工时/48
-            aa: $('#add-aa').val(),    // 外委单价
-            ab: $('#add-ab').val(),    // 镗工时/73
-            ac: $('#add-ac').val(),    // 镗单价
-            ad: $('#add-ad').val(),    // 割工时/24
-            ae: $('#add-ae').val(),    // 割单价
-            af: $('#add-af').val(),    // 磨工时/42
-            ag: $('#add-ag').val(),    // 磨单价
-            ah: $('#add-ah').val(),    // 数控铣工时/69
-            ai: $('#add-ai').val(),    // 数控铣单价
-            aj: $('#add-aj').val(),    // 立车/71
-            ak: $('#add-ak').val(),    // 立车单价
-            al: $('#add-al').val(),    // 电火花/42
-            am: $('#add-am').val(),    // 电火花单价
-            an: $('#add-an').val(),    // 中走丝/38
-            ao: $('#add-ao').val(),    // 中走丝单价
-            ap: $('#add-ap').val(),    // 下料
-            aq: $('#add-aq').val(),    // 深孔钻
-            ar: $('#add-ar').val(),    // 回厂日期
-            as: $('#add-as').val(),    // 出厂日期
-            at: $('#add-at').val(),    // 订单要求交货时间
-            au: $('#add-au').val(),    // 铣
-            av: $('#add-av').val(),    // 车
-            aw: $('#add-aw').val(),    // 登记员
-            ax: $('#add-ax').val()     // 备注
+            c: $('#add-c').val(),              // 业务单位
+            d: $('#add-d').val(),              // 合同号
+            e: $('#add-e').val(),              // 任务号
+            zhuangtai: $('#add-zhuangtai').val(), // 工艺规程状态（修改）
+            g: $('#add-g').val(),              // 工序
+            h: $('#add-h').val(),              // 名称
+            i: $('#add-i').val(),              // 图号
+            j: $('#add-j').val(),              // 单位
+            k: $('#add-k').val(),              // 数量
+            l: $('#add-l').val(),              // 材质
+            av: $('#add-av').val(),            // 序合计（修改）
+            aw: $('#add-aw').val(),            // 重量（修改）
+            ax: $('#add-ax').val(),            // 工件尺寸（修改）
+            m: $('#add-m').val(),              // 单价元（修改）
+            n: $('#add-n').val(),              // 合计金额（修改）
+            o: $('#add-o').val(),              // 铣工时（修改）
+            p: $('#add-p').val(),              // 铣单价（修改）
+            q: $('#add-q').val(),              // 车工时（修改）
+            r: $('#add-r').val(),              // 车单价（修改）
+            s: $('#add-s').val(),              // 钳工时（修改）
+            t: $('#add-t').val(),              // 钳单价（修改）
+            u: $('#add-u').val(),              // 整件外委工时（修改）
+            v: $('#add-v').val(),              // 整件外委单位（修改）
+            w: $('#add-w').val(),              // 外委工时（修改）
+            x: $('#add-x').val(),              // 外委单价（修改）
+            y: $('#add-y').val(),              // 镗工时（修改）
+            z: $('#add-z').val(),              // 镗单价（修改）
+            aa: $('#add-aa').val(),            // 割工时（修改）
+            ab: $('#add-ab').val(),            // 割单价（修改）
+            ac: $('#add-ac').val(),            // 磨工时（修改）
+            ad: $('#add-ad').val(),            // 磨单价（修改）
+            ae: $('#add-ae').val(),            // 数控铣工时（修改）
+            af: $('#add-af').val(),            // 数控铣单价（修改）
+            ag: $('#add-ag').val(),            // 立车（修改）
+            ah: $('#add-ah').val(),            // 立车单价（修改）
+            ai: $('#add-ai').val(),            // 电火花（修改）
+            aj: $('#add-aj').val(),            // 电火花单价（修改）
+            ak: $('#add-ak').val(),            // 中走丝（修改）
+            al: $('#add-al').val(),            // 中走丝单价（修改）
+            am: $('#add-am').val(),            // 下料（修改）
+            an: $('#add-an').val(),            // 深孔钻（修改）
+            ao: $('#add-ao').val(),            // 回厂日期（修改）
+            ap: $('#add-ap').val(),            // 出厂日期（修改）
+            ay: $('#add-ay').val(),            // 订单要求交货时间（修改）
+            aq: $('#add-aq').val(),            // 铣（修改）
+            ar: $('#add-ar').val(),            // 车（修改）
+            aas: $('#add-aas').val(),          // 登记员（新增）
+            at: $('#add-at').val()             // 备注（修改）
         };
 
         console.log('前端输入的数据:', params);
@@ -589,6 +733,21 @@ $(function () {
             })
         }
     })
+
+    // 延迟初始化表格拖动滚动
+    setTimeout(function() {
+        initTableDragScroll();
+    }, 1000);
+
+    // 监听表格刷新事件
+    $(document).on('post-body.bs.table', function(e, data) {
+        if ($(e.target).is('#userTable')) {
+            console.log('表格已刷新，重新初始化拖动滚动');
+            setTimeout(function() {
+                initTableDragScroll();
+            }, 300);
+        }
+    });
 });
 
 function setTable(data) {
@@ -963,6 +1122,10 @@ function setTable(data) {
         onPostBody: function() {
             bindRowClickEvents();
             enableCellEditing();
+            // 延迟初始化表格拖动滚动
+            setTimeout(function() {
+                initTableDragScroll();
+            }, 300);
         }
     });
 
@@ -1635,20 +1798,6 @@ function gotoReturnOrderPage() {
         let rowData = selectedRow.data;
         let processStatus = rowData.zhuangtai || '';
 
-        // 重新计算状态（和表格中一样的逻辑）
-        // if (!processStatus || processStatus === '未创建') {
-        //     let kValue = parseFloat(rowData.k) || 0;
-        //     let mValue = parseFloat(rowData.m) || 0;
-        //
-        //     if (rowData.k === null || rowData.k === undefined || rowData.k === '') {
-        //         processStatus = '未创建';
-        //     } else if (kValue > mValue) {
-        //         processStatus = '未完成';
-        //     } else {
-        //         processStatus = '已完成';
-        //     }
-        // }
-
         if (processStatus === '已完成') {
             validRows.push(rowData);
         } else {
@@ -1769,7 +1918,10 @@ function bindReturnOrderEvents() {
     $('#select-all').click(function() {
         $('.row-select').prop('checked', this.checked);
     });
-
+// 添加打印按钮事件绑定
+    $('#print-btn').off('click').on('click', function() {
+        printReturnOrder();
+    });
     // 保存退货单按钮点击事件
     $("#save-return-btn").click(function () {
         // 检测必填字段
@@ -2008,8 +2160,12 @@ function generateReturnOrder() {
     // 更新退货单头部信息（使用第一个选中行的信息）
     if (rows.length > 0) {
         let firstRow = rows[0].data;
-        $('#return-customer').val(firstRow.c || '');
-        $('#return-phone').val(firstRow.phone || '');
+        let customerName = firstRow.c || '';
+
+        // 修改这里：将设置下拉框值改为设置默认值函数
+        setTimeout(function() {
+            setReturnCustomerDefault(customerName);
+        }, 100); // 延迟100ms确保下拉框已加载
 
         // 生成退货单号（根据当前时间）
         $('#return-no').val(generateReturnNo());
@@ -2023,6 +2179,42 @@ function generateReturnOrder() {
 
     $('#return-modal').modal('show');
     swal("生成成功", "已生成 " + rows.length + " 条退货单数据", "success");
+}
+
+// 设置退货客户下拉框默认值
+function setReturnCustomerDefault(customerName) {
+    if (!customerName || customerName.trim() === '') return;
+    var $select = $('#return-customer');
+    // 检查下拉框是否已加载
+    if ($select.length === 0) {
+        console.warn('退货客户下拉框未找到');
+        return;
+    }
+    // 检查下拉框中是否存在该客户
+    var exists = false;
+    $select.find('option').each(function() {
+        if ($(this).val() === customerName) {
+            exists = true;
+            return false; // 退出循环
+        }
+    });
+    if (exists) {
+        // 如果存在，直接设置选中
+        $select.val(customerName);
+        console.log('已设置退货客户:', customerName);
+    } else {
+        // 如果不存在，先检查是否已经有默认选项
+        if ($select.find('option[value=""]').length > 0) {
+            // 如果有默认空选项，添加到下拉框并选中
+            $select.append('<option value="' + customerName + '">' + customerName + '</option>');
+            $select.val(customerName);
+            console.log('已添加并设置退货客户:', customerName);
+        } else {
+            // 没有默认选项，直接添加选中
+            $select.append('<option value="' + customerName + '" selected>' + customerName + '</option>');
+            console.log('已添加并选中退货客户:', customerName);
+        }
+    }
 }
 // 填充退货单行数据
 function fillReturnRowData($row, rowData) {
@@ -2167,7 +2359,13 @@ function searchReturnOrder(returnNo, callback) {
                 if (res.data[0]) {
                     var firstRecord = res.data[0];
                     $('#return-no').val(firstRecord.f || returnNo);
-                    $('#return-customer').val(firstRecord.c || '');
+
+                    // 修改这里：将设置输入框值改为设置下拉框默认值
+                    var customerName = firstRecord.c || '';
+                    setTimeout(function() {
+                        setReturnCustomerDefault(customerName);
+                    }, 100);
+
                     $('#return-phone').val(firstRecord.d || '');
                     $('#return-date').val(firstRecord.e || getCurrentDate());
                     $('#company-address').val(firstRecord.r || '');
@@ -2596,5 +2794,1462 @@ function clearReturnForm() {
 
     console.log('退货单表单已清空');
 }
+
+
+
+
+// 显示导出设置模态框
+function showExportModal() {
+    var defaultFileName = '合同记录_' + getCurrentDate();
+    $('#export-filename').val(defaultFileName);
+    $('#exportModal').modal('show');
+}
+
+// 获取当前日期
+function getCurrentDate() {
+    var now = new Date();
+    var year = now.getFullYear();
+    var month = String(now.getMonth() + 1).padStart(2, '0');
+    var day = String(now.getDate()).padStart(2, '0');
+    return year + month + day;
+}
+
+// 日期格式化函数
+function formatDate(date, format) {
+    var d = new Date(date);
+    var year = d.getFullYear();
+    var month = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+
+    switch(format) {
+        case 'YYYYMMDD':
+            return year + month + day;
+        case 'YYYY-MM-DD':
+            return year + '-' + month + '-' + day;
+        case 'YYYY年MM月DD日':
+            return year + '年' + month + '月' + day + '日';
+        default:
+            return year + month + day;
+    }
+}
+
+// 导出到Excel功能
+function exportToExcel(filename) {
+    console.log('开始导出Excel:', filename);
+
+    showExportLoading();
+
+    // 获取所有数据（注意：这里需要根据实际接口调整）
+    $ajax({
+        type: 'post',
+        url: '/htjl/getListExcludeThjl', // 需要后端提供获取所有数据的接口
+        contentType: 'application/json',
+        data: JSON.stringify({
+            pageNum: 1,
+            pageSize: 9999999,
+        }),
+        dataType: 'json'
+    }, false, '', function (res) {
+        hideExportLoading();
+
+        if (res.code === 200 && res.data && res.data.records && res.data.records.length > 0) {
+            console.log('获取到数据，开始导出:', res.data.records.length, '条记录');
+            createExcelFile(res.data.records, filename);
+        } else {
+            swal('没有数据可以导出');
+        }
+    });
+}
+
+// 创建Excel文件
+function createExcelFile(data, filename) {
+    try {
+        // 检查 SheetJS 是否已加载
+        if (typeof XLSX === 'undefined') {
+            swal('导出功能初始化失败，请刷新页面重试');
+            return;
+        }
+
+        // 准备Excel数据 - 根据表格列顺序
+        var excelData = data.map(function(item) {
+            return {
+                '业务单位': item.c || '',
+                '合同号': item.d || '',
+                '任务号': item.e || '',
+                '工艺规程状态': item.zhuangtai || calculateProcessStatus(item),
+                '工序': item.g || '',
+                '名称': item.h || '',
+                '图号': item.i || '',
+                '单位': item.j || '',
+                '数量': item.k || '',
+                '材质': item.l || '',
+                '序合计': item.av || '',
+                '重量': item.aw || '',
+                '工件尺寸': item.ax || '',
+                '单价元': item.m || '',
+                '合计金额': item.n || '',
+                '铣工时': item.o || '',
+                '铣单价': item.p || '',
+                '车工时': item.q || '',
+                '车单价': item.r || '',
+                '钳工时': item.s || '',
+                '钳单价': item.t || '',
+                '整件外委工时': item.u || '',
+                '整件外委单位': item.v || '',
+                '外委工时': item.w || '',
+                '外委单价': item.x || '',
+                '镗工时': item.y || '',
+                '镗单价': item.z || '',
+                '割工时': item.aa || '',
+                '割单价': item.ab || '',
+                '磨工时': item.ac || '',
+                '磨单价': item.ad || '',
+                '数控铣工时': item.ae || '',
+                '数控铣单价': item.af || '',
+                '立车': item.ag || '',
+                '立车单价': item.ah || '',
+                '电火花': item.ai || '',
+                '电火花单价': item.aj || '',
+                '中走丝': item.ak || '',
+                '中走丝单价': item.al || '',
+                '下料': item.am || '',
+                '深孔钻': item.an || '',
+                '回厂日期': item.ao || '',
+                '出厂日期': item.ap || '',
+                '订单要求交货时间': item.ay || '',
+                '铣': item.aq || '',
+                '车': item.ar || '',
+                '登记员': item.aas || '',
+                '备注': item.at || ''
+            };
+        });
+
+        // 创建工作簿
+        var wb = XLSX.utils.book_new();
+
+        // 创建工作表
+        var ws = XLSX.utils.json_to_sheet(excelData);
+
+        // 设置列宽
+        var colWidths = [
+            { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
+            { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 8 },
+            { wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 8 },
+            { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 10 },
+            { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
+            { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 10 },
+            { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
+            { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 },
+            { wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 12 },
+            { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 },
+            { wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 8 },
+            { wch: 8 }, { wch: 10 }, { wch: 15 }
+        ];
+        ws['!cols'] = colWidths;
+
+        // 添加工作表
+        XLSX.utils.book_append_sheet(wb, ws, '合同记录');
+
+        // 导出文件
+        XLSX.writeFile(wb, filename);
+
+        console.log('Excel文件导出成功:', filename);
+
+        // 显示成功消息
+        setTimeout(function() {
+            swal(`导出成功！\n文件名：${filename}`);
+        }, 500);
+
+    } catch (error) {
+        console.error('创建Excel文件错误:', error);
+        swal('导出失败: ' + error.message);
+    }
+}
+
+// 计算工艺规程状态（与表格中一致）
+function calculateProcessStatus(row) {
+    var zhuangtaiValue = row.zhuangtai;
+
+    // 1. 如果zhuangtai字段为空字符串，返回"未创建"
+    if (zhuangtaiValue === '' || zhuangtaiValue === null || zhuangtaiValue === undefined) {
+        return '未创建';
+    }
+
+    // 2. 如果zhuangtai有值且不是"未创建"，则直接返回该值
+    if (zhuangtaiValue && zhuangtaiValue !== '未创建') {
+        return zhuangtaiValue;
+    }
+
+}
+
+// 显示导出加载中
+function showExportLoading() {
+    $('#export-btn').prop('disabled', true).html('<i class="bi bi-hourglass-split icon"></i> 导出中...');
+
+    // 添加加载提示
+    if (!$('#export-loading').length) {
+        $('body').append(`
+            <div id="export-loading" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 5px; z-index: 9999;">
+                <div style="text-align: center;">
+                    <i class="bi bi-hourglass-split" style="font-size: 24px;"></i>
+                    <div style="margin-top: 10px;">正在准备导出数据，请稍候...</div>
+                </div>
+            </div>
+        `);
+    }
+}
+
+// 隐藏导出加载中
+function hideExportLoading() {
+    $('#export-btn').prop('disabled', false).html('<i class="bi bi-file-earmark-excel icon"></i> 导出Excel');
+    $('#export-loading').remove();
+}
+
+// ==================== Excel导入功能 ====================
+
+// 数据库字段定义（根据您的表结构调整）
+var databaseFields = [
+    { field: 'c', name: '退货客户', description: '退货客户名称' },
+    { field: 'd', name: '退货电话', description: '联系电话' },
+    { field: 'e', name: '退货日期', description: '退货日期' },
+    { field: 'f', name: '退货单号', description: '退货单编号' },
+    { field: 'g', name: '合同号', description: '合同编号' },
+    { field: 'h', name: '任务号', description: '任务编号' },
+    { field: 'i', name: '产品名称', description: '产品名称' },
+    { field: 'j', name: '图号', description: '图纸编号' },
+    { field: 'k', name: '单位', description: '计量单位' },
+    { field: 'l', name: '数量', description: '产品数量' },
+    { field: 'm', name: '单价', description: '产品单价' },
+    { field: 'n', name: '金额', description: '总金额' },
+    { field: 'o', name: '材质', description: '材料材质' },
+    { field: 'p', name: '重量', description: '产品重量' },
+    { field: 'q', name: '退货原因', description: '退货原因说明' },
+    { field: 'r', name: '地址', description: '客户地址' },
+    { field: 's', name: '客户签字', description: '客户签名' },
+    { field: 't', name: '电话', description: '联系电话' },
+    { field: 'u', name: '备注', description: '备注信息' },
+    { field: 'v', name: '回厂日期', description: '返回工厂日期' }
+    // 根据您的需求添加更多字段...
+];
+
+// 导入数据对象
+var importData = {
+    excelData: null,
+    columnHeaders: [],
+    columnData: []
+};
+
+// 导入按钮点击事件
+$('#import-btn').click(function() {
+    resetImportModal();
+    $('#importModal').modal('show');
+});
+
+// 文件选择变化
+$('#excelFile').change(function(e) {
+    var fileName = e.target.files[0] ? e.target.files[0].name : '选择文件';
+    $('#fileLabel').text(fileName);
+    $('#btn-analyze-file').prop('disabled', !e.target.files[0]);
+});
+
+// 分析Excel文件
+$('#btn-analyze-file').click(function() {
+    var fileInput = document.getElementById('excelFile');
+
+    if (!fileInput.files[0]) {
+        swal('请选择Excel文件');
+        return;
+    }
+
+    var file = fileInput.files[0];
+    var reader = new FileReader();
+
+    reader.onload = function(e) {
+        try {
+            var data = new Uint8Array(e.target.result);
+            var workbook = XLSX.read(data, { type: 'array' });
+
+            if (workbook.SheetNames.length === 0) {
+                swal('Excel文件中没有工作表');
+                return;
+            }
+
+            // 读取第一个工作表
+            var worksheet = workbook.Sheets[workbook.SheetNames[0]];
+
+            // 获取范围（A2:BDxxx）
+            var range = XLSX.utils.decode_range(worksheet['!ref']);
+
+            // 调整从第二行开始（跳过表头）
+            range.s.r = 1;
+
+            // 限制列数：A到BD（BD是第56列）
+            var maxCol = Math.min(range.e.c, 55); // A=0, BD=55
+
+            // 收集列数据
+            importData.columnHeaders = [];
+            importData.columnData = [];
+            importData.excelData = [];
+
+            // 首先读取表头（第一行）
+            for (var col = 0; col <= maxCol; col++) {
+                var cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+                var cell = worksheet[cellAddress];
+                var header = cell ? (cell.v || `列${getColumnLetter(col)}`) : `列${getColumnLetter(col)}`;
+                importData.columnHeaders.push(header);
+                importData.columnData[col] = [];
+            }
+
+            // 读取数据（从第二行开始）
+            var rowCount = 0;
+            for (var row = 1; row <= range.e.r; row++) {
+                var rowData = {};
+                var hasData = false;
+
+                for (var col = 0; col <= maxCol; col++) {
+                    var cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+                    var cell = worksheet[cellAddress];
+                    var cellValue = cell ? cell.v : '';
+
+                    if (cellValue !== '' && cellValue !== null && cellValue !== undefined) {
+                        hasData = true;
+                        rowData[col] = cellValue;
+                        importData.columnData[col].push(cellValue);
+                    }
+                }
+
+                if (hasData) {
+                    importData.excelData.push(rowData);
+                    rowCount++;
+
+                    // 限制最大行数
+                    if (rowCount >= 1000) {
+                        break;
+                    }
+                }
+            }
+
+            if (rowCount === 0) {
+                swal('Excel文件中没有有效数据');
+                return;
+            }
+
+            // 显示预览信息
+            showImportPreview(rowCount);
+
+        } catch (error) {
+            console.error('Excel解析错误:', error);
+            swal('Excel文件解析失败: ' + error.message);
+        }
+    };
+
+    reader.onerror = function(error) {
+        swal('文件读取失败: ' + error);
+    };
+
+    reader.readAsArrayBuffer(file);
+});
+
+// 显示导入预览信息
+function showImportPreview(rowCount) {
+    $('#import-step-1').hide();
+    $('#import-step-3').show();
+
+    // 显示预览信息
+    var previewHtml = `
+        <div class="alert alert-success">
+            <h6><i class="bi bi-file-earmark-excel me-2"></i>Excel文件分析完成</h6>
+            <p>共发现 <strong>${rowCount}</strong> 行数据</p>
+            <p>共 <strong>${importData.columnHeaders.length}</strong> 列</p>
+            <p class="mt-2">
+                <small class="text-muted">
+                    将按照预定义映射关系导入数据：A列→业务单位，B列→合同号，C列→任务号...
+                </small>
+            </p>
+        </div>
+        
+        <div class="alert alert-info">
+            <h6><i class="bi bi-lightbulb me-2"></i>字段映射预览</h6>
+            <div class="table-responsive mt-2">
+                <table class="table table-sm table-bordered">
+                    <thead class="thead-light">
+                        <tr>
+                            <th width="80">Excel列</th>
+                            <th width="120">Excel列名</th>
+                            <th width="120">映射字段</th>
+                            <th width="180">数据库字段说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+
+    // 显示前20列的映射关系
+    var maxPreviewCols = Math.min(importData.columnHeaders.length, 20);
+    for (var col = 0; col < maxPreviewCols; col++) {
+        var colLetter = getColumnLetter(col);
+        var header = importData.columnHeaders[col];
+        var dbField = excelToDbMapping[col] || '未映射';
+
+        // 获取字段说明
+        var fieldDescription = getFieldDescription(dbField);
+
+        previewHtml += `
+            <tr>
+                <td><strong>${colLetter}</strong></td>
+                <td>${header}</td>
+                <td>${dbField}</td>
+                <td><small class="text-muted">${fieldDescription}</small></td>
+            </tr>
+        `;
+    }
+
+    if (importData.columnHeaders.length > 20) {
+        previewHtml += `
+            <tr>
+                <td colspan="4" class="text-center">
+                    <small class="text-muted">... 还有 ${importData.columnHeaders.length - 20} 列</small>
+                </td>
+            </tr>
+        `;
+    }
+
+    previewHtml += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <button type="button" class="btn btn-secondary mr-2" id="btn-back-to-file">
+                <i class="bi bi-arrow-left me-2"></i>
+                返回文件选择
+            </button>
+            <button type="button" class="btn btn-success" id="btn-direct-import">
+                <i class="bi bi-cloud-upload me-2"></i>
+                直接导入数据
+            </button>
+        </div>
+    `;
+
+    $('#import-step-3').html(previewHtml);
+
+    // 绑定返回按钮事件
+    $('#btn-back-to-file').click(function() {
+        $('#import-step-3').hide();
+        $('#import-step-1').show();
+    });
+
+    // 绑定直接导入按钮事件
+    $('#btn-direct-import').click(function() {
+        startDirectImport();
+    });
+}
+
+// 获取字段说明
+function getFieldDescription(field) {
+    var descriptions = {
+        'c': '业务单位',
+        'd': '合同号',
+        'e': '任务号',
+        'zhuangtai': '工艺规程状态',
+        'g': '工序',
+        'h': '名称',
+        'i': '图号',
+        'j': '单位',
+        'k': '数量',
+        'l': '材质',
+        'av': '序合计',
+        'aw': '重量',
+        'ax': '工件尺寸',
+        'm': '单价元',
+        'n': '合计金额',
+        'o': '铣工时',
+        'p': '铣单价',
+        'q': '车工时',
+        'r': '车单价',
+        's': '钳工时',
+        't': '钳单价',
+        'u': '整件外委工时',
+        'v': '整件外委单位',
+        'w': '外委工时',
+        'x': '外委单价',
+        'y': '镗工时',
+        'z': '镗单价',
+        'aa': '割工时',
+        'ab': '割单价',
+        'ac': '磨工时',
+        'ad': '磨单价',
+        'ae': '数控铣工时',
+        'af': '数控铣单价',
+        'ag': '立车',
+        'ah': '立车单价',
+        'ai': '电火花',
+        'aj': '电火花单价',
+        'ak': '中走丝',
+        'al': '中走丝单价',
+        'am': '下料',
+        'an': '深孔钻',
+        'ao': '回厂日期',
+        'ap': '出厂日期',
+        'ay': '订单要求交货时间',
+        'aq': '铣',
+        'ar': '车',
+        'aas': '登记员',
+        'at': '备注'
+    };
+
+    return descriptions[field] || '未知字段';
+}
+
+// 开始直接导入
+function startDirectImport() {
+    // 转换数据格式
+    var dataToImport = convertDataForImport();
+
+    if (dataToImport.length === 0) {
+        swal('没有可导入的数据');
+        return;
+    }
+
+    // 显示导入进度
+    showImportProgressBar(dataToImport.length);
+
+    // 开始导入数据
+    startDataImport(dataToImport);
+}
+
+// 显示导入进度条
+function showImportProgressBar(totalRows) {
+    var progressHtml = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                <span class="sr-only">导入中...</span>
+            </div>
+            <h5>正在导入数据...</h5>
+            <p class="text-muted" id="import-progress-text">准备导入 ${totalRows} 条记录...</p>
+            <div class="progress mb-3" style="height: 20px;">
+                <div id="import-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                     role="progressbar" style="width: 0%"></div>
+            </div>
+            <div id="import-details" class="text-left"></div>
+        </div>
+    `;
+
+    $('#import-step-3').html(progressHtml);
+}
+
+// 显示字段映射配置
+function showFieldMapping(rowCount) {
+    $('#import-step-1').hide();
+    $('#import-step-2').show();
+
+    var tbody = $('#mapping-tbody');
+    tbody.empty();
+
+    // 为每一列生成映射行
+    for (var col = 0; col < importData.columnHeaders.length; col++) {
+        var colLetter = getColumnLetter(col);
+        var header = importData.columnHeaders[col];
+        var sampleData = importData.columnData[col].slice(0, 3).join(', ');
+        if (importData.columnData[col].length > 3) {
+            sampleData += '...';
+        }
+
+        var fieldOptions = '<option value="">-- 请选择 --</option>';
+        databaseFields.forEach(function(field) {
+            fieldOptions += `<option value="${field.field}">${field.name} (${field.field})</option>`;
+        });
+
+        var row = `<tr>
+            <td>${col + 1}</td>
+            <td><strong>${colLetter}</strong></td>
+            <td>${header}</td>
+            <td>
+                <select class="form-control form-control-sm field-mapping" data-col="${col}">
+                    ${fieldOptions}
+                </select>
+            </td>
+            <td>
+                <small class="text-muted">${sampleData || '无数据'}</small>
+            </td>
+        </tr>`;
+
+        tbody.append(row);
+    }
+
+    // 添加信息提示
+    tbody.prepend(`<tr class="table-info">
+        <td colspan="5" class="text-center">
+            <i class="bi bi-info-circle me-2"></i>
+            共发现 ${rowCount} 行数据，${importData.columnHeaders.length} 列
+        </td>
+    </tr>`);
+}
+
+// 获取列字母（A, B, C, ..., Z, AA, AB, ...）
+function getColumnLetter(columnIndex) {
+    var letter = '';
+    while (columnIndex >= 0) {
+        letter = String.fromCharCode(65 + (columnIndex % 26)) + letter;
+        columnIndex = Math.floor(columnIndex / 26) - 1;
+    }
+    return letter;
+}
+
+// 返回第一步
+$('#btn-back-step1').click(function() {
+    $('#import-step-2').hide();
+    $('#import-step-1').show();
+});
+
+// 开始导入
+$('#btn-start-import').click(function() {
+    // 收集映射配置
+    importData.mappingConfig = {};
+    $('.field-mapping').each(function() {
+        var col = $(this).data('col');
+        var field = $(this).val();
+        if (field) {
+            importData.mappingConfig[col] = field;
+        }
+    });
+
+    // 检查是否有映射
+    if (Object.keys(importData.mappingConfig).length === 0) {
+        swal('请至少配置一个字段映射');
+        return;
+    }
+
+    // 转换数据格式
+    var dataToImport = convertDataForImport();
+
+    if (dataToImport.length === 0) {
+        swal('没有可导入的数据');
+        return;
+    }
+
+    // 显示导入进度
+    showImportProgress(dataToImport.length);
+
+    // 根据模式选择导入方式
+    var importMode = $('#import-mode').val();
+    if (importMode === 'preview') {
+        previewImportData(dataToImport);
+    } else {
+        startDataImport(dataToImport);
+    }
+});
+
+// 转换数据格式（使用硬编码映射）
+function convertDataForImport() {
+    var result = [];
+
+    importData.excelData.forEach(function(rowData) {
+        var record = {};
+
+        // 根据硬编码映射配置转换数据
+        Object.keys(excelToDbMapping).forEach(function(col) {
+            var field = excelToDbMapping[col];
+            var value = rowData[col];
+
+            if (value !== undefined && value !== null && value !== '') {
+                // 特殊字段处理（日期等）
+                if (field === 'ao' || field === 'ap') {
+                    // 日期字段处理
+                    if (value instanceof Date) {
+                        record[field] = formatDateForServer(value);
+                    } else {
+                        record[field] = value.toString();
+                    }
+                } else {
+                    record[field] = value.toString();
+                }
+            }
+        });
+
+        // 只有有数据的记录才添加
+        if (Object.keys(record).length > 0) {
+            result.push(record);
+        }
+    });
+
+    return result;
+}
+
+// 显示导入进度
+function showImportProgress(totalRows) {
+    $('#import-step-2').hide();
+    $('#import-step-3').show();
+    $('#import-progress-text').text(`准备导入 ${totalRows} 条记录...`);
+}
+
+// 预览导入数据
+function previewImportData(data) {
+    // 在控制台预览数据
+    console.log('=== 导入数据预览 ===');
+    console.log('总记录数:', data.length);
+    console.log('前5条记录:', data.slice(0, 5));
+    console.log('字段映射:', importData.mappingConfig);
+
+    // 显示预览信息
+    var detailsHtml = `
+        <div class="alert alert-info">
+            <h6><i class="bi bi-eye me-2"></i>数据预览</h6>
+            <p>总记录数: <strong>${data.length}</strong></p>
+            <p>映射字段数: <strong>${Object.keys(importData.mappingConfig).length}</strong></p>
+            <div class="mt-2">
+                <button class="btn btn-sm btn-outline-info" onclick="showSampleData()">
+                    <i class="bi bi-table me-1"></i>查看示例数据
+                </button>
+            </div>
+        </div>
+    `;
+
+    $('#import-details').html(detailsHtml);
+
+    // 继续导入
+    startDataImport(data);
+}
+
+// 开始导入数据
+function startDataImport(data) {
+    var total = data.length;
+    var batchSize = 50; // 每批导入50条
+    var successCount = 0;
+    var errorCount = 0;
+    var errorDetails = [];
+
+    // 分批导入函数
+    function importBatch(startIndex) {
+        var endIndex = Math.min(startIndex + batchSize, total);
+        var batchData = data.slice(startIndex, endIndex);
+
+        // 更新进度
+        var progress = Math.round((startIndex / total) * 100);
+        $('#import-progress-bar').css('width', progress + '%');
+        $('#import-progress-text').text(`正在导入 ${startIndex + 1}-${endIndex} / ${total} 条记录...`);
+
+        // 发送导入请求
+        $ajax({
+            type: 'post',
+            url: '/htjl/importExcel',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                records: batchData,
+                total: total,
+                batch: Math.floor(startIndex / batchSize) + 1,
+                totalBatches: Math.ceil(total / batchSize)
+            }),
+            dataType: 'json'
+        }, false, '', function(res) {
+            if (res.code == 200) {
+                successCount += res.data.successCount || batchData.length;
+                if (res.data.errors && res.data.errors.length > 0) {
+                    errorCount += res.data.errors.length;
+                    errorDetails = errorDetails.concat(res.data.errors);
+                }
+            } else {
+                errorCount += batchData.length;
+                batchData.forEach(function(record, index) {
+                    errorDetails.push(`第${startIndex + index + 1}行: ${res.msg}`);
+                });
+            }
+
+            // 继续下一批或完成
+            if (endIndex < total) {
+                setTimeout(function() {
+                    importBatch(endIndex);
+                }, 500); // 延迟500ms，避免服务器压力过大
+            } else {
+                completeImport(successCount, errorCount, errorDetails);
+            }
+        }, function(xhr, status, error) {
+            // 请求失败，记录所有错误
+            errorCount += batchData.length;
+            batchData.forEach(function(record, index) {
+                errorDetails.push(`第${startIndex + index + 1}行: 网络错误 - ${error}`);
+            });
+
+            // 继续下一批或完成
+            if (endIndex < total) {
+                setTimeout(function() {
+                    importBatch(endIndex);
+                }, 1000);
+            } else {
+                completeImport(successCount, errorCount, errorDetails);
+            }
+        });
+    }
+
+    // 开始第一批导入
+    importBatch(0);
+}
+
+// 完成导入
+function completeImport(successCount, errorCount, errorDetails) {
+    $('#import-step-3').hide();
+    $('#import-step-4').show();
+    $('#import-progress-bar').css('width', '100%');
+
+    if (errorCount === 0) {
+        // 完全成功
+        $('#import-success-icon').show();
+        $('#import-result-title').text('导入成功！');
+        $('#import-result-message').html(`
+            <p>成功导入 <strong class="text-success">${successCount}</strong> 条记录</p>
+            <p class="text-muted">数据已保存到数据库</p>
+        `);
+    } else if (successCount > 0) {
+        // 部分成功
+        $('#import-success-icon').show();
+        $('#import-result-title').text('导入完成！');
+        $('#import-result-message').html(`
+            <p>导入结果：</p>
+            <p>✓ 成功：<strong class="text-success">${successCount}</strong> 条</p>
+            <p>✗ 失败：<strong class="text-danger">${errorCount}</strong> 条</p>
+        `);
+
+        if (errorDetails.length > 0) {
+            var errorHtml = '<div class="mt-3"><h6>失败详情：</h6><ul class="list-unstyled">';
+            errorDetails.slice(0, 10).forEach(function(error) {
+                errorHtml += `<li class="text-danger"><small>${error}</small></li>`;
+            });
+            if (errorDetails.length > 10) {
+                errorHtml += `<li><small>... 还有 ${errorDetails.length - 10} 个错误</small></li>`;
+            }
+            errorHtml += '</ul></div>';
+            $('#import-result-details').html(errorHtml).addClass('alert-warning').show();
+        }
+    } else {
+        // 完全失败
+        $('#import-error-icon').show();
+        $('#import-result-title').text('导入失败！');
+        $('#import-result-message').html(`
+            <p>所有记录导入失败</p>
+            <p class="text-muted">请检查Excel文件格式和数据</p>
+        `);
+
+        if (errorDetails.length > 0) {
+            var errorHtml = '<div class="mt-3"><h6>错误详情：</h6><ul class="list-unstyled">';
+            errorDetails.slice(0, 5).forEach(function(error) {
+                errorHtml += `<li class="text-danger"><small>${error}</small></li>`;
+            });
+            errorHtml += '</ul></div>';
+            $('#import-result-details').html(errorHtml).addClass('alert-danger').show();
+        }
+    }
+}
+
+// 查看数据按钮
+$('#btn-view-data').click(function() {
+    $('#importModal').modal('hide');
+    getList(currentPage); // 刷新数据
+});
+
+// 关闭导入按钮
+$('#btn-close-import').click(function() {
+    $('#importModal').modal('hide');
+    getList(currentPage); // 刷新数据
+});
+
+// 简化导入模态框重置函数
+function resetImportModal() {
+    $('#import-step-1').show();
+    $('#import-step-3').hide();
+    $('#import-step-4').hide();
+    $('#excelFile').val('');
+    $('#fileLabel').text('选择文件');
+    $('#btn-analyze-file').prop('disabled', true);
+
+    importData = {
+        excelData: null,
+        columnHeaders: [],
+        columnData: []
+    };
+}
+
+// 日期格式化（用于服务器）
+function formatDateForServer(date) {
+    if (!(date instanceof Date)) {
+        return date;
+    }
+
+    var year = date.getFullYear();
+    var month = ('0' + (date.getMonth() + 1)).slice(-2);
+    var day = ('0' + date.getDate()).slice(-2);
+
+    return year + '-' + month + '-' + day;
+}
+
+// 显示示例数据（调试用）
+function showSampleData() {
+    if (importData.excelData && importData.excelData.length > 0) {
+        var sample = importData.excelData[0];
+        var html = '<table class="table table-sm table-bordered"><thead><tr><th>Excel列</th><th>值</th><th>映射字段</th></tr></thead><tbody>';
+
+        Object.keys(sample).forEach(function(col) {
+            var field = importData.mappingConfig[col] || '未映射';
+            var letter = getColumnLetter(parseInt(col));
+            html += `<tr>
+                <td>${letter}</td>
+                <td>${sample[col]}</td>
+                <td>${field}</td>
+            </tr>`;
+        });
+
+        html += '</tbody></table>';
+
+        swal({
+            title: '示例数据',
+            html: html,
+            width: '800px'
+        });
+    }
+}
+
+var excelToDbMapping = {
+    // 0: 'c',    // A列 → 业务单位
+    0: 'd',    // B列 → 合同号
+    1: 'e',    // C列 → 任务号
+    // 3: 'zhuangtai', // D列 → 工艺规程状态
+    3: 'g',    // E列 → 工序
+    4: 'h',    // F列 → 名称
+    5: 'i',    // G列 → 图号
+    6: 'j',    // H列 → 单位
+    7: 'k',    // I列 → 数量
+    8: 'l',    // J列 → 材质
+    9: 'av',  // K列 → 序合计
+    // 11: 'aw',  // L列 → 重量
+    // 12: 'ax',  // M列 → 工件尺寸
+    10: 'm',   // N列 → 单价元
+    11: 'n',   // O列 → 合计金额
+    12: 'o',   // P列 → 铣工时
+    13: 'p',   // Q列 → 铣单价
+    15: 'q',   // R列 → 车工时
+    16: 'r',   // S列 → 车单价
+    18: 's',   // T列 → 钳工时
+    19: 't',   // U列 → 钳单价
+    21: 'u',   // V列 → 整件外委工时
+    22: 'v',   // W列 → 整件外委单位
+    23: 'w',   // X列 → 外委工时
+    24: 'x',   // Y列 → 外委单价
+    25: 'y',   // Z列 → 镗工时
+    26: 'z',   // AA列 → 镗单价
+    28: 'aa',  // AB列 → 割工时
+    29: 'ab',  // AC列 → 割单价
+    31: 'ac',  // AD列 → 磨工时
+    32: 'ad',  // AE列 → 磨单价
+    34: 'ae',  // AF列 → 数控铣工时
+    35: 'af',  // AG列 → 数控铣单价
+    37: 'ag',  // AH列 → 立车
+    38: 'ah',  // AI列 → 立车单价
+    40: 'ai',  // AJ列 → 电火花
+    41: 'aj',  // AK列 → 电火花单价
+    43: 'ak',  // AL列 → 中走丝
+    44: 'al',  // AM列 → 中走丝单价
+    47: 'am',  // AN列 → 下料
+    48: 'an',  // AO列 → 深孔钻
+    50: 'ao',  // AP列 → 回厂日期
+    51: 'ap',  // AQ列 → 出厂日期
+    // 43: 'ay',  // AR列 → 订单要求交货时间
+    52: 'aq',  // AS列 → 铣
+    53: 'ar',  // AT列 → 车
+    54: 'aas', // AU列 → 登记员
+    55: 'at'   // AV列 → 备注
+};
+
+// 文件选择变化 - 确保这个事件绑定正确
+$('#excelFile').on('change', function(e) {
+    var fileName = e.target.files[0] ? e.target.files[0].name : '选择文件';
+    $('#fileLabel').text(fileName);
+    $('#btn-analyze-file').prop('disabled', !e.target.files[0]);
+    console.log('文件已选择:', fileName);
+});
+
+// 分析Excel文件按钮
+$('#btn-analyze-file').on('click', function() {
+    var fileInput = document.getElementById('excelFile');
+
+    if (!fileInput.files || !fileInput.files[0]) {
+        swal('请选择Excel文件');
+        return;
+    }
+
+    var file = fileInput.files[0];
+    console.log('开始分析文件:', file.name);
+
+    // 显示加载状态
+    var $btn = $(this);
+    var originalText = $btn.html();
+    $btn.prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>分析中...');
+
+    var reader = new FileReader();
+
+    reader.onload = function(e) {
+        try {
+            var data = new Uint8Array(e.target.result);
+            var workbook = XLSX.read(data, { type: 'array' });
+
+            if (workbook.SheetNames.length === 0) {
+                swal('Excel文件中没有工作表');
+                $btn.prop('disabled', false).html(originalText);
+                return;
+            }
+
+            // 读取第一个工作表
+            var worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+            if (jsonData.length <= 1) {
+                swal('Excel文件中没有有效数据');
+                $btn.prop('disabled', false).html(originalText);
+                return;
+            }
+
+            // 获取表头和数据
+            var headers = jsonData[0];
+            var dataRows = jsonData.slice(1);
+
+            // 存储导入数据
+            importData = {
+                excelData: dataRows,
+                headers: headers,
+                rowCount: dataRows.length,
+                columnCount: headers.length
+            };
+
+            // 显示预览
+            showImportPreview(dataRows.length);
+            $btn.prop('disabled', false).html(originalText);
+
+        } catch (error) {
+            console.error('Excel解析错误:', error);
+            swal('Excel文件解析失败: ' + error.message);
+            $btn.prop('disabled', false).html(originalText);
+        }
+    };
+
+    reader.onerror = function(error) {
+        console.error('文件读取错误:', error);
+        swal('文件读取失败: ' + error);
+        $btn.prop('disabled', false).html(originalText);
+    };
+
+    reader.readAsArrayBuffer(file);
+});
+
+function convertExcelData(jsonData) {
+    var result = [];
+
+    // 跳过表头（第一行）
+    for (var i = 1; i < jsonData.length; i++) {
+        var row = jsonData[i];
+        if (!row || row.length === 0) continue;
+
+        var record = {};
+
+        // 根据预定义的映射转换数据
+        for (var col = 0; col < row.length; col++) {
+            if (col > 55) break; // 限制到BD列
+
+            var field = excelToDbMapping[col];
+            var value = row[col];
+
+            if (field && value !== undefined && value !== null && value !== '') {
+                // 简单处理：转换为字符串
+                record[field] = String(value).trim();
+            }
+        }
+
+        // 只有有数据的记录才添加
+        if (Object.keys(record).length > 0) {
+            result.push(record);
+        }
+    }
+
+    return result;
+}
+
+// 发送数据到服务器
+function sendImportData(data, fileName) {
+    var totalRows = data.length;
+
+    $ajax({
+        type: 'post',
+        url: '/htjl/importExcel',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            records: data,
+            fileName: fileName,
+            totalRows: totalRows
+        }),
+        dataType: 'json'
+    }, false, '', function(res) {
+        if (res.code == 200) {
+            var successCount = res.data.successCount || totalRows;
+            var errorCount = res.data.errorCount || 0;
+
+            if (errorCount === 0) {
+                showImportResult(true, `成功导入 ${successCount} 条数据`);
+            } else {
+                showImportResult(true, `导入完成：成功 ${successCount} 条，失败 ${errorCount} 条`);
+            }
+
+            // 如果有错误信息，显示详细错误
+            if (res.data.errors && res.data.errors.length > 0) {
+                console.log('导入错误详情:', res.data.errors);
+            }
+        } else {
+            showImportResult(false, '导入失败: ' + (res.msg || '服务器错误'));
+        }
+    }, function(xhr, status, error) {
+        console.error('导入请求失败:', error);
+        showImportResult(false, '网络错误: ' + error);
+    });
+}
+
+// 显示导入结果
+function showImportResult(isSuccess, message) {
+    var icon = isSuccess ?
+        '<i class="bi bi-check-circle-fill text-success" style="font-size: 48px;"></i>' :
+        '<i class="bi bi-x-circle-fill text-danger" style="font-size: 48px;"></i>';
+
+    var title = isSuccess ? '导入成功' : '导入失败';
+
+    var resultHtml = `
+        <div class="text-center py-4">
+            ${icon}
+            <h4 class="mt-3">${title}</h4>
+            <p>${message}</p>
+            <div class="mt-4">
+                <button type="button" class="btn btn-primary" id="refreshDataBtn" data-dismiss="modal">
+                    <i class="bi bi-arrow-clockwise me-2"></i>
+                    刷新数据
+                </button>
+                <button type="button" class="btn btn-secondary" id="closeImportBtn" data-dismiss="modal">
+                    <i class="bi bi-x me-2"></i>
+                    关闭
+                </button>
+            </div>
+        </div>
+    `;
+
+    $('.modal-body').html(resultHtml);
+
+    // 绑定刷新按钮事件
+    $('#refreshDataBtn').click(function() {
+        getList();
+    });
+}
+
+// 简化版打印函数
+function printReturnOrder() {
+    console.log('开始打印退货单...');
+
+    // 创建一个打印样式
+    var printStyle = `
+        <style>
+            @media print {
+                body * {
+                    visibility: hidden;
+                }
+                #return-print-section, #return-print-section * {
+                    visibility: visible;
+                }
+                #return-print-section {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    padding: 20px;
+                }
+                .no-print {
+                    display: none !important;
+                }
+                /* 表格样式 */
+                .print-table {
+                    border-collapse: collapse;
+                    width: 100%;
+                    margin-top: 20px;
+                }
+                .print-table th, .print-table td {
+                    border: 1px solid #000;
+                    padding: 8px;
+                    text-align: center;
+                    font-size: 12px;
+                }
+                .print-table th {
+                    background-color: #f2f2f2;
+                    font-weight: bold;
+                }
+                .print-info {
+                    margin-bottom: 15px;
+                    line-height: 2;
+                }
+                .print-title {
+                    text-align: center;
+                    font-size: 20px;
+                    font-weight: bold;
+                    margin-bottom: 20px;
+                }
+            }
+        </style>
+    `;
+
+    // 添加打印样式到页面
+    $('head').append(printStyle);
+
+    // 构建打印内容
+    var printContent = buildReturnOrderPrintContent();
+
+    // 创建打印区域
+    var printSection = $('<div id="return-print-section"></div>').html(printContent);
+    $('body').append(printSection);
+
+    // 执行打印
+    window.print();
+
+    // 清理打印区域
+    setTimeout(function() {
+        $('#return-print-section').remove();
+        $('head style:last-child').remove();
+    }, 100);
+}
+
+function buildReturnOrderPrintContent() {
+    // 构建表格行
+    var tableRows = '';
+    var rowNumber = 1;
+
+    $('#return-detail-table tbody tr').each(function() {
+        var $row = $(this);
+        var contractNo = $row.find('input[name="contractNo"]').val();
+
+        // 只显示有数据的行
+        if (contractNo && contractNo.trim() !== '') {
+            tableRows += `
+                <tr>
+                    <td>${rowNumber++}</td>
+                    <td>${contractNo}</td>
+                    <td>${$row.find('input[name="taskNo"]').val() || ''}</td>
+                    <td>${$row.find('input[name="productName"]').val() || ''}</td>
+                    <td>${$row.find('input[name="drawingNo"]').val() || ''}</td>
+                    <td>${$row.find('input[name="unit"]').val() || ''}</td>
+                    <td>${$row.find('input[name="quantity"]').val() || ''}</td>
+                    <td>${$row.find('input[name="unitPrice"]').val() || ''}</td>
+                    <td>${$row.find('input[name="amount"]').val() || ''}</td>
+                    <td>${$row.find('input[name="material"]').val() || ''}</td>
+                    <td>${$row.find('input[name="weight"]').val() || ''}</td>
+                    <td>${$row.find('input[name="returnDate"]').val() || ''}</td>
+                    <td>${$row.find('input[name="returnReason"]').val() || ''}</td>
+                    <td>${$row.find('input[name="remark"]').val() || ''}</td>
+                </tr>
+            `;
+        }
+    });
+
+    // 如果没有数据
+    if (tableRows === '') {
+        tableRows = '<tr><td colspan="14" style="text-align: center;">暂无退货明细</td></tr>';
+    }
+
+    return `
+        <div class="print-container">
+            <div class="print-title">退货单</div>
+            
+            <div class="print-info">
+                <div><strong>退货客户：</strong>${$('#return-customer').val() || ''}</div>
+                <div><strong>退货电话：</strong>${$('#return-phone').val() || ''}</div>
+                <div><strong>退货单号：</strong>${$('#return-no').val() || ''}</div>
+                <div><strong>退货日期：</strong>${$('#return-date').val() || ''}</div>
+            </div>
+            
+            <table class="print-table">
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>合同号</th>
+                        <th>任务号</th>
+                        <th>产品名称</th>
+                        <th>图号</th>
+                        <th>单位</th>
+                        <th>数量</th>
+                        <th>单价</th>
+                        <th>金额</th>
+                        <th>材质</th>
+                        <th>重量</th>
+                        <th>回厂日期</th>
+                        <th>退货原因</th>
+                        <th>备注</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+            
+            <div class="print-info" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #000;">
+                <div><strong>合计金额(大写)：</strong>${$('#total-amount-chinese').text()}</div>
+                <div><strong>合计金额：</strong>${$('#total-amount').text()}</div>
+            </div>
+            
+            <div class="print-info" style="margin-top: 30px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <div><strong>地址：</strong>${$('#company-address').val() || ''}</div>
+                    <div><strong>电话：</strong>${$('#company-phone').val() || ''}</div>
+                    <div><strong>客户签字：</strong>${$('#customer-signature').val() || ''}</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+
+function loadCustomerList() {
+    console.log('开始加载客户列表...');
+
+    $ajax({
+        type: 'post',
+        url: '/htjl/getCustomerList',
+        contentType: 'application/json',
+        dataType: 'json'
+    }, false, '', function(res) {
+        if (res.code === 200) {
+            console.log('获取客户列表成功:', res.data);
+
+            var $select = $('#return-customer');
+            $select.empty(); // 清空现有选项
+
+            // 添加默认选项
+            $select.append('<option value="">请选择退货客户</option>');
+
+            // 检查数据结构
+            if (res.data && Array.isArray(res.data)) {
+                // 遍历客户数据 - 现在客户名称在 c 字段中
+                res.data.forEach(function(customer) {
+                    // 从c字段获取客户名称
+                    var customerName = customer.c || '';
+
+                    if (customerName && customerName.trim() !== '') {
+                        // 只使用客户名称，不存储电话和ID
+                        $select.append(
+                            '<option value="' + customerName + '">' +
+                            customerName +
+                            '</option>'
+                        );
+                    }
+                });
+
+                console.log('已加载 ' + res.data.length + ' 个客户');
+            } else {
+                console.warn('客户数据格式异常:', res.data);
+                $select.append('<option value="">暂无客户数据</option>');
+            }
+        } else {
+            console.error('获取客户列表失败:', res.msg);
+            $('#return-customer').html('<option value="">加载失败</option>');
+        }
+    });
+}
+
+
+// 表格鼠标拖动滚动功能
+// 表格鼠标拖动滚动功能 - 修复版
+function initTableDragScroll() {
+    console.log('初始化表格拖动滚动...');
+
+    // 查找表格容器
+    const tableContainer = document.querySelector('.fixed-table-body') ||
+        document.querySelector('.table-responsive') ||
+        document.querySelector('.bootstrap-table .fixed-table-container');
+
+    if (!tableContainer) {
+        console.warn('找不到表格容器');
+        return;
+    }
+
+    console.log('找到表格容器:', tableContainer);
+
+    let isDragging = false;
+    let startX;
+    let startY;
+    let scrollLeft;
+    let scrollTop;
+
+    // 鼠标按下事件 - 开始拖动
+    tableContainer.addEventListener('mousedown', function(e) {
+        // 只有在表格有水平滚动条时才启用拖动
+        if (tableContainer.scrollWidth <= tableContainer.clientWidth) {
+            return;
+        }
+
+        isDragging = true;
+        startX = e.pageX;
+        startY = e.pageY;
+        scrollLeft = tableContainer.scrollLeft;
+        scrollTop = tableContainer.scrollTop;
+
+        // 添加拖动样式
+        tableContainer.style.cursor = 'grabbing';
+        tableContainer.style.userSelect = 'none';
+
+        // 防止文本选择
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'grabbing';
+
+        e.preventDefault();
+        e.stopPropagation();
+    });
+
+    // 鼠标移动事件 - 拖动滚动
+    tableContainer.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+
+        e.preventDefault();
+
+        const x = e.pageX;
+        const y = e.pageY;
+        const walkX = (x - startX) * 2; // 乘以2增加拖动速度
+        const walkY = (y - startY) * 2;
+
+        tableContainer.scrollLeft = scrollLeft - walkX;
+        tableContainer.scrollTop = scrollTop - walkY;
+    });
+
+    // 鼠标释放事件 - 停止拖动
+    tableContainer.addEventListener('mouseup', function() {
+        if (isDragging) {
+            isDragging = false;
+            tableContainer.style.cursor = 'grab';
+            tableContainer.style.userSelect = 'auto';
+            document.body.style.userSelect = 'auto';
+            document.body.style.cursor = 'default';
+        }
+    });
+
+    // 鼠标离开容器时释放拖动
+    tableContainer.addEventListener('mouseleave', function() {
+        if (isDragging) {
+            isDragging = false;
+            tableContainer.style.cursor = 'grab';
+            tableContainer.style.userSelect = 'auto';
+            document.body.style.userSelect = 'auto';
+            document.body.style.cursor = 'default';
+        }
+    });
+
+    // 设置初始光标样式
+    tableContainer.style.cursor = 'grab';
+
+    // 阻止默认的拖拽行为
+    tableContainer.addEventListener('dragstart', function(e) {
+        e.preventDefault();
+        return false;
+    });
+
+    console.log('表格拖动滚动初始化完成');
+}
+
+
 
 

@@ -10,4 +10,5 @@ public class PageRequest {
     @JsonProperty("C")
     private String C;
     private String zhuangtai;
+    private String hetongzhuangtai;
 }

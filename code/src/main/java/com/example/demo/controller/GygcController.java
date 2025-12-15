@@ -109,6 +109,7 @@ public class GygcController {
             // 调用批量新增服务
             boolean success = gygcService.addBatch(gygcList);
             if (success) {
+                updateHetongZhuangtaiBasedOnGongyiGuicheng();
                 return ResultInfo.success("批量添加成功，共添加 " + gygcList.size() + " 条记录", gygcList);
             } else {
                 return ResultInfo.error("批量添加失败");

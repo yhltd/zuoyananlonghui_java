@@ -249,6 +249,16 @@
                 -webkit-print-color-adjust: exact;
                 color-adjust: exact;
             }
+
+            .print-qrcode-container {
+                display: block !important;
+                page-break-inside: avoid;
+            }
+
+            .controls, button, .page-indicator {
+                display: none !important;
+            }
+
             th {
                 background-color: #f0f0f0 !important;
             }
@@ -341,6 +351,21 @@
         .modal-body ul li {
             margin-bottom: 0.3rem;
         }
+
+        /* 在现有样式后面添加 */
+        .print-qrcode-container {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px solid #000;
+        }
+
+        .print-qrcode-container img {
+            max-width: 120px;
+            height: auto;
+        }
+
     </style>
 </head>
 <body style="overflow: auto">
@@ -503,7 +528,10 @@
         </div>
     </div>
 </div>
-
+<!-- 在签名部分后面添加 -->
+<div id="qrcodePrintContainer" class="print-qrcode-container">
+    <!-- 二维码将在这里动态生成 -->
+</div>
 <script>
     $(document).ready(function() {
         // 点击页面指示器显示使用说明弹窗

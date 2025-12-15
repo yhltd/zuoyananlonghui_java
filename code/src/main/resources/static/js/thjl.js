@@ -68,7 +68,11 @@ function getList(page) {
 
             // 更新分页信息显示
             updatePagination();
-
+            // ============= 新增：重新初始化拖动 =============
+            setTimeout(function() {
+                initTableDragScroll();
+            }, 500);
+            // ================================================
             // 添加列可调整功能
             if ($("#userTable").data('colResizable')) {
                 $("#userTable").colResizable({
@@ -474,6 +478,13 @@ $(function () {
             })
         }
     });
+
+    // ============= 新增：页面加载后初始化拖动 =============
+    // 延迟初始化，等待表格完全加载
+    setTimeout(function() {
+        initTableDragScroll();
+    }, 1000);
+    // ==================================================
 });
 
 function setTableSimple(data) {
@@ -558,7 +569,7 @@ function setTableSimple(data) {
     $table.html(thead + tbody);
 
     // 为表格整体添加容器样式（可选）
-    $table.wrap('<div style="border: 1px solid #ddd; border-radius: 4px; overflow: hidden; margin: 10px 0;"></div>');
+    // $table.wrap('<div style="border: 1px solid #ddd; border-radius: 4px; overflow: hidden; margin: 10px 0;"></div>');
 
     // 绑定单选按钮点击事件
     $table.find('.row-radio').click(function(e) {
@@ -599,6 +610,17 @@ function setTableSimple(data) {
         'table { border-collapse: collapse; }' +
         'td { border: 1px solid #ddd; padding: 8px; text-align: center; }' +
         '</style>');
+
+    // ============= 新增：初始化表格拖动滚动 =============
+    setTimeout(function() {
+        console.log('初始化表格拖动...');
+
+        // 方法1：使用简单版本
+        initTableDragScroll();
+
+
+    }, 200);
+    // ================================================
 
     console.log('简单表格更新完成');
 }
@@ -764,18 +786,8 @@ function updatePagination() {
             </div>
         </div>`;
 
-    // 确保表格容器存在
-    if ($('.fixed-table-container').length > 0) {
-        // 将分页控件添加到 bootstrap-table 分页位置
-        $('.fixed-table-container').after(paginationHtml);
-    } else if ($('#userTable').parent().hasClass('bootstrap-table')) {
-        // 或者添加到表格父元素后面
-        $('#userTable').closest('.bootstrap-table').after(paginationHtml);
-    } else {
-        // 最后添加到表格后面
-        $('#userTable').after(paginationHtml);
-    }
-
+    // 将分页控件添加到表格后面
+    $('#userTable1').after(paginationHtml);
     // 绑定分页事件
     bindPaginationEvents();
 }
@@ -872,4 +884,99 @@ function bindPaginationEvents() {
 function clearSelection() {
     $('#userTable').find('.row-radio').prop('checked', false);
     $('#userTable').find('tr').removeClass('selected');
+}
+
+function initTableDragScroll() {
+    console.log('初始化表格拖动滚动...');
+
+    // 查找表格容器
+    const tableContainer = document.querySelector('.fixed-table-body') ||
+        document.querySelector('.table-responsive') ||
+        document.querySelector('.bootstrap-table .fixed-table-container');
+
+    if (!tableContainer) {
+        console.warn('找不到表格容器');
+        return;
+    }
+
+    console.log('找到表格容器:', tableContainer);
+
+    let isDragging = false;
+    let startX;
+    let startY;
+    let scrollLeft;
+    let scrollTop;
+
+    // 鼠标按下事件 - 开始拖动
+    tableContainer.addEventListener('mousedown', function(e) {
+        // 只有在表格有水平滚动条时才启用拖动
+        if (tableContainer.scrollWidth <= tableContainer.clientWidth) {
+            return;
+        }
+
+        isDragging = true;
+        startX = e.pageX;
+        startY = e.pageY;
+        scrollLeft = tableContainer.scrollLeft;
+        scrollTop = tableContainer.scrollTop;
+
+        // 添加拖动样式
+        tableContainer.style.cursor = 'grabbing';
+        tableContainer.style.userSelect = 'none';
+
+        // 防止文本选择
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'grabbing';
+
+        e.preventDefault();
+        e.stopPropagation();
+    });
+
+    // 鼠标移动事件 - 拖动滚动
+    tableContainer.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+
+        e.preventDefault();
+
+        const x = e.pageX;
+        const y = e.pageY;
+        const walkX = (x - startX) * 2; // 乘以2增加拖动速度
+        const walkY = (y - startY) * 2;
+
+        tableContainer.scrollLeft = scrollLeft - walkX;
+        tableContainer.scrollTop = scrollTop - walkY;
+    });
+
+    // 鼠标释放事件 - 停止拖动
+    tableContainer.addEventListener('mouseup', function() {
+        if (isDragging) {
+            isDragging = false;
+            tableContainer.style.cursor = 'grab';
+            tableContainer.style.userSelect = 'auto';
+            document.body.style.userSelect = 'auto';
+            document.body.style.cursor = 'default';
+        }
+    });
+
+    // 鼠标离开容器时释放拖动
+    tableContainer.addEventListener('mouseleave', function() {
+        if (isDragging) {
+            isDragging = false;
+            tableContainer.style.cursor = 'grab';
+            tableContainer.style.userSelect = 'auto';
+            document.body.style.userSelect = 'auto';
+            document.body.style.cursor = 'default';
+        }
+    });
+
+    // 设置初始光标样式
+    tableContainer.style.cursor = 'grab';
+
+    // 阻止默认的拖拽行为
+    tableContainer.addEventListener('dragstart', function(e) {
+        e.preventDefault();
+        return false;
+    });
+
+    console.log('表格拖动滚动初始化完成');
 }

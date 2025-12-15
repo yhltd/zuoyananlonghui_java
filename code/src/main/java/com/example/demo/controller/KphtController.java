@@ -28,21 +28,7 @@ public class KphtController {
      *
      * @return ResultInfo
      */
-//    @RequestMapping("/getList")
-//    public ResultInfo getList(HttpSession session) {
-////        Kpht kpht = GsonUtil.toEntity(SessionUtil.getToken(session), Kpht.class);
-//        try {
-//            // 执行查询
-//            PageResult<Xdmx> result = xdmxService.getScgdPage(request);
-//            return Result.success(result);
-//            List<Kpht> getList = kphtService.getList();
-//            return ResultInfo.success("获取成功", getList);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            log.error("获取失败：{}", e.getMessage());
-//            return ResultInfo.error("错误!");
-//        }
-//    }
+
     @RequestMapping("/getList")
     public Result<Page<Map<String, Object>>> distinctPage(HttpSession session, @RequestBody PageRequest pageRequest) {
         // 创建分页对象
@@ -50,16 +36,14 @@ public class KphtController {
 
         // 构建查询条件
         QueryWrapper<Map<String, Object>> queryWrapper = new QueryWrapper<>();
-        System.out.println("=== 接收到的参数 ===");
-        System.out.println("pageNum: " + pageRequest.getPageNum());
-        System.out.println("pageSize: " + pageRequest.getPageSize());
-        System.out.println("C字段值: " + pageRequest.getC());
-        System.out.println("C是否为空: " + (pageRequest.getC() == null));
-        System.out.println("C是否空白: " + StringUtils.isBlank(pageRequest.getC()));
 
         // 添加查询条件
         if (StringUtils.isNotBlank(pageRequest.getC())) {
             queryWrapper.like("c", pageRequest.getC());
+        }
+
+        if (StringUtils.isNotBlank(pageRequest.getHetongzhuangtai())) {
+            queryWrapper.like("hetong_zhuangtai", pageRequest.getHetongzhuangtai());
         }
 
         // 执行查询 - 通过Service调用

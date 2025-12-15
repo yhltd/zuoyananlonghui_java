@@ -5,7 +5,7 @@
 $(document).ready(function() {
     // 从sessionStorage获取数据
     const processData = JSON.parse(sessionStorage.getItem('currentProcessData') || '{}');
-
+    window.currentHtid = processData.id || '';
     console.log('接收到的工艺规程数据:', processData);
 
     if (Object.keys(processData).length === 0) {
@@ -78,7 +78,7 @@ $(document).ready(function() {
     });
 
     document.getElementById('printBtn').addEventListener('click', function() {
-        window.print();
+        printWithQRCode();
     });
 
     document.getElementById('baocun').addEventListener('click', function() {
@@ -653,8 +653,12 @@ function populateTable(data) {
 }
 // 根据ID查询详细数据
 // 根据ID查询详细数据
+// 修改查询函数，更新htid
 function queryListById(id) {
     console.log('查询详细数据，ID:', id);
+
+    // 更新当前htid
+    window.currentHtid = id;
 
     // 显示加载中
     const $queryModal = $('#queryModal');
@@ -667,20 +671,15 @@ function queryListById(id) {
         closeOnClickOutside: false
     });
 
-    // 将id作为htid参数传递给后端
     $ajax({
         type: 'post',
         url: '/gygc/queryList',
-        data: {
-            htid: id  // 将双击行的id作为htid参数
-        }
+        data: { htid: id }
     }, false, '', function (res) {
         swal.close();
-        console.log('详细数据查询响应:', res);
 
         if (res.code == 200) {
             if (res.data && res.data.length > 0) {
-                // 将查询到的数据添加到表格中
                 replaceTableData(res.data);
                 swal("加载成功", "已成功加载 " + res.data.length + " 条工序数据", "success");
             } else {
@@ -689,10 +688,6 @@ function queryListById(id) {
         } else {
             swal("查询失败", res.msg || "查询详细数据失败", "error");
         }
-    }, function(xhr, status, error) {
-        swal.close();
-        console.error('详细数据查询请求失败:', error);
-        swal("请求失败", "查询详细数据失败: " + error, "error");
     });
 }
 
@@ -1069,3 +1064,70 @@ function loadDropdownData() {
         console.error('获取审批人员数据失败:', error);
     });
 }
+
+
+// 打印时显示二维码
+// 打印函数
+function printWithQRCode() {
+    // 直接从全局变量获取htid
+    const htid = window.currentHtid;
+
+    if (!htid) {
+        swal("提示", "请先选择或查询数据", "warning");
+        return;
+    }
+
+    swal({
+        title: "准备打印",
+        text: "正在生成二维码...",
+        icon: "info",
+        buttons: false,
+        closeOnClickOutside: false
+    });
+
+    $ajax({
+        type: 'post',
+        url: '/bgd/generateContractQR',
+        data: { contractId: htid }
+    }, false, '', function(res) {
+        swal.close();
+
+        if (res.code == 200 && res.data?.qrCodeImage) {
+            // 显示二维码
+            const qrHtml = `
+                <div style="text-align:center;margin:20px 0;border:2px solid #000;padding:15px;background:#f9f9f9;">
+                    <h4 style="margin-bottom:10px;">合同二维码</h4>
+                    <img src="data:image/png;base64,${res.data.qrCodeImage}" 
+                         style="width:120px;height:120px;">
+                    <p style="margin-top:10px;">
+                        <strong>合同ID:</strong> ${htid}<br>
+                        <small>扫描二维码查看详情</small>
+                    </p>
+                </div>
+            `;
+
+            // 插入到表格前面
+            $('#processTable').before(qrHtml);
+
+            // 隐藏按钮，准备打印
+            $('.controls, .page-indicator').hide();
+            $('[contenteditable="true"]').removeAttr('contenteditable');
+
+            // 打印
+            setTimeout(() => {
+                window.print();
+                // 恢复页面
+                setTimeout(() => {
+                    $('#processTable').prev().remove();
+                    $('.controls, .page-indicator').show();
+                    $('[contenteditable="true"]').attr('contenteditable', 'true');
+                }, 100);
+            }, 500);
+        } else {
+            // 直接打印
+            window.print();
+        }
+    });
+}
+
+

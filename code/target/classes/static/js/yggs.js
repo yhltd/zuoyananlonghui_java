@@ -1,25 +1,10 @@
-
 var idd;
 
-// 添加 queryList 函数定义
-function queryList() {
-    // // 初始查询逻辑，可以留空或者执行一些初始化操作
-    // console.log('页面初始化完成，执行 queryList');
-}
-function queryList1() {
-    // // 初始查询逻辑，可以留空或者执行一些初始化操作
-    // console.log('页面初始化完成，执行 queryList');
-}
-
-
 $(function () {
-    queryList();
 
-    // 初始查询或其它初始化逻辑
     console.log('页面初始化完成');
-
     // // 初始化员工下拉框
-    // initEmployeeSelect();
+    loadEmployeeList();
 
     // 设置默认日期（保持 yyyy-MM-dd 格式）
     var date = new Date();
@@ -83,7 +68,387 @@ $(function () {
             }
         })
     });
+
+    // ==================== 导出功能按钮事件绑定 ====================
+
+    // 详细数据导出按钮事件
+    $('#export-detail-btn').off('click').on('click', function() {
+        console.log('导出详细数据按钮被点击');
+        showExportModal('detail');
+    });
+
+    // 汇总数据导出按钮事件
+    $('#export-summary-btn').off('click').on('click', function() {
+        console.log('导出汇总数据按钮被点击');
+        showExportModal('summary');
+    });
+
+    // 确认导出按钮事件
+    $('#confirm-export-btn').off('click').on('click', function() {
+        console.log('确认导出按钮被点击');
+        var filename = $('#export-filename').val().trim();
+        var dateFormat = $('#export-date-format').val();
+        var exportType = $('#export-type').val();
+
+        if (!filename) {
+            swal('请输入文件名');
+            return;
+        }
+
+        // 添加日期后缀
+        if (dateFormat !== 'none') {
+            var dateSuffix = formatDate(new Date(), dateFormat);
+            filename += '_' + dateSuffix;
+        }
+
+        // 确保文件名以.xlsx结尾
+        if (!filename.toLowerCase().endsWith('.xlsx')) {
+            filename += '.xlsx';
+        }
+
+        $('#exportModal').modal('hide');
+
+        // 根据类型调用不同的导出函数
+        if (exportType === 'detail') {
+            exportDetailToExcel(filename);
+        } else if (exportType === 'summary') {
+            exportSummaryToExcel(filename);
+        }
+    });
 });
+
+// ==================== 导出功能函数 ====================
+
+// 显示导出设置模态框
+function showExportModal(type) {
+    var defaultFileName = '';
+    var modalTitle = '';
+
+    if (type === 'detail') {
+        defaultFileName = '员工工时详细_' + getCurrentDate();
+        modalTitle = '导出详细数据设置';
+    } else if (type === 'summary') {
+        defaultFileName = '员工工时汇总_' + getCurrentDate();
+        modalTitle = '导出汇总数据设置';
+    }
+
+    $('#exportModalTitle').text(modalTitle);
+    $('#export-filename').val(defaultFileName);
+    $('#export-type').val(type);
+    $('#exportModal').modal('show');
+}
+
+// 获取当前日期
+function getCurrentDate() {
+    var now = new Date();
+    var year = now.getFullYear();
+    var month = String(now.getMonth() + 1).padStart(2, '0');
+    var day = String(now.getDate()).padStart(2, '0');
+    return year + month + day;
+}
+
+// 日期格式化函数
+function formatDate(date, format) {
+    var d = new Date(date);
+    var year = d.getFullYear();
+    var month = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+
+    switch(format) {
+        case 'YYYYMMDD':
+            return year + month + day;
+        case 'YYYY-MM-DD':
+            return year + '-' + month + '-' + day;
+        case 'YYYY年MM月DD日':
+            return year + '年' + month + '月' + day + '日';
+        default:
+            return year + month + day;
+    }
+}
+
+// 导出详细数据到Excel
+function exportDetailToExcel(filename) {
+    console.log('开始导出详细数据Excel:', filename);
+
+    showExportLoading('detail');
+
+    // 获取当前查询条件
+    var ksrq = $('#ksrq').val() || '';
+    var jsrq = $('#jsrq').val() || '';
+    var m = $('#yg').val() || '';
+
+    console.log('详细数据导出查询条件:', {
+        ksrq: ksrq,
+        jsrq: jsrq,
+        m: m
+    });
+
+    // 获取所有详细数据
+    $ajax({
+        type: 'post',
+        url: '/yggs/queryList',
+        data: {
+            ksrq: ksrq,
+            jsrq: jsrq,
+            m: m,
+            pageSize: 9999999 // 获取所有数据
+        }
+    }, true, '正在导出详细数据...', function (res) {
+        hideExportLoading('detail');
+
+        console.log('详细数据响应:', res);
+        if (res.code == 200 && res.data && res.data.length > 0) {
+            console.log('获取到详细数据，开始导出:', res.data.length, '条记录');
+            createDetailExcelFile(res.data, filename);
+        } else {
+            swal('没有详细数据可以导出');
+        }
+    });
+}
+
+// 导出汇总数据到Excel
+function exportSummaryToExcel(filename) {
+    console.log('开始导出汇总数据Excel:', filename);
+
+    showExportLoading('summary');
+
+    // 获取当前查询条件
+    var ksrq1 = $('#ksrq1').val() || '';
+    var jsrq1 = $('#jsrq1').val() || '';
+
+    console.log('汇总数据导出查询条件:', {
+        ksrq1: ksrq1,
+        jsrq1: jsrq1
+    });
+
+    // 获取所有汇总数据
+    $.ajax({
+        type: 'POST',
+        url: '/yggs/queryList1',
+        data: {
+            ksrq1: ksrq1,
+            jsrq1: jsrq1
+        },
+        success: function(res) {
+            hideExportLoading('summary');
+
+            console.log('汇总数据响应:', res);
+            if (res.code == 200 && res.data && res.data.length > 0) {
+                console.log('获取到汇总数据，开始导出:', res.data.length, '条记录');
+                createSummaryExcelFile(res.data, filename);
+            } else {
+                swal('没有汇总数据可以导出');
+            }
+        },
+        error: function(xhr, status, error) {
+            hideExportLoading('summary');
+            console.error('汇总数据导出请求错误:', error);
+            swal("导出失败", "错误: " + error, "error");
+        }
+    });
+}
+
+// 创建详细数据Excel文件
+function createDetailExcelFile(data, filename) {
+    try {
+        // 检查 SheetJS 是否已加载
+        if (typeof XLSX === 'undefined') {
+            swal('导出功能初始化失败，请刷新页面重试');
+            return;
+        }
+
+        // 准备Excel数据 - 根据详细表格列顺序
+        var excelData = data.map(function(item) {
+            return {
+                '工序名称': item.j || '',
+                '工序内容': item.k || '',
+                '合计工时': item.l ? parseFloat(item.l).toFixed(2) : '0.00',
+                '员工签名': item.m || '',
+                '完工时间': item.n || '',
+                '检验盖章': item.o || '',
+                '备注': item.p || '',
+                '查询日期范围': ($('#ksrq').val() || '全部') + ' 至 ' + ($('#jsrq').val() || '全部'),
+                '查询员工': $('#yg').val() || '全部'
+            };
+        });
+
+        // 创建包含统计信息的工作表
+        var wb = XLSX.utils.book_new();
+
+        // 创建工作表
+        var ws = XLSX.utils.json_to_sheet(excelData);
+
+        // 设置列宽
+        var colWidths = [
+            { wch: 15 }, // 工序名称
+            { wch: 20 }, // 工序内容
+            { wch: 12 }, // 合计工时
+            { wch: 12 }, // 员工签名
+            { wch: 15 }, // 完工时间
+            { wch: 12 }, // 检验盖章
+            { wch: 20 }, // 备注
+            { wch: 25 }, // 查询日期范围
+            { wch: 15 }  // 查询员工
+        ];
+        ws['!cols'] = colWidths;
+
+        // 添加统计信息（添加在数据后面）
+        var totalHours = calculateTotalHours(data);
+        var hourlyWage = parseFloat($('#hourly-wage').val()) || 30;
+        var totalSalary = totalHours * hourlyWage;
+
+        var stats = [
+            { '项目': '总计', '值': '' },
+            { '项目': '总记录数', '值': data.length },
+            { '项目': '总工时（小时）', '值': totalHours.toFixed(2) },
+            { '项目': '小时工资（元/小时）', '值': hourlyWage.toFixed(2) },
+            { '项目': '总工资（元）', '值': totalSalary.toFixed(2) }
+        ];
+
+        // 计算数据结束位置
+        var dataEndRow = data.length + 2; // +2 因为标题行和空行
+
+        // 添加空行
+        XLSX.utils.sheet_add_json(ws, [{}], { origin: -1 });
+
+        // 添加统计信息
+        XLSX.utils.sheet_add_json(ws, stats, { origin: -1 });
+
+        // 添加工作表
+        XLSX.utils.book_append_sheet(wb, ws, '员工工时详细');
+
+        // 导出文件
+        XLSX.writeFile(wb, filename);
+
+        console.log('详细数据Excel文件导出成功:', filename);
+
+        // 显示成功消息
+        setTimeout(function() {
+            swal(`详细数据导出成功！\n文件名：${filename}\n总记录：${data.length}条\n总工资：¥${totalSalary.toFixed(2)}`);
+        }, 500);
+
+    } catch (error) {
+        console.error('创建详细数据Excel文件错误:', error);
+        swal('导出失败: ' + error.message);
+    }
+}
+
+// 创建汇总数据Excel文件
+function createSummaryExcelFile(data, filename) {
+    try {
+        // 检查 SheetJS 是否已加载
+        if (typeof XLSX === 'undefined') {
+            swal('导出功能初始化失败，请刷新页面重试');
+            return;
+        }
+
+        // 准备Excel数据 - 根据汇总表格列顺序
+        var excelData = data.map(function(item) {
+            return {
+                '员工姓名': item.m || '',
+                '总工时': item.l ? parseFloat(item.l).toFixed(2) : '0.00',
+                '查询日期范围': ($('#ksrq1').val() || '全部') + ' 至 ' + ($('#jsrq1').val() || '全部')
+            };
+        });
+
+        // 计算总计
+        var totalHours = data.reduce(function(sum, item) {
+            return sum + (parseFloat(item.l) || 0);
+        }, 0);
+
+        var hourlyWage = parseFloat($('#hourly-wage').val()) || 30;
+        var totalSalary = totalHours * hourlyWage;
+
+        // 创建包含统计信息的工作表
+        var wb = XLSX.utils.book_new();
+
+        // 创建工作表
+        var ws = XLSX.utils.json_to_sheet(excelData);
+
+        // 设置列宽
+        var colWidths = [
+            { wch: 15 }, // 员工姓名
+            { wch: 12 }, // 总工时
+            { wch: 25 }  // 查询日期范围
+        ];
+        ws['!cols'] = colWidths;
+
+        // 计算数据结束位置
+        var dataEndRow = data.length + 2;
+
+        // 添加空行
+        XLSX.utils.sheet_add_json(ws, [{}], { origin: -1 });
+
+        // 添加统计信息
+        var stats = [
+            { '项目': '总计', '值': '' },
+            { '项目': '员工总数', '值': data.length },
+            { '项目': '总工时（小时）', '值': totalHours.toFixed(2) },
+            { '项目': '小时工资（元/小时）', '值': hourlyWage.toFixed(2) },
+            { '项目': '总工资（元）', '值': totalSalary.toFixed(2) }
+        ];
+        XLSX.utils.sheet_add_json(ws, stats, { origin: -1 });
+
+        // 添加工作表
+        XLSX.utils.book_append_sheet(wb, ws, '员工工时汇总');
+
+        // 导出文件
+        XLSX.writeFile(wb, filename);
+
+        console.log('汇总数据Excel文件导出成功:', filename);
+
+        // 显示成功消息
+        setTimeout(function() {
+            swal(`汇总数据导出成功！\n文件名：${filename}\n员工数：${data.length}人\n总工资：¥${totalSalary.toFixed(2)}`);
+        }, 500);
+
+    } catch (error) {
+        console.error('创建汇总数据Excel文件错误:', error);
+        swal('导出失败: ' + error.message);
+    }
+}
+
+// 计算总工时的辅助函数
+function calculateTotalHours(data) {
+    if (!data || data.length === 0) {
+        return 0;
+    }
+
+    return data.reduce(function(sum, item) {
+        return sum + (parseFloat(item.l) || 0);
+    }, 0);
+}
+
+// 显示导出加载中
+function showExportLoading(type) {
+    var btnId = type === 'detail' ? '#export-detail-btn' : '#export-summary-btn';
+    var btnText = type === 'detail' ? '导出详细数据' : '导出汇总数据';
+
+    $(btnId).prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i> 导出中...');
+
+    // 添加加载提示
+    if (!$('#export-loading').length) {
+        $('body').append(`
+            <div id="export-loading" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 5px; z-index: 9999;">
+                <div style="text-align: center;">
+                    <i class="bi bi-hourglass-split" style="font-size: 24px;"></i>
+                    <div style="margin-top: 10px;">正在准备导出${btnText}，请稍候...</div>
+                </div>
+            </div>
+        `);
+    }
+}
+
+// 隐藏导出加载中
+function hideExportLoading(type) {
+    var btnId = type === 'detail' ? '#export-detail-btn' : '#export-summary-btn';
+    var btnText = type === 'detail' ? '详细数据' : '汇总数据';
+
+    $(btnId).prop('disabled', false).html(`<i class="bi bi-file-earmark-excel me-2"></i> 导出${btnText}`);
+    $('#export-loading').remove();
+}
+
+// ==================== 原有代码保持不变 ====================
 
 // 计算总工时和工资的函数
 function calculateSalary(data) {
@@ -132,23 +497,6 @@ $('#hourly-wage').on('input', function() {
 $('#refresh-btn').click(function() {
     $('#select-btn').click(); // 重新查询
 });
-
-
-// function initEmployeeSelect() {
-//     $ajax({
-//         type: 'post',
-//         url: '/Yggs/getEmployees', // 需要创建这个接口
-//     }, false, '', function (res) {
-//         if (res.code == 200) {
-//             var select = $('#yg');
-//             select.empty();
-//             select.append('<option value="">请选择员工</option>');
-//             res.data.forEach(function(emp) {
-//                 select.append('<option value="' + emp + '">' + emp + '</option>');
-//             });
-//         }
-//     });
-// }
 
 
 
@@ -345,4 +693,52 @@ function setSummaryTable(data) {
     // 强制刷新表格视图
     $('#summaryTable').bootstrapTable('load', data);
     $('#summaryTable').bootstrapTable('resetView');
+}
+
+function loadEmployeeList() {
+    console.log('开始加载员工列表...');
+
+    $ajax({
+        type: 'post',
+        url: '/yggs/getygname',
+        contentType: 'application/json',
+        dataType: 'json'
+    }, false, '', function(res) {
+        if (res.code === 200) {
+            console.log('获取员工列表成功:', res.data);
+
+            var $select = $('#yg');
+            $select.empty(); // 清空现有选项
+            $select.append('<option value="">请选择员工</option>');
+
+            if (res.data && Array.isArray(res.data)) {
+                // 遍历数据，从m字段获取员工姓名
+                res.data.forEach(function(item) {
+                    // 安全地获取m字段的值
+                    var employeeName = item && item.m;
+
+                    // 检查是否为有效的字符串
+                    if (employeeName != null && employeeName !== '') {
+                        // 转换为字符串并去除首尾空格
+                        var nameStr = String(employeeName).trim();
+                        if (nameStr !== '') {
+                            $select.append(
+                                '<option value="' + nameStr + '">' +
+                                nameStr +
+                                '</option>'
+                            );
+                        }
+                    }
+                });
+
+                console.log('已加载 ' + res.data.length + ' 个员工选项');
+            } else {
+                console.warn('员工数据格式异常:', res.data);
+                $select.append('<option value="">暂无员工数据</option>');
+            }
+        } else {
+            console.error('获取员工列表失败:', res.msg);
+            $('#yg').html('<option value="">加载失败</option>');
+        }
+    });
 }

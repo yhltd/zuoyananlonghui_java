@@ -58,6 +58,12 @@ function getList(page) {
                 setTableSimple(data);
                 updatePagination();
 
+                // ============= 新增：重新初始化拖动 =============
+                setTimeout(function() {
+                    initTableDragScroll();
+                }, 500);
+                // ================================================
+
                 // 添加列可调整功能
                 if ($("#userTable").data('colResizable')) {
                     $("#userTable").colResizable({
@@ -139,6 +145,37 @@ $(function () {
         swal("刷新成功", "已显示所有数据", "success");
     });
 
+    // 导出按钮事件
+    $('#export-btn').off('click').on('click', function() {
+        console.log('导出Excel');
+        showExportModal();
+    });
+
+    // 绑定确认导出事件
+    $('#confirm-export-btn').off('click').on('click', function() {
+        var filename = $('#export-filename').val().trim();
+        var dateFormat = $('#export-date-format').val();
+
+        if (!filename) {
+            swal('请输入文件名');
+            return;
+        }
+
+        // 添加日期后缀
+        if (dateFormat !== 'none') {
+            var dateSuffix = formatDate(new Date(), dateFormat);
+            filename += '_' + dateSuffix;
+        }
+
+        // 确保文件名以.xlsx结尾
+        if (!filename.toLowerCase().endsWith('.xlsx')) {
+            filename += '.xlsx';
+        }
+
+        $('#exportModal').modal('hide');
+        exportToExcel(filename);
+    });
+
     //点击删除按钮
     $('#delete-btn').click(function () {
         var msg = confirm("确认要删除吗？");
@@ -172,6 +209,12 @@ $(function () {
             })
         }
     })
+    // ============= 新增：页面加载后初始化拖动 =============
+    // 延迟初始化，等待表格完全加载
+    setTimeout(function() {
+        initTableDragScroll();
+    }, 1000);
+    // ==================================================
 });
 
 // 单元格编辑功能 - 修改为简单表格版本
@@ -604,7 +647,14 @@ function setTableSimple(data) {
     setTimeout(function() {
         enableCellEditing();
     }, 100);
-
+    bindRowClickEvents();
+    // ============= 新增：初始化表格拖动滚动 =============
+    setTimeout(function() {
+        console.log('初始化表格拖动...');
+        // 方法1：使用简单版本
+        initTableDragScroll();
+    }, 200);
+    // ================================================
     console.log('简单表格更新完成');
 }
 
@@ -781,7 +831,7 @@ function updatePagination() {
         </div>`;
 
     // 将分页控件添加到表格后面
-    $('#userTable').after(paginationHtml);
+    $('#userTable1').after(paginationHtml);
 
     // 绑定分页事件
     bindPaginationEvents();
@@ -834,4 +884,446 @@ function bindPaginationEvents() {
             getList(currentPage);
         }
     });
+}
+
+// 显示导出设置模态框
+function showExportModal() {
+    var defaultFileName = '业务查询_' + getCurrentDate();
+    $('#export-filename').val(defaultFileName);
+    $('#exportModal').modal('show');
+}
+
+// 获取当前日期
+function getCurrentDate() {
+    var now = new Date();
+    var year = now.getFullYear();
+    var month = String(now.getMonth() + 1).padStart(2, '0');
+    var day = String(now.getDate()).padStart(2, '0');
+    return year + month + day;
+}
+
+// 日期格式化函数
+function formatDate(date, format) {
+    var d = new Date(date);
+    var year = d.getFullYear();
+    var month = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+
+    switch(format) {
+        case 'YYYYMMDD':
+            return year + month + day;
+        case 'YYYY-MM-DD':
+            return year + '-' + month + '-' + day;
+        case 'YYYY年MM月DD日':
+            return year + '年' + month + '月' + day + '日';
+        default:
+            return year + month + day;
+    }
+}
+
+// 导出到Excel功能
+function exportToExcel(filename) {
+    console.log('开始导出Excel:', filename);
+
+    showExportLoading();
+
+    // 构建查询参数（获取所有数据）
+    var name = $('#name').val() || '';
+    var hetongZhuangtai = $('#hetongZhuangtai').val() || '';
+    var hetongHao = $('#hetongHao').val() || '';
+    var renwuHao = $('#renwuHao').val() || '';
+
+    var params = {
+        pageNum: 1,
+        pageSize: 9999999
+    };
+
+    // 添加查询条件
+    if (name) params.name = name;
+    if (hetongZhuangtai) params.hetongZhuangtai = hetongZhuangtai;
+    if (hetongHao) params.hetongHao = hetongHao;
+    if (renwuHao) params.renwuHao = renwuHao;
+
+    $.ajax({
+        type: 'post',
+        url: '/ywc/getList',
+        data: JSON.stringify(params),
+        contentType: 'application/json',
+        dataType: 'json',
+        success: function (res) {
+            hideExportLoading();
+
+            if (res.code === 200 && res.data && res.data.list && res.data.list.length > 0) {
+                console.log('获取到数据，开始导出:', res.data.list.length, '条记录');
+                createExcelFile(res.data.list, filename);
+            } else {
+                swal('没有数据可以导出');
+            }
+        },
+        error: function (xhr, status, error) {
+            hideExportLoading();
+            console.error('导出请求失败:', error);
+            swal('导出失败: ' + error);
+        }
+    });
+}
+
+// 创建Excel文件
+function createExcelFile(data, filename) {
+    try {
+        // 检查 SheetJS 是否已加载
+        if (typeof XLSX === 'undefined') {
+            swal('导出功能初始化失败，请刷新页面重试');
+            return;
+        }
+
+        // 准备Excel数据 - 根据表格列顺序
+        var excelData = data.map(function(item) {
+            return {
+                '业务单位': item.c || '',
+                '合同号': item.d || '',
+                '任务号': item.e || '',
+                '对账状态': item.hetongzhuangtai || '',
+                '工序': item.g || '',
+                '名称': item.h || '',
+                '图号': item.i || '',
+                '单位': item.j || '',
+                '数量': item.k || '',
+                '材质': item.l || '',
+                '出库单号': item.au || '',
+                '序合计': item.av || '',
+                '重量': item.aw || '',
+                '工件尺寸': item.ax || '',
+                '单价元': item.m || '',
+                '合计金额': item.n || '',
+                '铣工时': item.o || '',
+                '铣单价': item.p || '',
+                '车工时': item.q || '',
+                '车单价': item.r || '',
+                '钳工时': item.s || '',
+                '钳单价': item.t || '',
+                '整件外委工时': item.u || '',
+                '整件外委单位': item.v || '',
+                '外委工时': item.w || '',
+                '外委单价': item.x || '',
+                '镗工时': item.y || '',
+                '镗单价': item.z || '',
+                '割工时': item.aa || '',
+                '割单价': item.ab || '',
+                '磨工时': item.ac || '',
+                '磨单价': item.ad || '',
+                '数控铣工时': item.ae || '',
+                '数控铣单价': item.af || '',
+                '立车': item.ag || '',
+                '立车单价': item.ah || '',
+                '电火花': item.ai || '',
+                '电火花单价': item.aj || '',
+                '中走丝': item.ak || '',
+                '中走丝单价': item.al || '',
+                '下料': item.am || '',
+                '深孔钻': item.an || '',
+                '回厂日期': item.ao || '',
+                '出厂日期': item.ap || '',
+                '订单要求交货时间': item.ay || '',
+                '铣': item.aq || '',
+                '车': item.ar || '',
+                '登记员': item.aas || '',
+                '备注': item.at || ''
+            };
+        });
+
+        // 创建工作簿
+        var wb = XLSX.utils.book_new();
+
+        // 创建工作表
+        var ws = XLSX.utils.json_to_sheet(excelData);
+
+        // 设置列宽
+        var colWidths = [
+            { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
+            { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 8 },
+            { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 12 },
+            { wch: 10 }, { wch: 8 }, { wch: 12 }, { wch: 10 },
+            { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
+            { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 },
+            { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
+            { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
+            { wch: 12 }, { wch: 12 }, { wch: 8 }, { wch: 10 },
+            { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 12 },
+            { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 },
+            { wch: 16 }, { wch: 8 }, { wch: 8 }, { wch: 10 },
+            { wch: 15 }
+        ];
+        ws['!cols'] = colWidths;
+
+        // 添加工作表
+        XLSX.utils.book_append_sheet(wb, ws, '业务查询记录');
+
+        // 导出文件
+        XLSX.writeFile(wb, filename);
+
+        console.log('Excel文件导出成功:', filename);
+
+        // 显示成功消息
+        setTimeout(function() {
+            swal(`导出成功！\n文件名：${filename}`);
+        }, 500);
+
+    } catch (error) {
+        console.error('创建Excel文件错误:', error);
+        swal('导出失败: ' + error.message);
+    }
+}
+
+// 显示导出加载中
+function showExportLoading() {
+    $('#export-btn').prop('disabled', true).html('<i class="bi bi-hourglass-split icon"></i> 导出中...');
+
+    // 添加加载提示
+    if (!$('#export-loading').length) {
+        $('body').append(`
+            <div id="export-loading" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 5px; z-index: 9999;">
+                <div style="text-align: center;">
+                    <i class="bi bi-hourglass-split" style="font-size: 24px;"></i>
+                    <div style="margin-top: 10px;">正在准备导出数据，请稍候...</div>
+                </div>
+            </div>
+        `);
+    }
+}
+
+// 隐藏导出加载中
+function hideExportLoading() {
+    $('#export-btn').prop('disabled', false).html('<i class="bi bi-file-earmark-excel icon"></i> 导出Excel');
+    $('#export-loading').remove();
+}
+
+
+function initSimpleDragScroll() {
+    const container = document.getElementById('tableScrollContainer');
+    if (!container) return;
+
+    // 使用 simple-drag-scroll
+    new SimpleDragScroll(container, {
+        dragSpeed: 1.5, // 拖动速度
+        useTransform: true, // 使用CSS transform实现平滑滚动
+        bounds: true, // 限制在容器边界内
+        preventClickOnDrag: true, // 拖拽时阻止点击事件
+        onDragStart: function() {
+            container.style.cursor = 'grabbing';
+        },
+        onDragEnd: function() {
+            container.style.cursor = 'grab';
+        }
+    });
+
+    container.style.cursor = 'grab';
+}
+
+// 绑定行点击事件（区分单击和双击）
+function bindRowClickEvents() {
+    var clickTimer = null;
+    var clickedRow = null;
+
+    $('#userTable').off('click', 'tbody tr').on('click', 'tbody tr', function(e) {
+        var $row = $(this);
+
+        // 排除点击复选框的情况
+        if ($(e.target).is('input[type="checkbox"]') || $(e.target).is('input')) {
+            return;
+        }
+
+        // 如果是双击，清除计时器并执行双击操作
+        if (clickTimer && clickedRow && clickedRow.is($row)) {
+            clearTimeout(clickTimer);
+            clickTimer = null;
+            handleRowDoubleClick($row);
+            return;
+        }
+
+        // 设置新的计时器
+        clickedRow = $row;
+        clickTimer = setTimeout(function() {
+            // 处理单击事件（行选择）
+            handleRowSingleClick($row);
+            clickTimer = null;
+            clickedRow = null;
+        }, 300); // 300ms延迟，用于区分单击和双击
+    });
+}
+
+// 处理行单击事件（选择行）
+function handleRowSingleClick($row) {
+    let isSelect = $row.hasClass('selected');
+    if (isSelect) {
+        $row.removeClass('selected');
+    } else {
+        $row.addClass('selected');
+    }
+    // 同时同步复选框状态
+    var $checkbox = $row.find('.row-checkbox');
+    $checkbox.prop('checked', $row.hasClass('selected'));
+}
+
+function handleRowDoubleClick($row) {
+    var rowIndex = $row.data('row-index');
+    var rowId = $row.data('id');
+
+    console.log('双击行，索引:', rowIndex, 'ID:', rowId);
+
+    // 由于是简单表格，我们需要从行的数据中提取信息
+    // 首先获取行的所有单元格数据
+    var rowData = {
+        id: rowId,
+        c: '', d: '', e: '', hetongzhuangtai: '', g: '', h: '', i: '', j: '', k: '', l: '',
+        au: '', av: '', aw: '', ax: '', m: '', n: '', o: '', p: '', q: '', r: '', s: '', t: '',
+        u: '', v: '', w: '', x: '', y: '', z: '', aa: '', ab: '', ac: '', ad: '', ae: '', af: '',
+        ag: '', ah: '', ai: '', aj: '', ak: '', al: '', am: '', an: '', ao: '', ap: '', ay: '',
+        aq: '', ar: '', aas: '', at: ''
+    };
+
+    // 遍历行的每个单元格（跳过第一列的复选框）
+    $row.find('td').each(function(index) {
+        if (index === 0) return; // 跳过复选框列
+
+        var $th = $('#userTable thead th').eq(index);
+        var field = $th.data('field') || getFieldFromHeaderText($th.text());
+        if (field) {
+            rowData[field] = $(this).text().trim();
+        }
+    });
+
+    console.log('双击行数据:', rowData);
+
+    if (rowData && rowData.id) {
+        // 准备传递给工艺规程页面的完整数据
+        var processData = {
+            // 基础信息
+            id: rowData.id,
+            c: rowData.c || '',           // 业务单位
+            e: rowData.e || '',           // 任务号
+            h: rowData.h || '',           // 名称
+            i: rowData.i || '',           // 图号
+            k: rowData.k || '',           // 数量
+            l: rowData.l || '',           // 材质
+        };
+
+        console.log('跳转数据:', processData);
+
+        // 跳转到工艺规程页面
+        navigateToProcessPage(processData);
+    } else {
+        console.warn('无法获取行数据，无法跳转');
+        swal("提示", "无法获取行数据，请重试", "warning");
+    }
+}
+
+// 跳转到工艺规程页面
+function navigateToProcessPage(data) {
+    // 使用sessionStorage传递完整数据
+    sessionStorage.setItem('currentProcessData', JSON.stringify(data));
+
+    // 修改iframe的src
+    var iframe = window.frameElement;
+    if (iframe) {
+        // 当前在iframe中，让父页面修改iframe的src
+        window.parent.changeIframeSrc('gygc.html');
+    } else {
+        window.location.href = 'gygc.html';
+    }
+}
+
+function initTableDragScroll() {
+    console.log('初始化表格拖动滚动...');
+
+    // 查找表格容器
+    const tableContainer = document.querySelector('.fixed-table-body') ||
+        document.querySelector('.table-responsive') ||
+        document.querySelector('.bootstrap-table .fixed-table-container');
+
+    if (!tableContainer) {
+        console.warn('找不到表格容器');
+        return;
+    }
+
+    console.log('找到表格容器:', tableContainer);
+
+    let isDragging = false;
+    let startX;
+    let startY;
+    let scrollLeft;
+    let scrollTop;
+
+    // 鼠标按下事件 - 开始拖动
+    tableContainer.addEventListener('mousedown', function(e) {
+        // 只有在表格有水平滚动条时才启用拖动
+        if (tableContainer.scrollWidth <= tableContainer.clientWidth) {
+            return;
+        }
+
+        isDragging = true;
+        startX = e.pageX;
+        startY = e.pageY;
+        scrollLeft = tableContainer.scrollLeft;
+        scrollTop = tableContainer.scrollTop;
+
+        // 添加拖动样式
+        tableContainer.style.cursor = 'grabbing';
+        tableContainer.style.userSelect = 'none';
+
+        // 防止文本选择
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'grabbing';
+
+        e.preventDefault();
+        e.stopPropagation();
+    });
+
+    // 鼠标移动事件 - 拖动滚动
+    tableContainer.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+
+        e.preventDefault();
+
+        const x = e.pageX;
+        const y = e.pageY;
+        const walkX = (x - startX) * 2; // 乘以2增加拖动速度
+        const walkY = (y - startY) * 2;
+
+        tableContainer.scrollLeft = scrollLeft - walkX;
+        tableContainer.scrollTop = scrollTop - walkY;
+    });
+
+    // 鼠标释放事件 - 停止拖动
+    tableContainer.addEventListener('mouseup', function() {
+        if (isDragging) {
+            isDragging = false;
+            tableContainer.style.cursor = 'grab';
+            tableContainer.style.userSelect = 'auto';
+            document.body.style.userSelect = 'auto';
+            document.body.style.cursor = 'default';
+        }
+    });
+
+    // 鼠标离开容器时释放拖动
+    tableContainer.addEventListener('mouseleave', function() {
+        if (isDragging) {
+            isDragging = false;
+            tableContainer.style.cursor = 'grab';
+            tableContainer.style.userSelect = 'auto';
+            document.body.style.userSelect = 'auto';
+            document.body.style.cursor = 'default';
+        }
+    });
+
+    // 设置初始光标样式
+    tableContainer.style.cursor = 'grab';
+
+    // 阻止默认的拖拽行为
+    tableContainer.addEventListener('dragstart', function(e) {
+        e.preventDefault();
+        return false;
+    });
+
+    console.log('表格拖动滚动初始化完成');
 }
