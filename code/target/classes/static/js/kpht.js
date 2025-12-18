@@ -202,11 +202,13 @@ function enableCellEditing() {
         }
 
         // 特殊处理对账状态字段 - 使用下拉框
-        if (field === 'hetongzhuangtai') {
-            createSelectEditor($cell, originalValue, field, rowId, tableData, rowIndex);
-        } else {
-            createInputEditor($cell, originalValue, field, rowId, tableData, rowIndex);
-        }
+        // if (field === 'hetongzhuangtai') {
+        //     createSelectEditor($cell, originalValue, field, rowId, tableData, rowIndex);
+        // } else {
+        //     createInputEditor($cell, originalValue, field, rowId, tableData, rowIndex);
+        // }
+        // 所有字段都使用输入框编辑器（将对账状态也改为手动输入）
+        createInputEditor($cell, originalValue, field, rowId, tableData, rowIndex);
     });
 }
 
@@ -377,7 +379,9 @@ function setTable(data) {
         classes: 'table table-hover table-bordered',
         idField: 'id',
         pagination: false, // 关键修改：禁用分页
-        clickToSelect: true,
+        clickToSelect: false, // 禁用默认的点击选择
+        height: 400,                    // 必须设置高度
+        fixedHeader: true,
         locale: 'zh-CN',
         rowAttributes: function(row, index) {
             return {
@@ -400,7 +404,15 @@ function setTable(data) {
                 sortable: true,
                 width: 120,
                 class: 'editable'
-            }, {
+            },
+            {
+                field: 'lingjianhao',
+                title: '零件号',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
                 field: 'e',
                 title: '任务号',
                 align: 'center',
@@ -417,14 +429,6 @@ function setTable(data) {
                 formatter: function(value, row, index) {
                     // 显示当前值
                     return value || '';
-                },
-                cell: {
-                    // 添加下拉框编辑
-                    type: 'select',
-                    options: [
-                        {value: '已对账', text: '已对账'},
-                        {value: '未开票', text: '未开票'}
-                    ]
                 }
             }, {
                 field: 'g',
@@ -525,6 +529,13 @@ function setTable(data) {
                 width: 100,
                 class: 'editable'
             }, {
+                field: 'xianshiji',
+                title: '铣实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
                 field: 'q',
                 title: '车工时',
                 align: 'center',
@@ -539,6 +550,13 @@ function setTable(data) {
                 width: 100,
                 class: 'editable'
             }, {
+                field: 'cheshiji',
+                title: '车实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
                 field: 's',
                 title: '钳工时',
                 align: 'center',
@@ -548,6 +566,13 @@ function setTable(data) {
             }, {
                 field: 't',
                 title: '钳单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
+                field: 'qianshiji',
+                title: '钳实际工时',
                 align: 'center',
                 sortable: true,
                 width: 100,
@@ -594,6 +619,13 @@ function setTable(data) {
                 sortable: true,
                 width: 100,
                 class: 'editable'
+            },{
+                field: 'tangshiji',
+                title: '镗实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
             }, {
                 field: 'aa',
                 title: '割工时',
@@ -604,6 +636,13 @@ function setTable(data) {
             }, {
                 field: 'ab',
                 title: '割单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
+                field: 'geshiji',
+                title: '割实际工时',
                 align: 'center',
                 sortable: true,
                 width: 100,
@@ -623,6 +662,13 @@ function setTable(data) {
                 width: 100,
                 class: 'editable'
             }, {
+                field: 'moshiji',
+                title: '磨实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
                 field: 'ae',
                 title: '数控铣工时',
                 align: 'center',
@@ -632,6 +678,13 @@ function setTable(data) {
             }, {
                 field: 'af',
                 title: '数控铣单价',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
+                field: 'skxshiji',
+                title: '数控铣实际工时',
                 align: 'center',
                 sortable: true,
                 width: 120,
@@ -651,6 +704,13 @@ function setTable(data) {
                 width: 100,
                 class: 'editable'
             }, {
+                field: 'licheshiji',
+                title: '立车实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
                 field: 'ai',
                 title: '电火花',
                 align: 'center',
@@ -665,6 +725,13 @@ function setTable(data) {
                 width: 120,
                 class: 'editable'
             }, {
+                field: 'dianhuohuashiji',
+                title: '电火花实际工时',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
                 field: 'ak',
                 title: '中走丝',
                 align: 'center',
@@ -678,12 +745,33 @@ function setTable(data) {
                 sortable: true,
                 width: 120,
                 class: 'editable'
+            },{
+                field: 'zhongzuosishiji',
+                title: '中走丝实际工时',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
+                field: 'jingmixianqiege',
+                title: '精密线切割',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
             }, {
                 field: 'am',
                 title: '下料',
                 align: 'center',
                 sortable: true,
                 width: 80,
+                class: 'editable'
+            },{
+                field: 'hanjiegongshi', // 注意：这里用的是 hanjiegongshi 而不是 am
+                title: '焊接工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
                 class: 'editable'
             }, {
                 field: 'an',
@@ -1157,6 +1245,7 @@ function createExcelFile(data, filename) {
                 '业务单位': item.c || '',
                 '合同号': item.d || '',
                 '任务号': item.e || '',
+                '零件号': item.lingjianhao || '',
                 '对账状态': item.hetongzhuangtai || '',
                 '工序': item.g || '',
                 '名称': item.h || '',
@@ -1172,28 +1261,39 @@ function createExcelFile(data, filename) {
                 '合计金额': item.n || '',
                 '铣工时': item.o || '',
                 '铣单价': item.p || '',
+                '实际工时（铣）': item.xianshiji || '',
                 '车工时': item.q || '',
                 '车单价': item.r || '',
+                '实际工时（车）': item.cheshiji || '',
                 '钳工时': item.s || '',
                 '钳单价': item.t || '',
+                '实际工时（钳）': item.qianshiji || '',
                 '整件外委工时': item.u || '',
                 '整件外委单位': item.v || '',
                 '外委工时': item.w || '',
                 '外委单价': item.x || '',
                 '镗工时': item.y || '',
                 '镗单价': item.z || '',
+                '实际工时（镗）': item.tangshiji || '',
                 '割工时': item.aa || '',
                 '割单价': item.ab || '',
+                '实际工时（割）': item.geshiji || '',
                 '磨工时': item.ac || '',
                 '磨单价': item.ad || '',
+                '实际工时（磨）': item.moshiji || '',
                 '数控铣工时': item.ae || '',
                 '数控铣单价': item.af || '',
+                '实际工时（数控铣）': item.skxshiji || '',
                 '立车': item.ag || '',
                 '立车单价': item.ah || '',
+                '实际工时（立车）': item.licheshiji || '',
                 '电火花': item.ai || '',
                 '电火花单价': item.aj || '',
+                '实际工时（电火花）': item.dianhuohuashiji || '',
                 '中走丝': item.ak || '',
                 '中走丝单价': item.al || '',
+                '实际工时（中走丝）': item.zhongzuosishiji || '',
+                '精密线切割': item.jingmixianqiege || '',
                 '下料': item.am || '',
                 '深孔钻': item.an || '',
                 '回厂日期': item.ao || '',

@@ -412,7 +412,19 @@ $(function () {
             aq: $('#add-aq').val(),            // 铣（修改）
             ar: $('#add-ar').val(),            // 车（修改）
             aas: $('#add-aas').val(),          // 登记员（新增）
-            at: $('#add-at').val()             // 备注（修改）
+            at: $('#add-at').val(),             // 备注（修改）
+            lingjianhao: $('#add-lingjianhao').val(),  // 新增：零件号
+            xianshiji: $('#add-xianshiji').val(),      // 新增：铣实际工时
+            cheshiji: $('#add-cheshiji').val(),        // 新增：车实际工时
+            qianshiji: $('#add-qianshiji').val(),      // 新增：钳实际工时
+            tangshiji: $('#add-tangshiji').val(),      // 新增：镗实际工时
+            geshiji: $('#add-geshiji').val(),          // 新增：割实际工时
+            moshiji: $('#add-moshiji').val(),          // 新增：磨实际工时
+            skxshiji: $('#add-skxshiji').val(),        // 新增：数控铣实际工时
+            licheshiji: $('#add-licheshiji').val(),    // 新增：立车实际工时
+            dianhuohuashiji: $('#add-dianhuohuashiji').val(), // 新增：电火花实际工时
+            zhongzuosishiji: $('#add-zhongzuosishiji').val(), // 新增：中走丝实际工时
+            jingmixianqiege: $('#add-jingmixianqiege').val(), // 新增：精密线切割
         };
 
         console.log('前端输入的数据:', params);
@@ -592,6 +604,18 @@ $(function () {
             $('#update-av').val(selectedRow.av || '');  // 车
             $('#update-aw').val(selectedRow.aw || '');  // 登记员
             $('#update-ax').val(selectedRow.ax || '');  // 备注
+            $('#update-lingjianhao').val(rowData.lingjianhao || '');  // 零件号
+            $('#update-xianshiji').val(rowData.xianshiji || '');      // 铣实际工时
+            $('#update-cheshiji').val(rowData.cheshiji || '');        // 车实际工时
+            $('#update-qianshiji').val(rowData.qianshiji || '');      // 钳实际工时
+            $('#update-tangshiji').val(rowData.tangshiji || '');      // 镗实际工时
+            $('#update-geshiji').val(rowData.geshiji || '');          // 割实际工时
+            $('#update-moshiji').val(rowData.moshiji || '');          // 磨实际工时
+            $('#update-skxshiji').val(rowData.skxshiji || '');        // 数控铣实际工时
+            $('#update-licheshiji').val(rowData.licheshiji || '');    // 立车实际工时
+            $('#update-dianhuohuashiji').val(rowData.dianhuohuashiji || ''); // 电火花实际工时
+            $('#update-zhongzuosishiji').val(rowData.zhongzuosishiji || ''); // 中走丝实际工时
+            $('#update-jingmixianqiege').val(rowData.jingmixianqiege || ''); // 精密线切割
 
             $('#id').val(selectedRow.id || '');  // 添加这一行！
 
@@ -656,7 +680,19 @@ $(function () {
                 au: $('#update-au').val(),  // 铣
                 av: $('#update-av').val(),  // 车
                 aw: $('#update-aw').val(),  // 登记员
-                ax: $('#update-ax').val()   // 备注
+                ax: $('#update-ax').val(),   // 备注
+                lingjianhao: $('#update-lingjianhao').val(),  // 新增：零件号
+                xianshiji: $('#update-xianshiji').val(),      // 新增：铣实际工时
+                cheshiji: $('#update-cheshiji').val(),        // 新增：车实际工时
+                qianshiji: $('#update-qianshiji').val(),      // 新增：钳实际工时
+                tangshiji: $('#update-tangshiji').val(),      // 新增：镗实际工时
+                geshiji: $('#update-geshiji').val(),          // 新增：割实际工时
+                moshiji: $('#update-moshiji').val(),          // 新增：磨实际工时
+                skxshiji: $('#update-skxshiji').val(),        // 新增：数控铣实际工时
+                licheshiji: $('#update-licheshiji').val(),    // 新增：立车实际工时
+                dianhuohuashiji: $('#update-dianhuohuashiji').val(), // 新增：电火花实际工时
+                zhongzuosishiji: $('#update-zhongzuosishiji').val(), // 新增：中走丝实际工时
+                jingmixianqiege: $('#update-jingmixianqiege').val(), // 新增：精密线切割
             };
 
             console.log('提交的修改数据:', params);
@@ -770,6 +806,8 @@ function setTable(data) {
         idField: 'id',
         pagination: false, // 关键修改：禁用分页
         clickToSelect: false, // 禁用默认的点击选择
+        height: 400,                    // 必须设置高度
+        fixedHeader: true,
         locale: 'zh-CN',
         rowAttributes: function(row, index) {
             return {
@@ -795,6 +833,13 @@ function setTable(data) {
             }, {
                 field: 'e',
                 title: '任务号',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'lingjianhao',
+                title: '零件号',
                 align: 'center',
                 sortable: true,
                 width: 120,
@@ -900,6 +945,13 @@ function setTable(data) {
                 sortable: true,
                 width: 100,
                 class: 'editable'
+            },{
+                field: 'xianshiji',
+                title: '实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
             }, {
                 field: 'q',
                 title: '车工时',
@@ -915,6 +967,13 @@ function setTable(data) {
                 width: 100,
                 class: 'editable'
             }, {
+                field: 'cheshiji',
+                title: '实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
                 field: 's',
                 title: '钳工时',
                 align: 'center',
@@ -924,6 +983,13 @@ function setTable(data) {
             }, {
                 field: 't',
                 title: '钳单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
+                field: 'qianshiji',
+                title: '实际工时',
                 align: 'center',
                 sortable: true,
                 width: 100,
@@ -970,6 +1036,13 @@ function setTable(data) {
                 sortable: true,
                 width: 100,
                 class: 'editable'
+            },{
+                field: 'tangshiji',
+                title: '实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
             }, {
                 field: 'aa',
                 title: '割工时',
@@ -984,6 +1057,13 @@ function setTable(data) {
                 sortable: true,
                 width: 100,
                 class: 'editable'
+            },{
+                field: 'geshiji',
+                title: '实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
             }, {
                 field: 'ac',
                 title: '磨工时',
@@ -994,6 +1074,13 @@ function setTable(data) {
             }, {
                 field: 'ad',
                 title: '磨单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
+                field: 'moshiji',
+                title: '实际工时',
                 align: 'center',
                 sortable: true,
                 width: 100,
@@ -1013,6 +1100,13 @@ function setTable(data) {
                 width: 120,
                 class: 'editable'
             }, {
+                field: 'skxshiji',
+                title: '实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
                 field: 'ag',
                 title: '立车',
                 align: 'center',
@@ -1027,6 +1121,13 @@ function setTable(data) {
                 width: 100,
                 class: 'editable'
             }, {
+                field: 'licheshiji',
+                title: '实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
                 field: 'ai',
                 title: '电火花',
                 align: 'center',
@@ -1039,6 +1140,13 @@ function setTable(data) {
                 align: 'center',
                 sortable: true,
                 width: 120,
+                class: 'editable'
+            },{
+                field: 'dianhuohuashiji',
+                title: '实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
                 class: 'editable'
             }, {
                 field: 'ak',
@@ -1054,6 +1162,20 @@ function setTable(data) {
                 sortable: true,
                 width: 120,
                 class: 'editable'
+            },{
+                field: 'zhongzuosishiji',
+                title: '实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
+                field: 'jingmixianqiege',
+                title: '精密线切割',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
             }, {
                 field: 'am',
                 title: '下料',
@@ -1064,6 +1186,13 @@ function setTable(data) {
             }, {
                 field: 'an',
                 title: '深孔钻',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
+                field: 'p',
+                title: '焊接工时',
                 align: 'center',
                 sortable: true,
                 width: 100,
@@ -1269,81 +1398,6 @@ function enableCellEditing() {
         // }
     });
 }
-
-// // 创建下拉框编辑器（针对工艺规程状态字段）
-// function createSelectEditor($cell, originalValue, field, rowId, tableData, rowIndex) {
-//     var $select = $('<select class="form-control cell-edit-select">')
-//         .css({
-//             width: '100%',
-//             height: '100%',
-//             border: '1px solid #007bff',
-//             borderRadius: '3px',
-//             padding: '2px 5px'
-//         });
-//
-//     // 添加工艺规程状态选项
-//     $select.append('<option value="">请选择</option>');
-//     $select.append('<option value="未创建">未创建</option>');
-//     $select.append('<option value="未创建">未创建</option>');
-//
-//     // 设置当前值
-//     $select.val(originalValue);
-//
-//     // 清空单元格内容并添加下拉框
-//     $cell.empty().append($select);
-//     $select.focus();
-//
-//     // 保存编辑
-//     function saveEdit() {
-//         var newValue = $select.val();
-//
-//         // 如果值没有变化，则不保存
-//         if (newValue === originalValue) {
-//             $cell.text(originalValue);
-//             return;
-//         }
-//
-//         console.log('发送更新:', { id: rowId, field: field, newValue: newValue });
-//
-//         // 发送更新请求
-//         $.ajax({
-//             type: 'post',
-//             url: '/htjl/updateField',
-//             data: JSON.stringify({
-//                 id: rowId,
-//                 [field]: newValue
-//             }),
-//             dataType: 'json',
-//             contentType: 'application/json;charset=utf-8',
-//             success: function(res) {
-//                 if (res.code == 200) {
-//                     $cell.text(newValue);
-//                     // 更新本地数据
-//                     tableData[rowIndex][field] = newValue;
-//                     // 注释掉这行，避免重新加载表格中断编辑状态
-//                     // getList();
-//                 } else {
-//                     $cell.text(originalValue);
-//                     swal("更新失败", res.msg, "error");
-//                 }
-//             },
-//             error: function(xhr, status, error) {
-//                 $cell.text(originalValue);
-//                 console.error('更新请求失败:', error);
-//                 swal("更新失败", "网络错误，请重试", "error");
-//             }
-//         });
-//     }
-//
-//     // 绑定事件
-//     $select.on('blur', saveEdit);
-//     $select.on('change', saveEdit); // 选择即保存
-//     $select.on('keydown', function(e) {
-//         if (e.keyCode === 27) { // ESC键
-//             $cell.text(originalValue);
-//         }
-//     });
-// }
 
 // 创建输入框编辑器
 function createInputEditor($cell, originalValue, field, rowId, tableData, rowIndex) {
@@ -2224,10 +2278,11 @@ function fillReturnRowData($row, rowData) {
     $row.find('input[name="drawingNo"]').val(rowData.i || '');
     $row.find('input[name="unit"]').val(rowData.j || '');
     $row.find('input[name="quantity"]').val(rowData.k || '1');
-    $row.find('input[name="unitPrice"]').val(rowData.p || '0');
+    $row.find('input[name="unitPrice"]').val(rowData.m || '0');
+    $row.find('input[name="amount"]').val(rowData.n || '0');
     $row.find('input[name="material"]').val(rowData.l || '');
-    $row.find('input[name="weight"]').val(rowData.n || '');
-    $row.find('input[name="remark"]').val(rowData.ax || '');
+    $row.find('input[name="weight"]').val(rowData.aw || '');
+    $row.find('input[name="remark"]').val(rowData.at || '');
 // 设置隐藏的原表id
     $row.data('original-id', rowData.id);  // 将原表id存储在data属性中
     // 计算金额
@@ -2876,6 +2931,7 @@ function createExcelFile(data, filename) {
                 '业务单位': item.c || '',
                 '合同号': item.d || '',
                 '任务号': item.e || '',
+                '零件号': item.lingjianhao || '',
                 '工艺规程状态': item.zhuangtai || calculateProcessStatus(item),
                 '工序': item.g || '',
                 '名称': item.h || '',
@@ -2890,28 +2946,39 @@ function createExcelFile(data, filename) {
                 '合计金额': item.n || '',
                 '铣工时': item.o || '',
                 '铣单价': item.p || '',
+                '实际工时（铣）': item.xianshiji || '',
                 '车工时': item.q || '',
                 '车单价': item.r || '',
+                '实际工时（车）': item.cheshiji || '',
                 '钳工时': item.s || '',
                 '钳单价': item.t || '',
+                '实际工时（钳）': item.qianshiji || '',
                 '整件外委工时': item.u || '',
                 '整件外委单位': item.v || '',
                 '外委工时': item.w || '',
                 '外委单价': item.x || '',
                 '镗工时': item.y || '',
                 '镗单价': item.z || '',
+                '实际工时（镗）': item.tangshiji || '',
                 '割工时': item.aa || '',
                 '割单价': item.ab || '',
+                '实际工时（割）': item.geshiji || '',
                 '磨工时': item.ac || '',
                 '磨单价': item.ad || '',
+                '实际工时（磨）': item.moshiji || '',
                 '数控铣工时': item.ae || '',
                 '数控铣单价': item.af || '',
+                '实际工时（数控铣）': item.skxshiji || '',
                 '立车': item.ag || '',
                 '立车单价': item.ah || '',
+                '实际工时（立车）': item.licheshiji || '',
                 '电火花': item.ai || '',
                 '电火花单价': item.aj || '',
+                '实际工时（电火花）': item.dianhuohuashiji || '',
                 '中走丝': item.ak || '',
                 '中走丝单价': item.al || '',
+                '实际工时（中走丝）': item.zhongzuosishiji || '',
+                '精密线切割': item.jingmixianqiege || '',
                 '下料': item.am || '',
                 '深孔钻': item.an || '',
                 '回厂日期': item.ao || '',
@@ -3028,7 +3095,19 @@ var databaseFields = [
     { field: 's', name: '客户签字', description: '客户签名' },
     { field: 't', name: '电话', description: '联系电话' },
     { field: 'u', name: '备注', description: '备注信息' },
-    { field: 'v', name: '回厂日期', description: '返回工厂日期' }
+    { field: 'v', name: '回厂日期', description: '返回工厂日期' },
+    { field: 'lingjianhao', name: '零件号', description: '零件编号' },
+    { field: 'xianshiji', name: '铣实际工时', description: '铣加工实际工时' },
+    { field: 'cheshiji', name: '车实际工时', description: '车加工实际工时' },
+    { field: 'qianshiji', name: '钳实际工时', description: '钳加工实际工时' },
+    { field: 'tangshiji', name: '镗实际工时', description: '镗加工实际工时' },
+    { field: 'geshiji', name: '割实际工时', description: '切割实际工时' },
+    { field: 'moshiji', name: '磨实际工时', description: '磨削实际工时' },
+    { field: 'skxshiji', name: '数控铣实际工时', description: '数控铣加工实际工时' },
+    { field: 'licheshiji', name: '立车实际工时', description: '立车加工实际工时' },
+    { field: 'dianhuohuashiji', name: '电火花实际工时', description: '电火花加工实际工时' },
+    { field: 'zhongzuosishiji', name: '中走丝实际工时', description: '中走丝加工实际工时' },
+    { field: 'jingmixianqiege', name: '精密线切割', description: '精密线切割加工' },
     // 根据您的需求添加更多字段...
 ];
 
@@ -3755,7 +3834,20 @@ var excelToDbMapping = {
     52: 'aq',  // AS列 → 铣
     53: 'ar',  // AT列 → 车
     54: 'aas', // AU列 → 登记员
-    55: 'at'   // AV列 → 备注
+    55: 'at',  // AV列 → 备注
+
+    2: 'lingjianhao',      // 新增：零件号（假设在某个列）
+    14: 'xianshiji',        // 新增：铣实际工时
+    17: 'cheshiji',         // 新增：车实际工时
+    20: 'qianshiji',        // 新增：钳实际工时
+    27: 'tangshiji',        // 新增：镗实际工时
+    30: 'geshiji',          // 新增：割实际工时
+    33: 'moshiji',          // 新增：磨实际工时
+    36: 'skxshiji',         // 新增：数控铣实际工时
+    39: 'licheshiji',       // 新增：立车实际工时
+    42: 'dianhuohuashiji',  // 新增：电火花实际工时
+    45: 'zhongzuosishiji',  // 新增：中走丝实际工时
+    46: 'jingmixianqiege',  // 新增：精密线切割
 };
 
 // 文件选择变化 - 确保这个事件绑定正确
@@ -4249,7 +4341,5 @@ function initTableDragScroll() {
 
     console.log('表格拖动滚动初始化完成');
 }
-
-
 
 

@@ -1,0 +1,784 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>新合同记录</title>
+    <link rel="shortcut icon" href="#"/>
+
+    <script type="text/javascript" src="../js/Jquery.js"></script>
+    <script type="text/javascript" src="../js/jquerysession.js"></script>
+
+    <link rel="stylesheet" href="../bootstrap-4.5.0-dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../bootstrap-4.5.0-dist/icons/bootstrap-icons.css">
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap.min.js"></script>
+
+    <!--bootstrap-table-->
+    <link rel="stylesheet" href="../bootstrap-4.5.0-dist/css/bootstrap-table.css">
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table.js"></script>
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table-zh-CN.min.js"></script>
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/colResizable-1.6.js"></script>
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table-resizable.js"></script>
+
+
+    <!-- 引入CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.22.1/dist/extensions/fixed-header/bootstrap-table-fixed-header.min.css">
+
+    <!-- 引入JS -->
+    <script src="https://unpkg.com/bootstrap-table@1.22.1/dist/extensions/fixed-header/bootstrap-table-fixed-header.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.22.1/dist/extensions/fixed-columns/bootstrap-table-fixed-columns.min.css">
+    <script src="https://unpkg.com/bootstrap-table@1.22.1/dist/extensions/fixed-columns/bootstrap-table-fixed-columns.min.js"></script>
+
+
+    <script type="text/javascript" src="../js/xlsx.full.min.js"></script>
+
+    <link rel="stylesheet" href="../css/sweetalert.css">
+    <script type="text/javascript" src="../js/sweetalert-dev.js"></script>
+
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/new.css">
+    <script type="text/javascript" src="../js/main.js"></script>
+    <script type="text/javascript" src="../js/xhtjl.js"></script>
+
+    <style>
+        .page-indicator {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .page-indicator:hover {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: #0d6efd;
+            transform: translateY(-1px);
+        }
+
+        .modal-body h6 {
+            color: #495057;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-body ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-body ul li {
+            margin-bottom: 0.3rem;
+        }
+
+        .page-indicator {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .page-indicator:hover {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: #0d6efd;
+            transform: translateY(-1px);
+        }
+
+        .modal-body h6 {
+            color: #495057;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-body ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-body ul li {
+            margin-bottom: 0.3rem;
+        }
+
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .pagination-info {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .pagination-btn, .page-number {
+            padding: 5px 10px;
+            border: 1px solid #dee2e6;
+            background-color: white;
+            color: #495057;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        .pagination-btn:hover:not(:disabled),
+        .page-number:hover:not(.active) {
+            background-color: #e9ecef;
+        }
+
+        .pagination-btn:disabled,
+        .page-number.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+            cursor: default;
+        }
+
+        .page-size-selector {
+            margin-left: 10px;
+        }
+
+        .page-size-select {
+            padding: 5px;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        /* 表格拖动滚动样式 */
+        .fixed-table-body,
+        .table-responsive,
+        .bootstrap-table .fixed-table-container {
+            cursor: grab;
+            user-select: none;
+            overflow-x: auto !important;
+            overflow-y: auto !important;
+        }
+
+        .fixed-table-body:active,
+        .table-responsive:active,
+        .bootstrap-table .fixed-table-container:active {
+            cursor: grabbing !important;
+        }
+
+        /* 确保表格容器有正确的滚动 */
+        .table-wrapper {
+            width: 100%;
+            overflow: auto;
+        }
+
+        /* 移除 Bootstrap Table 的默认选择样式 */
+        .bootstrap-table .fixed-table-container {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* 当拖动时，显示拖动状态 */
+        .dragging {
+            cursor: grabbing !important;
+        }
+    </style>
+</head>
+
+<body>
+<div class="top-header">
+    <div class="header-content">
+        <div class="logo-section">
+            <i class="bi bi-person-badge-fill logo-icon"></i>
+            <span class="system-title">信息管理系统</span>
+        </div>
+
+        <div class="time-display">
+            <i class="bi bi-clock"></i>
+            <span id="now_time"></span>
+        </div>
+
+        <div class="user-info">
+            <i class="bi bi-person-circle"></i>
+            您好 <span class="user-name" id="dlm"></span>，欢迎登录！
+        </div>
+
+        <div class="nav-icons">
+            <div class="nav-icon">
+                <a href="http://localhost:9093/index.html" target="_top" class="dropdown-item-custom">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+<div class="main-container">
+    <!-- 搜索区域 - 单行布局 -->
+    <div class="search-section">
+        <div class="search-toolbar">
+
+            <!-- 搜索字段 -->
+            <div class="search-field">
+                <label for="name" class="form-label-custom">业务单位</label>
+                <input id="name" type="text" class="form-control form-control-custom" placeholder="请输入业务单位名称" autocomplete="off">
+            </div>
+            <div class="search-field">
+                <label for="department" class="form-label-custom">工艺规程状态</label>
+                <input id="department" type="text" class="form-control form-control-custom" placeholder="工艺规程状态" autocomplete="off">
+            </div>
+            <!-- 查询按钮 -->
+            <div>
+                <label class="form-label-custom invisible">查询</label>
+                <button id="select-btn" class="btn btn-custom btn-primary-custom">
+                    <i class="bi bi-search me-2"></i>
+                    查询
+                </button>
+            </div>
+
+            <!-- 工具栏按钮 -->
+            <div class="toolbar-buttons">
+                <button id="refresh-btn" class="btn btn-custom btn-primary-custom">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    刷新
+                </button>
+
+                <button id="add-btn" class="btn btn-custom btn-primary-custom">
+                    <i class="bi bi-plus-square "></i>
+                    新增
+                </button>
+
+                <button id="delete-btn" class="btn btn-custom btn-danger-custom">
+                    <i class="bi bi-trash"></i>
+                    删除
+                </button>
+                <button id="goto-return-btn" class="btn btn-custom btn-primary-custom">
+                    <i class="bi bi-box-arrow-up"></i> 跳转到出库单页面
+                </button>
+                <button id="export-btn" class="btn btn-custom btn-primary-custom" >
+                    <i class="bi bi-file-earmark-excel"></i>
+                    导出Excel
+                </button>
+                <button id="import-btn" class="btn btn-custom btn-primary-custom">
+                    <i class="bi bi-file-earmark-arrow-up"></i>
+                    导入Excel
+                </button>
+
+                <!-- 当前页面指示器 -->
+                <div class="page-indicator" id="pageIndicator">
+                    <i class="bi bi-file-earmark-check me-2"></i>
+                    当前页：新合同记录
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 数据表格 -->
+    <div class="table-container">
+        <div class="table-header">
+            <i class="bi bi-table me-2"></i>
+            新合同记录数据列表
+        </div>
+        <div class="table-responsive" id="table1">
+            <table id="userTable" class="table table-hover table-custom gradient-table">
+                <!-- 表格内容将通过JavaScript动态生成 -->
+            </table>
+        </div>
+    </div>
+
+    <!-- 退货单模块 -->
+    <div class="border-top mt-4">
+        <div class="d-flex justify-content-between align-items-center" style="background: #f8f9fa;">
+            <h5 class="mb-0">退货单:上方表格内选择数据后点击生成退货单</h5>
+            <div>
+
+                <select id="return-no-select" class="form-control form-control-sm d-inline-block" style="width: 150px; margin-right: 8px;">
+                    <option value="">请选择退货单号</option>
+                    <!-- 动态加载选项 -->
+                </select>
+
+                <button id="sle-row-btn" class="btn btn-success btn-sm">
+                    <i class="bi bi-plus-circle"></i> 查询
+                </button>
+                <button id="add-row-btn" class="btn btn-success btn-sm">
+                    <i class="bi bi-plus-circle"></i> 添加行
+                </button>
+                <button id="remove-row-btn" class="btn btn-danger btn-sm ml-2">
+                    <i class="bi bi-dash-circle"></i> 删除行
+                </button>
+                <button id="generate-btn" class="btn btn-primary btn-sm ml-2">
+                    <i class="bi bi-file-earmark-text"></i> 生成退货单
+                </button>
+                <button id="save-return-btn" class="btn btn-primary btn-sm ml-2">
+                    <i class="bi bi-file-earmark-text"></i> 保存
+                </button>
+                <button id="print-btn" class="btn btn-info btn-sm ml-2">
+                    <i class="bi bi-printer"></i> 打印
+                </button>
+            </div>
+        </div>
+
+        <!-- 退货单表单 -->
+        <div class="border p-3 mb-3" style="background-color: #f8f9fa;">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="form-group row">
+                        <label class="col-sm-4 col-form-label"><strong>退货客户：</strong></label>
+                        <div class="col-sm-8">
+                            <!-- 将input改为select -->
+                            <select class="form-control form-control-sm" id="return-customer">
+                                <option value="">请选择退货客户</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-4 col-form-label"><strong>退货电话：</strong></label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control form-control-sm" id="return-phone">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group row">
+                        <label class="col-sm-4 col-form-label"><strong>退货单号：</strong></label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control form-control-sm" id="return-no" value="202511260001" readonly>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-4 col-form-label"><strong>退货日期：</strong></label>
+                        <div class="col-sm-8">
+                            <input type="date" class="form-control form-control-sm" id="return-date">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 退货明细表格 -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm" id="return-detail-table">
+                <thead class="thead-light">
+                <tr>
+                    <th width="30"><input type="checkbox" id="select-all"></th>
+                    <th width="50">序号</th>
+                    <th width="100">合同号</th>
+                    <th width="100">任务号</th>
+                    <th width="120">产品名称</th>
+                    <th width="120">图号</th>
+                    <th width="60">单位</th>
+                    <th width="60">数量</th>
+                    <th width="80">单价</th>
+                    <th width="80">金额</th>
+                    <th width="80">材质</th>
+                    <th width="80">重量</th>
+                    <th width="100">回厂日期</th>
+                    <th width="120">退货原因</th>
+                    <th width="100">备注</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- 初始一行 -->
+                <tr>
+                    <td><input type="checkbox" class="row-select"></td>
+                    <td>1</td>
+                    <td><input type="text" class="form-control form-control-sm" name="contractNo"  contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="taskNo"  contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="productName"  contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="drawingNo"  contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="unit"  contenteditable="false"></td>
+                    <td><input type="number" class="form-control form-control-sm" name="quantity"  contenteditable="false"></td>
+                    <td><input type="number" class="form-control form-control-sm" name="unitPrice"  contenteditable="false"></td>
+                    <td><input type="number" class="form-control form-control-sm" name="amount" contenteditable="false" ></td>
+                    <td><input type="text" class="form-control form-control-sm" name="material"  contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="weight"  contenteditable="false"></td>
+                    <td><input type="date" class="form-control form-control-sm" name="returnDate"  contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="returnReason"  contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="remark"  contenteditable="false"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 合计金额 -->
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label><strong>合计金额(大写)：</strong></label>
+                    <span id="total-amount-chinese">零元整</span>
+                </div>
+            </div>
+            <div class="col-md-6 text-right">
+                <div class="form-group">
+                    <label><strong>合计金额：</strong></label>
+                    <span id="total-amount">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部信息 -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label><strong>地址：</strong></label>
+                    <input type="text" class="form-control form-control-sm" id="company-address">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label><strong>电话：</strong></label>
+                    <input type="text" class="form-control form-control-sm" id="company-phone">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label><strong>客户签字：</strong></label>
+                    <input type="text" class="form-control form-control-sm" id="customer-signature">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- 新增合同模态框 -->
+<div class="modal fade" id="add-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    新增合同记录
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="add-form" class="needs-validation">
+                    <div class="row justify-content-evenly">
+                        <!-- 业务单位 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-c" class="form-label-custom">业务单位</label>
+                                <input id="add-c" name="c" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 合同号 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-d" class="form-label-custom">合同号</label>
+                                <input id="add-d" name="d" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 任务号 -->
+                        <div class="col-6">
+                            <div class="form-group" >
+                                <label for="add-e" class="form-label-custom">任务号</label>
+                                <input id="add-e" name="e" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 登记日期 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-dengjiriqi" class="form-label-custom">登记日期</label>
+                                <input id="add-dengjiriqi" name="dengjiriqi" type="date" class="form-control form-control-custom" value="" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 名称 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-h" class="form-label-custom">名称</label>
+                                <input id="add-h" name="h" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 工艺规程状态 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-zhuangtai" class="form-label-custom">工艺规程状态</label>
+                                <input id="add-zhuangtai" name="zhuangtai" type="text" class="form-control form-control-custom" value="未创建" readonly autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 规格型号 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-i" class="form-label-custom">规格型号</label>
+                                <input id="add-i" name="i" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 单位 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-j" class="form-label-custom">单位</label>
+                                <input id="add-j" name="j" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 数量 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-k" class="form-label-custom">数量</label>
+                                <input id="add-k" name="k" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 单价 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-m" class="form-label-custom">单价</label>
+                                <input id="add-m" name="m" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 金额 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-n" class="form-label-custom">金额</label>
+                                <input id="add-n" name="n" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 材质 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-l" class="form-label-custom">材质</label>
+                                <input id="add-l" name="l" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 重量 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-aw" class="form-label-custom">重量</label>
+                                <input id="add-aw" name="aw" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 零件尺寸 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-ax" class="form-label-custom">零件尺寸</label>
+                                <input id="add-ax" name="ax" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 订单实际交货日期 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-shijijiaohuoriqi" class="form-label-custom">订单实际交货日期</label>
+                                <input id="add-shijijiaohuoriqi" name="shijijiaohuoriqi" type="date" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 订单要求交货日期 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-ay" class="form-label-custom">订单要求交货日期</label>
+                                <input id="add-ay" name="ay" type="date" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 备注 -->
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="add-at" class="form-label-custom">备注</label>
+                                <textarea id="add-at" name="at" class="form-control form-control-custom" rows="3" autocomplete="off"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="add-submit-btn" type="button" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-2"></i>
+                    提交
+                </button>
+                <button id="add-close-btn" type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="delete-modal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">提示</div>
+            </div>
+            <div id="delete-modal-body" class="modal-body">
+                确定删除吗？
+            </div>
+            <div class="border-top" style="padding: 15px;">
+                <button id="delete-submit-btn" type="button" class="btn">
+                    <i class="bi bi-arrow-bar-up icon"></i>
+                    确定
+                </button>
+                <button id="delete-close-btn" type="button" class="btn left-margin">
+                    <i class="bi bi-x-circle icon"></i>
+                    取消
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 导出模态框 -->
+<div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">导出设置</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="export-form">
+                    <div class="form-group">
+                        <label for="export-filename">文件名</label>
+                        <input type="text" class="form-control" id="export-filename" value="合同记录" placeholder="请输入文件名">
+                        <small class="form-text text-muted">文件将保存到桌面，扩展名自动添加 .xlsx</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="export-date-format">日期格式</label>
+                        <select class="form-control" id="export-date-format">
+                            <option value="YYYYMMDD">年月日 (20231201)</option>
+                            <option value="YYYY-MM-DD">年-月-日 (2023-12-01)</option>
+                            <option value="YYYY年MM月DD日">年月日中文 (2023年12月01日)</option>
+                            <option value="none">不添加日期</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirm-export-btn">开始导出</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 简化版导入模态框 -->
+<div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-upload me-2"></i>
+                    导入Excel文件
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <!-- 简单文件选择 -->
+                    <div class="mb-4">
+                        <label class="btn btn-primary btn-lg" for="simpleExcelFile">
+                            <i class="bi bi-folder-plus me-2"></i>
+                            选择Excel文件
+                        </label>
+                        <input type="file" class="d-none" id="simpleExcelFile" accept=".xlsx,.xls">
+                    </div>
+
+                    <!-- 文件信息显示 -->
+                    <div id="fileInfo" class="mb-3" style="display: none;">
+                        <div class="alert alert-info">
+                            <i class="bi bi-file-earmark-excel me-2"></i>
+                            <strong>已选择文件：</strong>
+                            <span id="fileName"></span>
+                            <br>
+                            <small>大小：<span id="fileSize"></span></small>
+                        </div>
+                    </div>
+
+                    <!-- 简单说明 -->
+                    <div class="text-muted small">
+                        <p>支持 .xlsx 和 .xls 格式</p>
+                        <p>数据将按照预定义字段映射导入</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="simpleImportBtn" disabled>
+                    <i class="bi bi-cloud-upload me-2"></i>
+                    开始导入
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 使用说明弹窗 -->
+<div class="modal fade" id="instructionsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-info-circle me-2"></i>
+                    合同记录使用说明
+                </h5>
+            </div>
+            <div class="modal-body">
+                <h6><i class="bi bi-1-circle me-2"></i>基本操作</h6>
+                <ul>
+                    <li>点击对应列表单元格可以直接修改信息，修改后数据自动保存</li>
+                    <li>点击新增按钮可以录入新信息</li>
+                    <li>单击对应行，变成浅蓝色为选中状态，点击删除可执行删除操作</li>
+                    <li>在有选中行的情况下，点击下方生成退货单按钮可以获取对应信息生成退货单</li>
+                </ul>
+
+                <h6><i class="bi bi-2-circle me-2"></i>注意事项</h6>
+                <ul>
+                    <li>在新增内容时对账状态一般情况下不需要操作，采取默认值就可以</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+    // 更新时间显示
+    function updateTime() {
+        const now = new Date();
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        document.getElementById('now_time').textContent = now.toLocaleDateString('zh-CN', options);
+    }
+
+    // 初始更新时间并设置定时器
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    $(document).ready(function() {
+        // 点击页面指示器显示使用说明弹窗
+        $('#pageIndicator').on('click', function() {
+            $('#instructionsModal').modal('show');
+        });
+
+        // 已阅读按钮点击事件
+        $('#confirmReadBtn').on('click', function() {
+            $('#instructionsModal').modal('hide');
+            localStorage.setItem('workReportInstructionsRead', 'true');
+            console.log('用户已确认阅读使用说明');
+        });
+    });
+
+</script>
+</html>
+
+

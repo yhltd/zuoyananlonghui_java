@@ -17,94 +17,12 @@ import java.util.Map;
 @Repository
 public interface HtjlMapper extends BaseMapper<Htjl> {
 
-//    @Select({
-//            "<script>",
-//            "WITH guicheng_stats AS (",
-//            "    SELECT ",
-//            "        C as left_id, ",
-//            "        COUNT(CASE WHEN ISNULL(K, '') != '' THEN 1 END) as renwu_count, ",
-//            "        COUNT(CASE WHEN ISNULL(M, '') != '' THEN 1 END) as renyuan_count ",
-//            "    FROM gongyi_guicheng ",
-//            "    WHERE C IS NOT NULL ",
-//            "    GROUP BY C ",
-//            "), ",
-//            "filtered_hetong AS (",
-//            "    SELECT * FROM hetong_jilu hj ",
-//            "    WHERE ISNULL(hj.hetong_zhuangtai, '') = '' ",
-//            "      AND NOT EXISTS (",
-//            "          SELECT 1 FROM tuihuo tb WITH(NOLOCK) ",
-//            "          WHERE tb.v = hj.id ",
-//            "      )",
-//            ") ",
-//            "SELECT ",
-//            "    hj.id, ",
-//            "    ISNULL(hj.C, '') as c, ",
-//            "    ISNULL(hj.D, '') as d, ",
-//            "    ISNULL(hj.E, '') as e, ",
-//            "    ISNULL(CASE ",
-//            "        WHEN gs.renwu_count > gs.renyuan_count THEN '未完成' ",
-//            "        WHEN gs.renwu_count IS NULL THEN '未创建' ",
-//            "        ELSE '已完成' ",
-//            "    END, '未创建') as zhuangtai, ",
-//            "    ISNULL(hj.G, '') as g, ",
-//            "    ISNULL(hj.H, '') as h, ",
-//            "    ISNULL(hj.I, '') as i, ",
-//            "    ISNULL(hj.J, '') as j, ",
-//            "    ISNULL(hj.K, '') as k, ",
-//            "    ISNULL(hj.L, '') as l, ",
-//            "    ISNULL(hj.AU, '') as au, ",
-//            "    ISNULL(hj.AV, '') as av, ",
-//            "    ISNULL(hj.AW, '') as aw, ",
-//            "    ISNULL(hj.AX, '') as ax, ",
-//            "    ISNULL(hj.M, '') as m, ",
-//            "    ISNULL(hj.N, '') as n, ",
-//            "    ISNULL(hj.O, '') as o, ",
-//            "    ISNULL(hj.P, '') as p, ",
-//            "    ISNULL(hj.Q, '') as q, ",
-//            "    ISNULL(hj.R, '') as r, ",
-//            "    ISNULL(hj.S, '') as s, ",
-//            "    ISNULL(hj.T, '') as t, ",
-//            "    ISNULL(hj.U, '') as u, ",
-//            "    ISNULL(hj.V, '') as v, ",
-//            "    ISNULL(hj.W, '') as w, ",
-//            "    ISNULL(hj.X, '') as x, ",
-//            "    ISNULL(hj.Y, '') as y, ",
-//            "    ISNULL(hj.Z, '') as z, ",
-//            "    ISNULL(hj.[AA], '') as aa, ",
-//            "    ISNULL(hj.[AB], '') as ab, ",
-//            "    ISNULL(hj.[AC], '') as ac, ",
-//            "    ISNULL(hj.[AD], '') as ad, ",
-//            "    ISNULL(hj.[AE], '') as ae, ",
-//            "    ISNULL(hj.[AF], '') as af, ",
-//            "    ISNULL(hj.[AG], '') as ag, ",
-//            "    ISNULL(hj.[AH], '') as ah, ",
-//            "    ISNULL(hj.[AI], '') as ai, ",
-//            "    ISNULL(hj.[AJ], '') as aj, ",
-//            "    ISNULL(hj.[AK], '') as ak, ",
-//            "    ISNULL(hj.[AL], '') as al, ",
-//            "    ISNULL(hj.[AM], '') as am, ",
-//            "    ISNULL(hj.[AN], '') as an, ",
-//            "    ISNULL(hj.[AO], '') as ao, ",
-//            "    ISNULL(hj.[AP], '') as ap, ",
-//            "    ISNULL(hj.[AY], '') as ay, ",
-//            "    ISNULL(hj.[AQ], '') as aq, ",
-//            "    ISNULL(hj.[AR], '') as ar, ",
-//            "    ISNULL(hj.[AS], '') as aas, ",
-//            "    ISNULL(hj.[AT], '') as at, ",
-//            "    ISNULL(hj.hetong_zhuangtai, '') as hetongzhuangtai, ",
-//            "    ISNULL(hj.riqi, '') as riqi ",
-//            "FROM filtered_hetong hj ",
-//            "LEFT JOIN guicheng_stats gs ON hj.id = gs.left_id ",
-//            "OPTION (RECOMPILE)",
-//            "</script>"
-//    })
-//    List<Htjl> getListExcludeThjl();
-
     @Select({
             "<script>",
             "WITH filtered_hetong AS (",
             "    SELECT * FROM hetong_jilu hj ",
             "    WHERE ISNULL(hj.hetong_zhuangtai, '') = '' ",
+            "    AND ISNULL(hj.muban, '') != '新' ",
             "      AND NOT EXISTS (",
             "          SELECT 1 FROM tuihuo tb WITH(NOLOCK) ",
             "          WHERE tb.v = hj.id ",
@@ -162,8 +80,24 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "    ISNULL(hj.[AS], '') as aas, ",
             "    ISNULL(hj.[AT], '') as at, ",
             "    ISNULL(hj.hetong_zhuangtai, '') as hetongzhuangtai, ",
-            "    ISNULL(hj.riqi, '') as riqi ",
-            "FROM filtered_hetong hj ",
+            "    ISNULL(hj.lingjianhao, '') as lingjianhao, ",
+            "    ISNULL(hj.qianshiji, '') as qianshiji, ",
+            "    ISNULL(hj.tangshiji, '') as tangshiji, ",
+            "    ISNULL(hj.geshiji, '') as geshiji, ",
+            "    ISNULL(hj.moshiji, '') as moshiji, ",
+            "    ISNULL(hj.licheshiji, '') as licheshiji, ",
+            "    ISNULL(hj.dianhuohuashiji, '') as dianhuohuashiji, ",
+            "    ISNULL(hj.zhongzuosishiji, '') as zhongzuosishiji, ",
+            "    ISNULL(hj.jingmixianqiege, '') as jingmixianqiege, ",
+            "    ISNULL(hj.hanjiegongshi, '') as hanjiegongshi, ",
+            "    ISNULL(hj.dengjiriqi, '') as dengjiriqi, ",
+            "    ISNULL(hj.shijijiaohuoriqi, '') as shijijiaohuoriqi, ",
+            "    ISNULL(hj.xianshiji, '') as xianshiji, ",  // 新增
+            "    ISNULL(hj.cheshiji, '') as cheshiji, ",    // 新增
+            "    ISNULL(hj.skxshiji, '') as skxshiji, ",    // 新增
+            "    ISNULL(hj.riqi, '') as riqi, ",            // 注意：这里有个问题，缺了逗号
+            "    ISNULL(hj.muban, '') as muban " +          // 新增muban字段
+                    "FROM filtered_hetong hj ",
             "OPTION (RECOMPILE)",
             "</script>"
     })
@@ -175,6 +109,7 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "WITH filtered_hetong AS (" +
             "    SELECT * FROM hetong_jilu hj " +
             "    WHERE ISNULL(hj.hetong_zhuangtai, '') = '' " +
+            "    AND ISNULL(hj.muban, '') != '新' " +
             "      AND NOT EXISTS (" +
             "          SELECT 1 FROM tuihuo tb WITH(NOLOCK) " +
             "          WHERE tb.v = hj.id " +
@@ -238,11 +173,27 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "           ISNULL(hj.[AS], '') as aas, " +
             "           ISNULL(hj.[AT], '') as at, " +
             "           ISNULL(hj.hetong_zhuangtai, '') as hetongzhuangtai, " +
-            "           ISNULL(hj.riqi, '') as riqi " +
+            "           ISNULL(hj.lingjianhao, '') as lingjianhao, " +
+            "           ISNULL(hj.qianshiji, '') as qianshiji, " +
+            "           ISNULL(hj.tangshiji, '') as tangshiji, " +
+            "           ISNULL(hj.geshiji, '') as geshiji, " +
+            "           ISNULL(hj.moshiji, '') as moshiji, " +
+            "           ISNULL(hj.licheshiji, '') as licheshiji, " +
+            "           ISNULL(hj.dianhuohuashiji, '') as dianhuohuashiji, " +
+            "           ISNULL(hj.zhongzuosishiji, '') as zhongzuosishiji, " +
+            "           ISNULL(hj.jingmixianqiege, '') as jingmixianqiege, " +
+            "           ISNULL(hj.hanjiegongshi, '') as hanjiegongshi, " +
+            "           ISNULL(hj.dengjiriqi, '') as dengjiriqi, " +
+            "           ISNULL(hj.shijijiaohuoriqi, '') as shijijiaohuoriqi, " +
+            "           ISNULL(hj.xianshiji, '') as xianshiji, " +        // 新增
+            "           ISNULL(hj.cheshiji, '') as cheshiji, " +          // 新增
+            "           ISNULL(hj.skxshiji, '') as skxshiji, " +          // 新增
+            "           ISNULL(hj.riqi, '') as riqi, " +                  // 修正：添加逗号
+            "           ISNULL(hj.muban, '') as muban " +                 // 新增muban字段
             "    FROM filtered_hetong hj " +
             ") temp " +
             "WHERE temp.rn BETWEEN #{start} + 1 AND #{start} + #{end} " +
-            "OPTION (RECOMPILE)" +  // 注意：前面有空格，没有分号
+            "OPTION (RECOMPILE)" +
             "</script>")
     List<Map<String, Object>> selectDistinctByDdhForPage(@Param("start") long start,
                                                          @Param("end") long end,
@@ -272,15 +223,25 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "s = #{s}, t = #{t}, u = #{u}, v = #{v}, w = #{w}, x = #{x}, y = #{y}, z = #{z}, " +
             "[aa] = #{aa}, [ab] = #{ab}, [ac] = #{ac}, [ad] = #{ad}, [ae] = #{ae}, [af] = #{af}, [ag] = #{ag}, " +
             "[ah] = #{ah}, [ai] = #{ai}, [aj] = #{aj}, [ak] = #{ak}, [al] = #{al}, [am] = #{am}, [an] = #{an}, " +
-            "[ao] = #{ao}, [ap] = #{ap}, [aq] = #{aq}, [ar] = #{ar}, [as] = #{as}, [at] = #{at}, [au] = #{au}, " +
-            "[av] = #{av}, [aw] = #{aw}, [ax] = #{ax} " +
+            "[ao] = #{ao}, [ap] = #{ap}, [aq] = #{aq}, [ar] = #{ar}, [as] = #{aas}, [at] = #{at}, [au] = #{au}, " +
+            "[av] = #{av}, [aw] = #{aw}, [ax] = #{ax}, [ay] = #{ay}, " +
+            "hetong_zhuangtai = #{hetongzhuangtai}, " +
+            "lingjianhao = #{lingjianhao}, qianshiji = #{qianshiji}, tangshiji = #{tangshiji}, " +
+            "geshiji = #{geshiji}, moshiji = #{moshiji}, licheshiji = #{licheshiji}, " +
+            "dianhuohuashiji = #{dianhuohuashiji}, zhongzuosishiji = #{zhongzuosishiji}, " +
+            "jingmixianqiege = #{jingmixianqiege}, hanjiegongshi = #{hanjiegongshi}, " +
+            "dengjiriqi = #{dengjiriqi}, shijijiaohuoriqi = #{shijijiaohuoriqi}, " +
+            "xianshiji = #{xianshiji}, cheshiji = #{cheshiji}, skxshiji = #{skxshiji}, " +  // 新增三个字段
+            "riqi = #{riqi}, muban = #{muban} " +  // 新增muban字段
             "WHERE id = #{id}")
     boolean update(Htjl htjl);
 
 
 
-    @Insert("INSERT INTO hetong_jilu (c, d, e, hetong_zhuangtai, zhuangtai, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, [aa], [ab], [ac], [ad], [ae], [af], [ag], [ah], [ai], [aj], [ak], [al], [am], [an], [ao], [ap], [aq], [ar], [as], [at], [au], [av], [aw], [ax], [ay]) " +
-            "VALUES (#{c}, #{d}, #{e}, #{hetongzhuangtai}, '未创建', #{g}, #{h}, #{i}, #{j}, #{k}, #{l}, #{m}, #{n}, #{o}, #{p}, #{q}, #{r}, #{s}, #{t}, #{u}, #{v}, #{w}, #{x}, #{y}, #{z}, #{aa}, #{ab}, #{ac}, #{ad}, #{ae}, #{af}, #{ag}, #{ah}, #{ai}, #{aj}, #{ak}, #{al}, #{am}, #{an}, #{ao}, #{ap}, #{aq}, #{ar}, #{aas}, #{at}, #{au}, #{av}, #{aw}, #{ax}, #{ay})")
+    @Insert("INSERT INTO hetong_jilu (c, d, e, hetong_zhuangtai, zhuangtai, muban, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, [aa], [ab], [ac], [ad], [ae], [af], [ag], [ah], [ai], [aj], [ak], [al], [am], [an], [ao], [ap], [aq], [ar], [as], [at], [au], [av], [aw], [ax], [ay], " +
+            "lingjianhao, qianshiji, tangshiji, geshiji, moshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, xianshiji, cheshiji, skxshiji, riqi) " +  // 新增三个字段
+            "VALUES (#{c}, #{d}, #{e}, #{hetongzhuangtai}, '未创建', '', #{g}, #{h}, #{i}, #{j}, #{k}, #{l}, #{m}, #{n}, #{o}, #{p}, #{q}, #{r}, #{s}, #{t}, #{u}, #{v}, #{w}, #{x}, #{y}, #{z}, #{aa}, #{ab}, #{ac}, #{ad}, #{ae}, #{af}, #{ag}, #{ah}, #{ai}, #{aj}, #{ak}, #{al}, #{am}, #{an}, #{ao}, #{ap}, #{aq}, #{ar}, #{aas}, #{at}, #{au}, #{av}, #{aw}, #{ax}, #{ay}, " +
+            "#{lingjianhao}, #{qianshiji}, #{tangshiji}, #{geshiji}, #{moshiji}, #{licheshiji}, #{dianhuohuashiji}, #{zhongzuosishiji}, #{jingmixianqiege}, #{hanjiegongshi}, #{dengjiriqi}, #{shijijiaohuoriqi}, #{xianshiji}, #{cheshiji}, #{skxshiji}, #{riqi})")  // 新增三个字段
     boolean add(Htjl htjl);
 
     @Delete("delete from hetong_jilu where id=#{id}")
@@ -341,8 +302,24 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "    ISNULL(hj.[AS], '') as aas, ",
             "    ISNULL(hj.[AT], '') as at, ",
             "    ISNULL(hj.hetong_zhuangtai, '') as hetongzhuangtai, ",
-            "    ISNULL(hj.riqi, '') as riqi ",
-            "FROM hetong_jilu hj ",
+            "    ISNULL(hj.lingjianhao, '') as lingjianhao, ",
+            "    ISNULL(hj.qianshiji, '') as qianshiji, ",
+            "    ISNULL(hj.tangshiji, '') as tangshiji, ",
+            "    ISNULL(hj.geshiji, '') as geshiji, ",
+            "    ISNULL(hj.moshiji, '') as moshiji, ",
+            "    ISNULL(hj.licheshiji, '') as licheshiji, ",
+            "    ISNULL(hj.dianhuohuashiji, '') as dianhuohuashiji, ",
+            "    ISNULL(hj.zhongzuosishiji, '') as zhongzuosishiji, ",
+            "    ISNULL(hj.jingmixianqiege, '') as jingmixianqiege, ",
+            "    ISNULL(hj.hanjiegongshi, '') as hanjiegongshi, ",
+            "    ISNULL(hj.dengjiriqi, '') as dengjiriqi, ",
+            "    ISNULL(hj.shijijiaohuoriqi, '') as shijijiaohuoriqi, ",
+            "    ISNULL(hj.xianshiji, '') as xianshiji, ",  // 新增
+            "    ISNULL(hj.cheshiji, '') as cheshiji, ",    // 新增
+            "    ISNULL(hj.skxshiji, '') as skxshiji, ",    // 新增
+            "    ISNULL(hj.riqi, '') as riqi, ",            // 修正：添加逗号
+            "    ISNULL(hj.muban, '') as muban " +          // 新增muban字段
+                    "FROM hetong_jilu hj ",
             "LEFT JOIN (",
             "    SELECT ",
             "        C as left_id, ",
@@ -375,35 +352,51 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
 
 
 
-//    退货单
-@Insert("INSERT INTO tuihuo (C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W) " +
-        "VALUES (#{c}, #{d}, #{e}, #{f}, #{g}, #{h}, #{i}, #{j}, #{k}, #{l}, #{m}, #{n}, " +
-        "#{o}, #{p}, #{q}, #{r}, #{s}, #{t}, #{u}, #{v}, #{w})")
-boolean save(Htjl htjl);
+    //    退货单
+    @Insert("INSERT INTO tuihuo (C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W) " +
+            "VALUES (#{c}, #{d}, #{e}, #{f}, #{g}, #{h}, #{i}, #{j}, #{k}, #{l}, #{m}, #{n}, " +
+            "#{o}, #{p}, #{q}, #{r}, #{s}, #{t}, #{u}, #{v}, #{w})")
+    boolean save(Htjl htjl);
+
     @Select("select isnull(max(F),'') from tuihuo where F like 'No:' + CONVERT(varchar(8), GETDATE(), 112) + '%'")
     String  getddh();
 
 
 
 
-//    出库单
+    //    出库单
     @Insert("INSERT INTO chuku (C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U) " +
             "VALUES (#{c}, #{d}, #{e}, #{f}, #{g}, #{h}, #{i}, #{j}, #{k}, #{l}, #{m}, #{n}, " +
             "#{o}, #{p}, #{q}, #{r}, #{s}, #{t}, #{u})")
     boolean save1(Htjl htjl);
+
     @Select("select isnull(max(F),'') from chuku where F like 'No:' + CONVERT(varchar(8), GETDATE(), 112) + '%'")
     String  getddh1();
 
 
 
-    @Select("SELECT * FROM hetong_jilu WHERE id = #{id}")
+    @Select("SELECT " +
+            "    id, c, d, e, zhuangtai, g, h, i, j, k, l, au, av, aw, ax, m, n, o, p, q, r, " +
+            "    s, t, u, v, w, x, y, z, [aa], [ab], [ac], [ad], [ae], [af], [ag], [ah], [ai], " +
+            "    [aj], [ak], [al], [am], [an], [ao], [ap], [ay], [aq], [ar], [as], [at], " +
+            "    hetong_zhuangtai, lingjianhao, qianshiji, tangshiji, geshiji, moshiji, " +
+            "    licheshiji, dianhuohuashiji, zhongzuosishiji, jingmixianqiege, hanjiegongshi, " +
+            "    dengjiriqi, shijijiaohuoriqi, xianshiji, cheshiji, skxshiji, riqi, muban " +  // 新增三个字段和muban
+            "FROM hetong_jilu WHERE id = #{id}")
     Htjl getById(String id);
 
 
 
     @Select({
             "<script>",
-            "SELECT * FROM hetong_jilu WHERE id IN",
+            "SELECT ",
+            "    id, c, d, e, zhuangtai, g, h, i, j, k, l, au, av, aw, ax, m, n, o, p, q, r, ",
+            "    s, t, u, v, w, x, y, z, [aa], [ab], [ac], [ad], [ae], [af], [ag], [ah], [ai], ",
+            "    [aj], [ak], [al], [am], [an], [ao], [ap], [ay], [aq], [ar], [as], [at], ",
+            "    hetong_zhuangtai, lingjianhao, qianshiji, tangshiji, geshiji, moshiji, ",
+            "    licheshiji, dianhuohuashiji, zhongzuosishiji, jingmixianqiege, hanjiegongshi, ",
+            "    dengjiriqi, shijijiaohuoriqi, xianshiji, cheshiji, skxshiji, riqi, muban ",  // 新增三个字段和muban
+            "FROM hetong_jilu WHERE id IN",
             "<foreach collection='ids' item='id' open='(' separator=',' close=')'>",
             "#{id}",
             "</foreach>",
@@ -464,6 +457,23 @@ boolean save(Htjl htjl);
             "<if test='params.ax != null'>[ax] = #{params.ax},</if>" +
             "<if test='params.ay != null'>[ay] = #{params.ay},</if>" +
             "<if test='params.hetong_zhuangtai != null'>hetong_zhuangtai = #{params.hetong_zhuangtai},</if>" +
+            "<if test='params.lingjianhao != null'>lingjianhao = #{params.lingjianhao},</if>" +
+            "<if test='params.qianshiji != null'>qianshiji = #{params.qianshiji},</if>" +
+            "<if test='params.tangshiji != null'>tangshiji = #{params.tangshiji},</if>" +
+            "<if test='params.geshiji != null'>geshiji = #{params.geshiji},</if>" +
+            "<if test='params.moshiji != null'>moshiji = #{params.moshiji},</if>" +
+            "<if test='params.licheshiji != null'>licheshiji = #{params.licheshiji},</if>" +
+            "<if test='params.dianhuohuashiji != null'>dianhuohuashiji = #{params.dianhuohuashiji},</if>" +
+            "<if test='params.zhongzuosishiji != null'>zhongzuosishiji = #{params.zhongzuosishiji},</if>" +
+            "<if test='params.jingmixianqiege != null'>jingmixianqiege = #{params.jingmixianqiege},</if>" +
+            "<if test='params.hanjiegongshi != null'>hanjiegongshi = #{params.hanjiegongshi},</if>" +
+            "<if test='params.dengjiriqi != null'>dengjiriqi = #{params.dengjiriqi},</if>" +
+            "<if test='params.shijijiaohuoriqi != null'>shijijiaohuoriqi = #{params.shijijiaohuoriqi},</if>" +
+            "<if test='params.xianshiji != null'>xianshiji = #{params.xianshiji},</if>" +        // 新增
+            "<if test='params.cheshiji != null'>cheshiji = #{params.cheshiji},</if>" +          // 新增
+            "<if test='params.skxshiji != null'>skxshiji = #{params.skxshiji},</if>" +          // 新增
+            "<if test='params.muban != null'>muban = #{params.muban},</if>" +                   // 新增
+            "<if test='params.riqi != null'>riqi = #{params.riqi},</if>" +
             "</set>" +
             "WHERE id = #{id}" +
             "</script>")
@@ -509,6 +519,7 @@ boolean save(Htjl htjl);
             "    ISNULL(c, '') as c " +
             "FROM hetong_jilu hj " +
             "WHERE ISNULL(hj.hetong_zhuangtai, '') = '' " +
+            "  AND ISNULL(hj.muban, '') != '新' " +
             "  AND ISNULL(c, '') != '' " +
             "ORDER BY c " +
             "</script>")

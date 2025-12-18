@@ -4,26 +4,29 @@ var pageSize = 20;
 var totalCount = 0;
 var totalPages = 0;
 
-function getList(page) {
+function getList(page, options = {}) {
     // 如果有传入页码参数，更新当前页码
     if (page) {
         currentPage = page;
     }
+
+    console.log('=== getList 开始 ===');
+    console.log('当前页码:', currentPage);
+    console.log('页面大小:', pageSize);
+    console.log('查询条件:', {
+        name: $('#name').val(),
+        hetongZhuangtai: $('#hetongZhuangtai').val(),
+        hetongHao: $('#hetongHao').val(),
+        renwuHao: $('#renwuHao').val()
+    });
+
+
 
     // 获取查询条件
     var name = $('#name').val() || '';
     var hetongZhuangtai = $('#hetongZhuangtai').val() || '';
     var hetongHao = $('#hetongHao').val() || '';
     var renwuHao = $('#renwuHao').val() || '';
-
-    console.log('查询条件:', {
-        pageNum: currentPage,
-        pageSize: pageSize,
-        name: name,
-        hetongZhuangtai: hetongZhuangtai,
-        hetongHao: hetongHao,
-        renwuHao: renwuHao
-    });
 
     // 构建查询参数
     var params = {
@@ -54,8 +57,7 @@ function getList(page) {
                 totalCount = res.data.total || 0;
                 totalPages = res.data.totalPages || res.data.pages || 1;
 
-                // 使用简单表格渲染，避免 bootstrap-table 的分页问题
-                setTableSimple(data);
+                setTable(data);
                 updatePagination();
 
                 // ============= 新增：重新初始化拖动 =============
@@ -74,10 +76,8 @@ function getList(page) {
                     });
                 }
 
-                if (data && data.length > 0) {
                     let maxId = Math.max(...data.map(item => item.id));
                     idd = maxId;
-                }
 
                 // 如果有查询条件，显示查询结果提示
                 if (name || hetongZhuangtai || hetongHao || renwuHao) {
@@ -92,36 +92,49 @@ function getList(page) {
 }
 
 function getSelectedRows() {
-    var selectedRows = [];
-    $('#userTable tbody tr.selected').each(function() {
-        var rowId = $(this).data('id');
-        var rowData = {
-            id: rowId,
-            data: {} // 如果需要其他数据，可以在这里添加
-        };
-        // 如果需要获取其他单元格数据，可以遍历 td
-        $(this).find('td').each(function(index) {
-            // 跳过第一个复选框列
-            if (index > 0) {
-                var $th = $('#userTable thead th').eq(index);
-                var field = $th.data('field') || getFieldFromHeaderText($th.text());
-                if (field) {
-                    rowData.data[field] = $(this).text().trim();
-                }
-            }
-        });
-        selectedRows.push(rowData);
-    });
-    return selectedRows;
+    // 使用bootstrap-table的getSelections方法获取选中行
+    return $('#userTable').bootstrapTable('getSelections') || [];
 }
 
 $(function () {
+    // 初始化页面加载
     getList();
 
+    // 重置所有状态
+    currentPage = 1;
+    pageSize = 20;
+    totalCount = 0;
+    totalPages = 0;
+
+    // 清理可能存在的残留
+    try {
+        if ($('#userTable').hasClass('bootstrap-table')) {
+            $('#userTable').bootstrapTable('destroy');
+        }
+    } catch (e) {
+        console.log('清理表格:', e.message);
+    }
+
+    // 移除所有事件绑定，避免重复绑定
+    $('#select-btn').off('click');
+    $('#clear-btn').off('click');
+    $('#refresh-btn').off('click');
+    $('#delete-btn').off('click');
+    $('#export-btn').off('click');
+
     //条件查询
+    // 条件查询 - 修复版本
     $('#select-btn').click(function () {
-        currentPage = 1; // 重置到第一页
-        getList(currentPage);
+        console.log('查询按钮被点击');
+
+        // 重置到第一页
+        currentPage = 1;
+
+
+        // 立即重新加载数据
+        getList(); // 已经显示加载状态，不再重复显示
+
+        console.log('开始查询，页码重置为:', currentPage);
     });
 
     // 清空按钮
@@ -131,7 +144,7 @@ $(function () {
         $('#hetongHao').val('');
         $('#renwuHao').val('');
         currentPage = 1;
-        getList(currentPage);
+        getList();
     });
 
     //刷新
@@ -141,7 +154,7 @@ $(function () {
         $('#hetongZhuangtai').val('');
         $('#hetongHao').val('');
         $('#renwuHao').val('');
-        getList(currentPage);
+        getList();
         swal("刷新成功", "已显示所有数据", "success");
     });
 
@@ -176,189 +189,799 @@ $(function () {
         exportToExcel(filename);
     });
 
-    //点击删除按钮
+    // 点击删除按钮 - 修复版本
     $('#delete-btn').click(function () {
-        var msg = confirm("确认要删除吗？");
+        console.log('删除按钮被点击');
+
+        var msg = confirm("确认要删除选中的数据吗？");
         if (msg) {
-            let selectedRows = getSelectedRows(); // 使用新的选择函数
+            let selectedRows = getSelectedRows();
+            console.log('选中的行:', selectedRows);
+
             if (selectedRows.length == 0) {
                 swal('请选择要删除的数据！');
                 return;
             }
+
             let idList = [];
             $.each(selectedRows, function (index, row) {
-                idList.push(row.id)
+                idList.push(row.id);
             });
-            $ajax({
+
+            console.log('要删除的ID列表:', idList);
+
+            // 显示删除确认和加载提示
+            swal({
+                title: "正在删除...",
+                text: "请稍候",
+                icon: "info",
+                buttons: false,
+                closeOnClickOutside: false,
+                closeOnEsc: false
+            });
+
+            // 使用统一的ajax请求
+            $.ajax({
                 type: 'post',
                 url: '/ywc/delete',
                 data: JSON.stringify({
                     idList: idList
                 }),
                 dataType: 'json',
-                contentType: 'application/json;charset=utf-8'
-            }, false, '', function (res) {
-                if (res.code == 200) {
-                    swal("", res.msg, "success");
-                    getList(currentPage);
-                } else if(res.code == 403) {
-                    swal("删除失败,权限不足,管理员权限可以删除");
-                } else {
-                    swal("", res.msg, "error");
+                contentType: 'application/json;charset=utf-8',
+                success: function (res) {
+                    console.log('删除响应:', res);
+
+                    if (res.code == 200) {
+                        // 关闭删除确认弹窗
+                        swal.close();
+
+                        // 显示成功消息
+                        swal({
+                            title: "删除成功！",
+                            text: res.msg,
+                            icon: "success",
+                            timer: 1500,
+                            buttons: false
+                        });
+
+                        // 立即重新加载数据
+                        console.log('删除成功，重新加载数据...');
+                        getList();
+
+                    } else if(res.code == 403) {
+                        swal("删除失败", "权限不足，管理员权限可以删除", "error");
+                    } else {
+                        swal("删除失败", res.msg || "删除操作失败", "error");
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('删除请求失败:', error);
+                    swal("删除失败", "网络错误，请检查连接", "error");
                 }
-            })
+            });
         }
-    })
-    // ============= 新增：页面加载后初始化拖动 =============
+    });
+
     // 延迟初始化，等待表格完全加载
     setTimeout(function() {
         initTableDragScroll();
     }, 1000);
-    // ==================================================
 });
 
-// 单元格编辑功能 - 修改为简单表格版本
+function setTableWithBootstrapTable(data) {
+    console.log('setTableWithBootstrapTable 被调用，数据长度:', data ? data.length : 0);
+
+    var $table = $('#userTable');
+    if (!$table.length) {
+        console.error('表格元素 #userTable 不存在');
+        return;
+    }
+
+    // 如果表格已经初始化，则更新数据
+    if ($table.hasClass('bootstrap-table')) {
+        console.log('表格已初始化，使用 load 方法更新数据');
+
+        // 确保表格存在且已初始化
+        try {
+            $table.bootstrapTable('load', data);
+            $table.bootstrapTable('resetView');
+
+            console.log('表格数据更新完成');
+        } catch (error) {
+            console.error('更新表格失败，尝试重新初始化:', error);
+
+            // 如果更新失败，销毁并重新初始化
+            $table.bootstrapTable('destroy');
+            initializeBootstrapTable(data);
+        }
+    } else {
+        console.log('表格未初始化，创建新表格');
+        initializeBootstrapTable(data);
+    }
+}
+
+// 独立的表格初始化函数
+function initializeBootstrapTable(data) {
+    var $table = $('#userTable');
+
+    // 初始化bootstrap-table
+    $table.bootstrapTable({
+        data: data,
+        sortStable: true,
+        classes: 'table table-hover table-bordered table-custom',
+        idField: 'id',
+        pagination: false,
+        clickToSelect: false,
+        height: 400,
+        fixedHeader: true,
+        locale: 'zh-CN',
+        columns: [
+            {
+                field: 'state',
+                checkbox: true,
+                align: 'center',
+                valign: 'middle',
+                width: 40
+            },
+            {
+                field: 'c',
+                title: '业务单位',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'd',
+                title: '合同号',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'e',
+                title: '任务号',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'lingjianhao',
+                title: '零件号',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'hetongzhuangtai',
+                title: '对账状态',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable',
+                formatter: function(value, row, index) {
+                    return value || '';
+                }
+            },
+            {
+                field: 'g',
+                title: '工序',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'h',
+                title: '名称',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'i',
+                title: '图号',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'j',
+                title: '单位',
+                align: 'center',
+                sortable: true,
+                width: 80,
+                class: 'editable'
+            },
+            {
+                field: 'k',
+                title: '数量',
+                align: 'center',
+                sortable: true,
+                width: 80,
+                class: 'editable'
+            },
+            {
+                field: 'l',
+                title: '材质',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'au',
+                title: '出库单号',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'av',
+                title: '序合计',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'aw',
+                title: '重量',
+                align: 'center',
+                sortable: true,
+                width: 80,
+                class: 'editable'
+            },
+            {
+                field: 'ax',
+                title: '工件尺寸',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'm',
+                title: '单价元',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'n',
+                title: '合计金额',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'o',
+                title: '铣工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'p',
+                title: '铣单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'xianshiji',
+                title: '铣实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'q',
+                title: '车工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'r',
+                title: '车单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'cheshiji',
+                title: '车实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 's',
+                title: '钳工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 't',
+                title: '钳单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'qianshiji',
+                title: '钳实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'u',
+                title: '整件外委工时',
+                align: 'center',
+                sortable: true,
+                width: 140,
+                class: 'editable'
+            },
+            {
+                field: 'v',
+                title: '整件外委单位',
+                align: 'center',
+                sortable: true,
+                width: 140,
+                class: 'editable'
+            },
+            {
+                field: 'w',
+                title: '外委工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'x',
+                title: '外委单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'y',
+                title: '镗工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'z',
+                title: '镗单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'tangshiji',
+                title: '镗实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'aa',
+                title: '割工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'ab',
+                title: '割单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'geshiji',
+                title: '割实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'ac',
+                title: '磨工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'ad',
+                title: '磨单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'moshiji',
+                title: '磨实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'ae',
+                title: '数控铣工时',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'af',
+                title: '数控铣单价',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'skxshiji',
+                title: '数控铣实际工时',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'ag',
+                title: '立车',
+                align: 'center',
+                sortable: true,
+                width: 80,
+                class: 'editable'
+            },
+            {
+                field: 'ah',
+                title: '立车单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'licheshiji',
+                title: '立车实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'ai',
+                title: '电火花',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'aj',
+                title: '电火花单价',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'dianhuohuashiji',
+                title: '电火花实际工时',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'ak',
+                title: '中走丝',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'al',
+                title: '中走丝单价',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'zhongzuosishiji',
+                title: '中走丝实际工时',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'jingmixianqiege',
+                title: '精密线切割',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'hanjiegongshi',
+                title: '焊接工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'an',
+                title: '深孔钻',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'ao',
+                title: '回厂日期',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'dengjiriqi',
+                title: '登记日期',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'ap',
+                title: '出厂日期',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'shijijiaohuoriqi',
+                title: '实际交货日期',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'ay',
+                title: '订单要求交货时间',
+                align: 'center',
+                sortable: true,
+                width: 160,
+                class: 'editable'
+            },
+            {
+                field: 'aq',
+                title: '铣',
+                align: 'center',
+                sortable: true,
+                width: 80,
+                class: 'editable'
+            },
+            {
+                field: 'ar',
+                title: '车',
+                align: 'center',
+                sortable: true,
+                width: 80,
+                class: 'editable'
+            },
+            {
+                field: 'aas',
+                title: '登记员',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },
+            {
+                field: 'at',
+                title: '备注',
+                align: 'center',
+                sortable: true,
+                width: 150,
+                class: 'editable'
+            }
+        ],
+        onPostBody: function() {
+            console.log('表格渲染完成');
+            // 启用单元格编辑
+            setTimeout(function() {
+                enableCellEditing();
+            }, 100);
+            // 初始化拖动
+            setTimeout(function() {
+                initTableDragScroll();
+            }, 300);
+        },
+        onClickRow: function (row, $element) {
+            let isSelect = $element.hasClass('selected')
+            if (isSelect) {
+                $element.removeClass('selected')
+            } else {
+                $element.addClass('selected')
+            }
+        },
+        onDblClickRow: function(row, $element) {
+            handleRowDoubleClick(row);
+        },
+        onPostBody: function() {
+            // 表格渲染完成后启用单元格编辑
+            enableCellEditing();
+            // 延迟初始化表格拖动滚动
+            setTimeout(function() {
+                initTableDragScroll();
+            }, 300);
+        }
+    });
+
+    console.log('表格初始化完成');
+}
+
+// 修改后的单元格编辑功能（适配bootstrap-table）
 function enableCellEditing() {
-    $('#userTable').on('click', 'td.editable', function() {
+    console.log('启用单元格编辑...');
+
+    // 先解绑事件，避免重复绑定
+    $('#userTable').off('click', 'td.editable');
+
+    $('#userTable').on('click', 'td.editable', function(e) {
+        console.log('单元格被点击');
+        e.stopPropagation(); // 阻止事件冒泡到行
+
         var $cell = $(this);
         var $row = $cell.closest('tr');
 
         // 如果已经在编辑状态，则不再重复创建
         if ($cell.find('input, select').length > 0) {
+            console.log('单元格已在编辑状态');
             return;
         }
 
         var originalValue = $cell.text().trim();
+        console.log('原始值:', originalValue);
 
-        // 获取字段名 - 简单表格版本
+        // 获取字段名
         var colIndex = $cell.index();
-        var $headerTh = $('#userTable thead th').eq(colIndex);
+        // 因为第一列是复选框，所以需要调整索引
+        if (colIndex > 0) colIndex = colIndex - 1;
 
-        // 从表头获取字段名（需要确保表头有data-field属性）
-        var field = $headerTh.data('field') || getFieldFromHeaderText($headerTh.text());
+        var $headerTh = $('#userTable thead th').eq(colIndex + 1); // +1 跳过复选框列
+        var field = $headerTh.data('field') || $headerTh.attr('data-field');
 
         // 获取行ID
-        var rowId = $row.data('id');
+        var rowIndex = $row.data('index');
+        var tableData = $('#userTable').bootstrapTable('getData');
+        var rowData = tableData[rowIndex];
+        var rowId = rowData ? rowData.id : null;
 
         console.log('编辑信息:', {
             field: field,
             rowId: rowId,
             originalValue: originalValue,
-            colIndex: colIndex
+            rowIndex: rowIndex
         });
 
-        // 如果没有获取到字段名或ID，提示错误
-        if (!field || field === 'undefined') {
-            swal("编辑失败", "无法获取字段名: " + field, "error");
+        // 验证数据
+        if (!field) {
+            console.error('无法获取字段名');
+            swal("编辑失败", "无法获取字段名", "error");
             return;
         }
         if (!rowId) {
+            console.error('无法获取行ID');
             swal("编辑失败", "无法获取行ID，请刷新页面重试", "error");
             return;
         }
 
-        // 特殊处理对账状态字段 - 使用下拉框
-        if (field === 'hetongzhuangtai') {
-            createSelectEditor($cell, originalValue, field, rowId, $row);
-        } else {
-            createInputEditor($cell, originalValue, field, rowId, $row);
-        }
+        // // 特殊处理对账状态字段
+        // if (field === 'hetongzhuangtai') {
+        //     console.log('创建下拉框编辑器');
+        //     createSelectEditor($cell, originalValue, field, rowId, tableData, rowIndex);
+        // } else {
+        //     console.log('创建输入框编辑器');
+        //     createInputEditor($cell, originalValue, field, rowId, tableData, rowIndex);
+        // }
+        createInputEditor($cell, originalValue, field, rowId, tableData, rowIndex);
     });
 }
 
-// 根据表头文本获取字段名
-function getFieldFromHeaderText(headerText) {
-    var fieldMap = {
-        '业务单位': 'c',
-        '合同号': 'd',
-        '任务号': 'e',
-        '对账状态': 'hetongzhuangtai',
-        '工序': 'g',
-        '名称': 'h',
-        '图号': 'i',
-        '单位': 'j',
-        '数量': 'k',
-        '材质': 'l',
-        '出库单号': 'au',
-        '序合计': 'av',
-        '重量': 'aw',
-        '工件尺寸': 'ax',
-        '单价元': 'm',
-        '合计金额': 'n',
-        '铣工时': 'o',
-        '铣单价': 'p',
-        '车工时': 'q',
-        '车单价': 'r',
-        '钳工时': 's',
-        '钳单价': 't',
-        '整件外委工时': 'u',
-        '整件外委单位': 'v',
-        '外委工时': 'w',
-        '外委单价': 'x',
-        '镗工时': 'y',
-        '镗单价': 'z',
-        '割工时': 'aa',
-        '割单价': 'ab',
-        '磨工时': 'ac',
-        '磨单价': 'ad',
-        '数控铣工时': 'ae',
-        '数控铣单价': 'af',
-        '立车': 'ag',
-        '立车单价': 'ah',
-        '电火花': 'ai',
-        '电火花单价': 'aj',
-        '中走丝': 'ak',
-        '中走丝单价': 'al',
-        '下料': 'am',
-        '深孔钻': 'an',
-        '回厂日期': 'ao',
-        '出厂日期': 'ap',
-        '订单要求交货时间': 'ay',
-        '铣': 'aq',
-        '车': 'ar',
-        '登记员': 'aas',
-        '备注': 'at'
-    };
+// 创建下拉框编辑器（bootstrap-table版本）
+function createSelectEditor($cell, originalValue, field, rowId, tableData, rowIndex) {
+    console.log('创建下拉编辑器，字段:', field, '当前值:', originalValue);
 
-    return fieldMap[headerText.trim()] || '';
-}
-
-// 创建下拉框编辑器（简单表格版本）
-function createSelectEditor($cell, originalValue, field, rowId, $row) {
     var $select = $('<select class="form-control cell-edit-select">')
         .css({
             width: '100%',
-            height: '100%',
-            border: '1px solid #007bff',
-            borderRadius: '3px',
-            padding: '2px 5px'
+            minWidth: '100px',
+            height: '30px',
+            border: '2px solid #007bff',
+            borderRadius: '4px',
+            padding: '0 5px',
+            boxSizing: 'border-box'
         });
 
-    // 添加选项
-    $select.append('<option value="">请选择</option>');
-    $select.append('<option value="已对账">已对账</option>');
-    $select.append('<option value="未对账">未对账</option>');
-    $select.append('<option value="已开票">已开票</option>');
-    $select.append('<option value="未开票">未开票</option>');
+    // 完整的对账状态选项
+    var options = [
+        {value: '', text: '请选择'},
+        {value: '已对账', text: '已对账'},
+        {value: '未对账', text: '未对账'},
+        {value: '已开票', text: '已开票'},
+        {value: '未开票', text: '未开票'}
+    ];
+
+    // 添加所有选项
+    $.each(options, function(index, option) {
+        $select.append('<option value="' + option.value + '">' + option.text + '</option>');
+    });
 
     // 设置当前值
     $select.val(originalValue);
+    console.log('设置下拉框值:', originalValue, '实际值:', $select.val());
 
-    // 清空单元格内容并添加下拉框
+    // 清空单元格并添加下拉框
     $cell.empty().append($select);
     $select.focus();
 
     // 保存编辑
     function saveEdit() {
         var newValue = $select.val();
+        console.log('保存编辑，新值:', newValue, '原值:', originalValue);
 
         // 如果值没有变化，则不保存
         if (newValue === originalValue) {
             $cell.text(originalValue);
             return;
         }
-
-        console.log('发送更新:', { id: rowId, field: field, newValue: newValue });
 
         // 发送更新请求
         $.ajax({
@@ -371,10 +994,11 @@ function createSelectEditor($cell, originalValue, field, rowId, $row) {
             dataType: 'json',
             contentType: 'application/json;charset=utf-8',
             success: function(res) {
+                console.log('更新响应:', res);
                 if (res.code == 200) {
                     $cell.text(newValue);
                     // 更新本地数据
-                    $row.data(field, newValue);
+                    tableData[rowIndex][field] = newValue;
                     // 重新加载当前页数据
                     getList(currentPage);
                 } else {
@@ -391,17 +1015,17 @@ function createSelectEditor($cell, originalValue, field, rowId, $row) {
     }
 
     // 绑定事件
-    $select.on('blur', saveEdit);
-    $select.on('change', saveEdit); // 选择即保存
-    $select.on('keydown', function(e) {
+    $select.off('blur').on('blur', saveEdit);
+    $select.off('change').on('change', saveEdit);
+    $select.off('keydown').on('keydown', function(e) {
         if (e.keyCode === 27) { // ESC键
             $cell.text(originalValue);
         }
     });
 }
 
-// 创建输入框编辑器（简单表格版本）
-function createInputEditor($cell, originalValue, field, rowId, $row) {
+// 创建输入框编辑器（bootstrap-table版本）
+function createInputEditor($cell, originalValue, field, rowId, tableData, rowIndex) {
     var $input = $('<input type="text" class="form-control cell-edit-input">')
         .val(originalValue)
         .css({
@@ -442,7 +1066,7 @@ function createInputEditor($cell, originalValue, field, rowId, $row) {
                 if (res.code == 200) {
                     $cell.text(newValue);
                     // 更新本地数据
-                    $row.data(field, newValue);
+                    tableData[rowIndex][field] = newValue;
                     // 重新加载当前页数据
                     getList(currentPage);
                 } else {
@@ -469,194 +1093,193 @@ function createInputEditor($cell, originalValue, field, rowId, $row) {
     });
 }
 
-// 简单表格渲染函数（类似 setTableSimple）
-function setTableSimple(data) {
-    console.log('使用简单表格更新，数据长度:', data ? data.length : 0);
+// 处理行双击事件
+function handleRowDoubleClick(row) {
+    console.log('双击行:', row);
 
-    var $table = $('#userTable');
-    if (!$table.length) return;
+    if (row && row.id) {
+        // 准备传递给工艺规程页面的完整数据
+        var processData = {
+            // 基础信息
+            id: row.id,
+            c: row.c || '',           // 业务单位
+            e: row.e || '',           // 任务号
+            h: row.h || '',           // 名称
+            i: row.i || '',           // 图号
+            k: row.k || '',           // 数量
+            l: row.l || '',           // 材质
+        };
 
-    // 清空表格
-    $table.empty();
+        console.log('跳转数据:', processData);
 
-    // 构建表头（为每个表头添加 data-field 属性）
-    var thead = '<thead>' +
-        '<tr>' +
-        // 添加全选复选框列
-        '<th style="width: 50px;"><input type="checkbox" id="selectAll"></th>' +
-        '<th width="120" style=" padding: 8px; text-align: center;" data-field="c">业务单位</th>' +
-        '<th width="120" style=" padding: 8px; text-align: center;" data-field="d">合同号</th>' +
-        '<th width="120" style=" padding: 8px; text-align: center;" data-field="e">任务号</th>' +
-        '<th width="120" style=" padding: 8px; text-align: center;" data-field="hetongzhuangtai">对账状态</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="g">工序</th>' +
-        '<th width="120" style=" padding: 8px; text-align: center;" data-field="h">名称</th>' +
-        '<th width="120" style=" padding: 8px; text-align: center;" data-field="i">图号</th>' +
-        '<th width="80" style=" padding: 8px; text-align: center;" data-field="j">单位</th>' +
-        '<th width="80" style=" padding: 8px; text-align: center;" data-field="k">数量</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="l">材质</th>' +
-        '<th width="120" style=" padding: 8px; text-align: center;" data-field="au">出库单号</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="av">序合计</th>' +
-        '<th width="80" style=" padding: 8px; text-align: center;" data-field="aw">重量</th>' +
-        '<th width="120" style=" padding: 8px; text-align: center;" data-field="ax">工件尺寸</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="m">单价元</th>' +
-        '<th width="120" style=" padding: 8px; text-align: center;" data-field="n">合计金额</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="o">铣工时</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="p">铣单价</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="q">车工时</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="r">车单价</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="s">钳工时</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="t">钳单价</th>' +
-        '<th width="140" style=" padding: 8px; text-align: center;" data-field="u">整件外委工时</th>' +
-        '<th width="140" style=" padding: 8px; text-align: center;" data-field="v">整件外委单位</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="w">外委工时</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="x">外委单价</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="y">镗工时</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="z">镗单价</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="aa">割工时</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="ab">割单价</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="ac">磨工时</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="ad">磨单价</th>' +
-        '<th width="120" style=" padding: 8px; text-align: center;" data-field="ae">数控铣工时</th>' +
-        '<th width="120" style=" padding: 8px; text-align: center;" data-field="af">数控铣单价</th>' +
-        '<th width="80" style=" padding: 8px; text-align: center;" data-field="ag">立车</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="ah">立车单价</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="ai">电火花</th>' +
-        '<th width="120" style=" padding: 8px; text-align: center;" data-field="aj">电火花单价</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="ak">中走丝</th>' +
-        '<th width="120" style=" padding: 8px; text-align: center;" data-field="al">中走丝单价</th>' +
-        '<th width="80" style=" padding: 8px; text-align: center;" data-field="am">下料</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="an">深孔钻</th>' +
-        '<th width="120" style=" padding: 8px; text-align: center;" data-field="ao">回厂日期</th>' +
-        '<th width="120" style=" padding: 8px; text-align: center;" data-field="ap">出厂日期</th>' +
-        '<th width="160" style=" padding: 8px; text-align: center;" data-field="ay">订单要求交货时间</th>' +
-        '<th width="80" style=" padding: 8px; text-align: center;" data-field="aq">铣</th>' +
-        '<th width="80" style=" padding: 8px; text-align: center;" data-field="ar">车</th>' +
-        '<th width="100" style=" padding: 8px; text-align: center;" data-field="aas">登记员</th>' +
-        '<th width="150" style=" padding: 8px; text-align: center;" data-field="at">备注</th>' +
-        '</tr>' +
-        '</thead>';
-
-    // 构建表格内容
-    var tbody = '<tbody>';
-
-    if (!data || data.length === 0) {
-        tbody += '<tr><td colspan="49" style="text-align: center; padding: 20px;">暂无数据</td></tr>';
+        // 跳转到工艺规程页面
+        navigateToProcessPage(processData);
     } else {
-        for (var i = 0; i < data.length; i++) {
-            var item = data[i];
-            // 为每一行添加完整的数据对象
-            tbody += '<tr data-id="' + (item.id || '') + '" data-row-index="' + i + '">' +
-                // 添加一个复选框列
-                '<td style="width: 40px;"><input type="checkbox" class="row-checkbox" data-id="' + (item.id || '') + '"></td>' +
-                // 修复：为每个可编辑的单元格添加 editable 类
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.c || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.d || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.e || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.hetongzhuangtai || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.g || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.h || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.i || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.j || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.k || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.l || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.au || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.av || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.aw || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.ax || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.m || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.n || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.o || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.p || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.q || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.r || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.s || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.t || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.u || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.v || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.w || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.x || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.y || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.z || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.aa || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.ab || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.ac || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.ad || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.ae || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.af || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.ag || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.ah || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.ai || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.aj || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.ak || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.al || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.am || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.an || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.ao || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.ap || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.ay || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.aq || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.ar || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.aas || '') + '</td>' +
-                '<td class="editable" style="border: 1px solid #ddd; padding: 8px; text-align: center;">' + (item.at || '') + '</td>' +
-                '</tr>';
+        console.warn('无法获取行数据，无法跳转');
+        swal("提示", "无法获取行数据，请重试", "warning");
+    }
+}
+
+// 跳转到工艺规程页面
+function navigateToProcessPage(data) {
+    // 使用sessionStorage传递完整数据
+    sessionStorage.setItem('currentProcessData', JSON.stringify(data));
+
+    // 修改iframe的src
+    var iframe = window.frameElement;
+    if (iframe) {
+        // 当前在iframe中，让父页面修改iframe的src
+        window.parent.changeIframeSrc('gygc.html');
+    } else {
+        window.location.href = 'gygc.html';
+    }
+}
+
+// 更新分页控件
+function updatePagination() {
+    // 移除现有的分页控件
+    $('#customPaginationContainer').remove();
+
+    var paginationHtml = `
+        <div id="customPaginationContainer" class="pagination-container">
+            <div class="pagination-info">
+                共 <span class="total-count">${totalCount}</span> 条记录，
+                第 <span class="current-page">${currentPage}</span> 页 / 共 <span class="total-pages">${totalPages}</span> 页
+            </div>
+            <div class="pagination-controls">
+                <button class="pagination-btn first-page" ${currentPage === 1 ? 'disabled' : ''}>
+                    <i class="bi bi-chevron-double-left"></i> 首页
+                </button>
+                <button class="pagination-btn prev-page" ${currentPage === 1 ? 'disabled' : ''}>
+                    <i class="bi bi-chevron-left"></i> 上一页
+                </button>
+                <div class="page-numbers">`;
+
+    var startPage = Math.max(1, currentPage - 2);
+    var endPage = Math.min(totalPages, currentPage + 2);
+
+    for (var i = startPage; i <= endPage; i++) {
+        if (i === currentPage) {
+            paginationHtml += `<button class="page-number active" data-page="${i}">${i}</button>`;
+        } else {
+            paginationHtml += `<button class="page-number" data-page="${i}">${i}</button>`;
         }
     }
 
-    tbody += '</tbody>';
+    paginationHtml += `
+                </div>
+                <button class="pagination-btn next-page" ${currentPage === totalPages ? 'disabled' : ''}>
+                    下一页 <i class="bi bi-chevron-right"></i>
+                </button>
+                <button class="pagination-btn last-page" ${currentPage === totalPages ? 'disabled' : ''}>
+                    末页 <i class="bi bi-chevron-double-right"></i>
+                </button>
+                <div class="page-size-selector">
+                    <select class="page-size-select form-control form-control-sm" style="width: auto; display: inline-block;">
+                        <option value="10" ${pageSize === 10 ? 'selected' : ''}>10条/页</option>
+                        <option value="15" ${pageSize === 15 ? 'selected' : ''}>15条/页</option>
+                        <option value="20" ${pageSize === 20 ? 'selected' : ''}>20条/页</option>
+                        <option value="50" ${pageSize === 50 ? 'selected' : ''}>50条/页</option>
+                        <option value="100" ${pageSize === 100 ? 'selected' : ''}>100条/页</option>
+                    </select>
+                </div>
+            </div>
+        </div>`;
 
-    $table.html(thead + tbody);
+    // 将分页控件添加到表格后面
+    $('#userTable1').after(paginationHtml);
 
-    // 重新绑定点击事件（行选择）
-    $table.find('tbody tr').click(function(e) {
-        // 如果点击的是复选框，不触发行选择
-        if ($(e.target).is('input[type="checkbox"]') || $(e.target).is('input')) {
+    console.log('分页控件已更新，当前页:', currentPage, '总页数:', totalPages);
+
+    // 绑定分页事件
+    bindPaginationEvents();
+}
+
+// 绑定分页事件
+function bindPaginationEvents() {
+    console.log('绑定分页事件，当前页码:', currentPage);
+
+    // 先移除所有事件绑定，避免重复绑定
+    $(document).off('click', '.first-page, .prev-page, .next-page, .last-page, .page-number');
+    $(document).off('change', '.page-size-select');
+
+    // 使用事件委托绑定到分页容器
+    $(document).on('click', '.pagination-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var $btn = $(this);
+        if ($btn.prop('disabled')) {
             return;
         }
-        $(this).toggleClass('selected');
-        // 同时同步复选框状态
-        var $checkbox = $(this).find('.row-checkbox');
-        $checkbox.prop('checked', $(this).hasClass('selected'));
-    });
 
-    $table.html(thead + tbody);
+        var action = '';
+        if ($btn.hasClass('first-page')) action = 'first';
+        else if ($btn.hasClass('prev-page')) action = 'prev';
+        else if ($btn.hasClass('next-page')) action = 'next';
+        else if ($btn.hasClass('last-page')) action = 'last';
 
-    // 绑定全选复选框
-    $('#selectAll').click(function() {
-        var isChecked = $(this).prop('checked');
-        $table.find('.row-checkbox').prop('checked', isChecked);
-        if (isChecked) {
-            $table.find('tbody tr').addClass('selected');
-        } else {
-            $table.find('tbody tr').removeClass('selected');
+        console.log('分页按钮点击:', action);
+
+        switch(action) {
+            case 'first':
+                if (currentPage !== 1) {
+                    currentPage = 1;
+                    getList(currentPage);
+                }
+                break;
+            case 'prev':
+                if (currentPage > 1) {
+                    currentPage--;
+                    getList(currentPage);
+                }
+                break;
+            case 'next':
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    getList(currentPage);
+                }
+                break;
+            case 'last':
+                if (currentPage !== totalPages) {
+                    currentPage = totalPages;
+                    getList(currentPage);
+                }
+                break;
         }
     });
 
-    // 绑定复选框点击事件
-    $table.find('.row-checkbox').click(function(e) {
-        e.stopPropagation(); // 阻止事件冒泡
-        var $row = $(this).closest('tr');
-        var isChecked = $(this).prop('checked');
-        if (isChecked) {
-            $row.addClass('selected');
-        } else {
-            $row.removeClass('selected');
+    // 绑定页码点击事件
+    $(document).on('click', '.page-number', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var page = parseInt($(this).text());
+        console.log('点击页码:', page, '当前页码:', currentPage);
+
+        if (page !== currentPage) {
+            currentPage = page;
+            getList(currentPage);
         }
     });
 
-    // 启用单元格编辑功能
-    setTimeout(function() {
-        enableCellEditing();
-    }, 100);
-    bindRowClickEvents();
-    // ============= 新增：初始化表格拖动滚动 =============
-    setTimeout(function() {
-        console.log('初始化表格拖动...');
-        // 方法1：使用简单版本
-        initTableDragScroll();
-    }, 200);
-    // ================================================
-    console.log('简单表格更新完成');
+    // 绑定每页显示条数变化事件
+    $(document).on('change', '.page-size-select', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var newPageSize = parseInt($(this).val());
+        console.log('页面大小改变:', newPageSize, '原大小:', pageSize);
+
+        if (newPageSize !== pageSize) {
+            pageSize = newPageSize;
+            currentPage = 1; // 重置到第一页
+            getList(currentPage);
+        }
+    });
 }
+
+// ============= 后续代码保持不变（工序配置、导出功能等）==============
 
 // 工序配置功能
 $(function() {
@@ -778,114 +1401,6 @@ function saveGongxuConfig(id, name, num, $btn) {
     });
 }
 
-
-// 更新分页控件
-function updatePagination() {
-    // 移除现有的分页控件
-    $('#customPaginationContainer').remove();
-
-    var paginationHtml = `
-        <div id="customPaginationContainer" class="pagination-container">
-            <div class="pagination-info">
-                共 <span class="total-count">${totalCount}</span> 条记录，
-                第 <span class="current-page">${currentPage}</span> 页 / 共 <span class="total-pages">${totalPages}</span> 页
-            </div>
-            <div class="pagination-controls">
-                <button class="pagination-btn first-page" ${currentPage === 1 ? 'disabled' : ''}>
-                    <i class="bi bi-chevron-double-left"></i> 首页
-                </button>
-                <button class="pagination-btn prev-page" ${currentPage === 1 ? 'disabled' : ''}>
-                    <i class="bi bi-chevron-left"></i> 上一页
-                </button>
-                <div class="page-numbers">`;
-
-    var startPage = Math.max(1, currentPage - 2);
-    var endPage = Math.min(totalPages, currentPage + 2);
-
-    for (var i = startPage; i <= endPage; i++) {
-        if (i === currentPage) {
-            paginationHtml += `<button class="page-number active">${i}</button>`;
-        } else {
-            paginationHtml += `<button class="page-number">${i}</button>`;
-        }
-    }
-
-    paginationHtml += `
-                </div>
-                <button class="pagination-btn next-page" ${currentPage === totalPages ? 'disabled' : ''}>
-                    下一页 <i class="bi bi-chevron-right"></i>
-                </button>
-                <button class="pagination-btn last-page" ${currentPage === totalPages ? 'disabled' : ''}>
-                    末页 <i class="bi bi-chevron-double-right"></i>
-                </button>
-                <div class="page-size-selector">
-                    <select class="page-size-select form-control form-control-sm" style="width: auto; display: inline-block;">
-                        <option value="10" ${pageSize === 10 ? 'selected' : ''}>10条/页</option>
-                        <option value="15" ${pageSize === 15 ? 'selected' : ''}>15条/页</option>
-                        <option value="20" ${pageSize === 20 ? 'selected' : ''}>20条/页</option>
-                        <option value="50" ${pageSize === 50 ? 'selected' : ''}>50条/页</option>
-                        <option value="100" ${pageSize === 100 ? 'selected' : ''}>100条/页</option>
-                    </select>
-                </div>
-            </div>
-        </div>`;
-
-    // 将分页控件添加到表格后面
-    $('#userTable1').after(paginationHtml);
-
-    // 绑定分页事件
-    bindPaginationEvents();
-}
-
-// 绑定分页事件
-function bindPaginationEvents() {
-    $(document).off('click', '.first-page').on('click', '.first-page', function(e) {
-        e.preventDefault();
-        if (!$(this).prop('disabled')) {
-            getList(1);
-        }
-    });
-
-    $(document).off('click', '.prev-page').on('click', '.prev-page', function(e) {
-        e.preventDefault();
-        if (!$(this).prop('disabled')) {
-            getList(currentPage - 1);
-        }
-    });
-
-    $(document).off('click', '.next-page').on('click', '.next-page', function(e) {
-        e.preventDefault();
-        if (!$(this).prop('disabled')) {
-            getList(currentPage + 1);
-        }
-    });
-
-    $(document).off('click', '.last-page').on('click', '.last-page', function(e) {
-        e.preventDefault();
-        if (!$(this).prop('disabled')) {
-            getList(totalPages);
-        }
-    });
-
-    $(document).off('click', '.page-number').on('click', '.page-number', function(e) {
-        e.preventDefault();
-        var page = parseInt($(this).text());
-        if (page !== currentPage) {
-            getList(page);
-        }
-    });
-
-    $(document).off('change', '.page-size-select').on('change', '.page-size-select', function(e) {
-        e.preventDefault();
-        var newPageSize = parseInt($(this).val());
-        if (newPageSize !== pageSize) {
-            pageSize = newPageSize;
-            currentPage = 1;
-            getList(currentPage);
-        }
-    });
-}
-
 // 显示导出设置模态框
 function showExportModal() {
     var defaultFileName = '业务查询_' + getCurrentDate();
@@ -983,6 +1498,7 @@ function createExcelFile(data, filename) {
                 '业务单位': item.c || '',
                 '合同号': item.d || '',
                 '任务号': item.e || '',
+                '零件号': item.lingjianhao || '',
                 '对账状态': item.hetongzhuangtai || '',
                 '工序': item.g || '',
                 '名称': item.h || '',
@@ -998,32 +1514,45 @@ function createExcelFile(data, filename) {
                 '合计金额': item.n || '',
                 '铣工时': item.o || '',
                 '铣单价': item.p || '',
+                '铣实际工时': item.xianshiji || '',
                 '车工时': item.q || '',
                 '车单价': item.r || '',
+                '车实际工时': item.cheshiji || '',
                 '钳工时': item.s || '',
                 '钳单价': item.t || '',
+                '钳实际工时': item.qianshiji || '',
                 '整件外委工时': item.u || '',
                 '整件外委单位': item.v || '',
                 '外委工时': item.w || '',
                 '外委单价': item.x || '',
                 '镗工时': item.y || '',
                 '镗单价': item.z || '',
+                '镗实际工时': item.tangshiji || '',
                 '割工时': item.aa || '',
                 '割单价': item.ab || '',
+                '割实际工时': item.geshiji || '',
                 '磨工时': item.ac || '',
                 '磨单价': item.ad || '',
+                '磨实际工时': item.moshiji || '',
                 '数控铣工时': item.ae || '',
                 '数控铣单价': item.af || '',
+                '数控铣实际工时': item.skxshiji || '',
                 '立车': item.ag || '',
                 '立车单价': item.ah || '',
+                '立车实际工时': item.licheshiji || '',
                 '电火花': item.ai || '',
                 '电火花单价': item.aj || '',
+                '电火花实际工时': item.dianhuohuashiji || '',
                 '中走丝': item.ak || '',
                 '中走丝单价': item.al || '',
-                '下料': item.am || '',
+                '中走丝实际工时': item.zhongzuosishiji || '',
+                '精密线切割': item.jingmixianqiege || '',
+                '焊接工时': item.hanjiegongshi || '',
                 '深孔钻': item.an || '',
                 '回厂日期': item.ao || '',
+                '登记日期': item.dengjiriqi || '',
                 '出厂日期': item.ap || '',
+                '实际交货日期': item.shijijiaohuoriqi || '',
                 '订单要求交货时间': item.ay || '',
                 '铣': item.aq || '',
                 '车': item.ar || '',
@@ -1096,141 +1625,6 @@ function showExportLoading() {
 function hideExportLoading() {
     $('#export-btn').prop('disabled', false).html('<i class="bi bi-file-earmark-excel icon"></i> 导出Excel');
     $('#export-loading').remove();
-}
-
-
-function initSimpleDragScroll() {
-    const container = document.getElementById('tableScrollContainer');
-    if (!container) return;
-
-    // 使用 simple-drag-scroll
-    new SimpleDragScroll(container, {
-        dragSpeed: 1.5, // 拖动速度
-        useTransform: true, // 使用CSS transform实现平滑滚动
-        bounds: true, // 限制在容器边界内
-        preventClickOnDrag: true, // 拖拽时阻止点击事件
-        onDragStart: function() {
-            container.style.cursor = 'grabbing';
-        },
-        onDragEnd: function() {
-            container.style.cursor = 'grab';
-        }
-    });
-
-    container.style.cursor = 'grab';
-}
-
-// 绑定行点击事件（区分单击和双击）
-function bindRowClickEvents() {
-    var clickTimer = null;
-    var clickedRow = null;
-
-    $('#userTable').off('click', 'tbody tr').on('click', 'tbody tr', function(e) {
-        var $row = $(this);
-
-        // 排除点击复选框的情况
-        if ($(e.target).is('input[type="checkbox"]') || $(e.target).is('input')) {
-            return;
-        }
-
-        // 如果是双击，清除计时器并执行双击操作
-        if (clickTimer && clickedRow && clickedRow.is($row)) {
-            clearTimeout(clickTimer);
-            clickTimer = null;
-            handleRowDoubleClick($row);
-            return;
-        }
-
-        // 设置新的计时器
-        clickedRow = $row;
-        clickTimer = setTimeout(function() {
-            // 处理单击事件（行选择）
-            handleRowSingleClick($row);
-            clickTimer = null;
-            clickedRow = null;
-        }, 300); // 300ms延迟，用于区分单击和双击
-    });
-}
-
-// 处理行单击事件（选择行）
-function handleRowSingleClick($row) {
-    let isSelect = $row.hasClass('selected');
-    if (isSelect) {
-        $row.removeClass('selected');
-    } else {
-        $row.addClass('selected');
-    }
-    // 同时同步复选框状态
-    var $checkbox = $row.find('.row-checkbox');
-    $checkbox.prop('checked', $row.hasClass('selected'));
-}
-
-function handleRowDoubleClick($row) {
-    var rowIndex = $row.data('row-index');
-    var rowId = $row.data('id');
-
-    console.log('双击行，索引:', rowIndex, 'ID:', rowId);
-
-    // 由于是简单表格，我们需要从行的数据中提取信息
-    // 首先获取行的所有单元格数据
-    var rowData = {
-        id: rowId,
-        c: '', d: '', e: '', hetongzhuangtai: '', g: '', h: '', i: '', j: '', k: '', l: '',
-        au: '', av: '', aw: '', ax: '', m: '', n: '', o: '', p: '', q: '', r: '', s: '', t: '',
-        u: '', v: '', w: '', x: '', y: '', z: '', aa: '', ab: '', ac: '', ad: '', ae: '', af: '',
-        ag: '', ah: '', ai: '', aj: '', ak: '', al: '', am: '', an: '', ao: '', ap: '', ay: '',
-        aq: '', ar: '', aas: '', at: ''
-    };
-
-    // 遍历行的每个单元格（跳过第一列的复选框）
-    $row.find('td').each(function(index) {
-        if (index === 0) return; // 跳过复选框列
-
-        var $th = $('#userTable thead th').eq(index);
-        var field = $th.data('field') || getFieldFromHeaderText($th.text());
-        if (field) {
-            rowData[field] = $(this).text().trim();
-        }
-    });
-
-    console.log('双击行数据:', rowData);
-
-    if (rowData && rowData.id) {
-        // 准备传递给工艺规程页面的完整数据
-        var processData = {
-            // 基础信息
-            id: rowData.id,
-            c: rowData.c || '',           // 业务单位
-            e: rowData.e || '',           // 任务号
-            h: rowData.h || '',           // 名称
-            i: rowData.i || '',           // 图号
-            k: rowData.k || '',           // 数量
-            l: rowData.l || '',           // 材质
-        };
-
-        console.log('跳转数据:', processData);
-
-        // 跳转到工艺规程页面
-        navigateToProcessPage(processData);
-    } else {
-        console.warn('无法获取行数据，无法跳转');
-        swal("提示", "无法获取行数据，请重试", "warning");
-    }
-}
-
-// 跳转到工艺规程页面
-function navigateToProcessPage(data) {
-    // 使用sessionStorage传递完整数据
-    sessionStorage.setItem('currentProcessData', JSON.stringify(data));
-
-    // 修改iframe的src
-    var iframe = window.frameElement;
-    if (iframe) {
-        // 当前在iframe中，让父页面修改iframe的src
-        window.parent.changeIframeSrc('gygc.html');
-    } else {
-        window.location.href = 'gygc.html';
-    }
 }
 
 function initTableDragScroll() {
@@ -1326,4 +1720,509 @@ function initTableDragScroll() {
     });
 
     console.log('表格拖动滚动初始化完成');
+}
+
+//页面渲染数据
+function setTable(data) {
+    // 确保表格容器存在
+    if ($('#userTable').length === 0) {
+        console.error('表格元素 #userTable 不存在');
+        return;
+    }
+
+    // 销毁现有表格
+    if ($('#userTable').hasClass('bootstrap-table')) {
+        $('#userTable').bootstrapTable('destroy');
+    }
+
+    // 初始化表格
+    $('#userTable').bootstrapTable({
+        data: data,
+        sortStable: true,
+        classes: 'table table-hover table-bordered',
+        idField: 'id',
+        pagination: false, // 关键修改：禁用分页
+        clickToSelect: false, // 禁用默认的点击选择
+        height: 400,                    // 必须设置高度
+        fixedHeader: true,
+        locale: 'zh-CN',
+        rowAttributes: function(row, index) {
+            return {
+                'data-index': index,
+                'data-id': row.id
+            };
+        },
+        columns: [
+            {
+                field: 'c',
+                title: '业务单位',
+                align: 'center',
+                sortable: true,
+                width: 120,  // 根据内容调整宽度
+                class: 'editable'
+            }, {
+                field: 'd',
+                title: '合同号',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
+            {
+                field: 'lingjianhao',
+                title: '零件号',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
+                field: 'e',
+                title: '任务号',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'hetongzhuangtai',
+                title: '对账状态',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable',
+                formatter: function(value, row, index) {
+                    // 显示当前值
+                    return value || '';
+                }
+            }, {
+                field: 'g',
+                title: '工序',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'h',
+                title: '名称',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'i',
+                title: '图号',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'j',
+                title: '单位',
+                align: 'center',
+                sortable: true,
+                width: 80,
+                class: 'editable'
+            }, {
+                field: 'k',
+                title: '数量',
+                align: 'center',
+                sortable: true,
+                width: 80,
+                class: 'editable'
+            }, {
+                field: 'l',
+                title: '材质',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
+                field: 'au',
+                title: '出库单号',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },  {
+                field: 'av',
+                title: '序合计',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'aw',
+                title: '重量',
+                align: 'center',
+                sortable: true,
+                width: 80,
+                class: 'editable'
+            }, {
+                field: 'ax',
+                title: '工件尺寸',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'm',
+                title: '单价元',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'n',
+                title: '合计金额',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'o',
+                title: '铣工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'p',
+                title: '铣单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'xianshiji',
+                title: '铣实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
+                field: 'q',
+                title: '车工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'r',
+                title: '车单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'cheshiji',
+                title: '车实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
+                field: 's',
+                title: '钳工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 't',
+                title: '钳单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
+                field: 'qianshiji',
+                title: '钳实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'u',
+                title: '整件外委工时',
+                align: 'center',
+                sortable: true,
+                width: 140,
+                class: 'editable'
+            }, {
+                field: 'v',
+                title: '整件外委单位',
+                align: 'center',
+                sortable: true,
+                width: 140,
+                class: 'editable'
+            }, {
+                field: 'w',
+                title: '外委工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'x',
+                title: '外委单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'y',
+                title: '镗工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'z',
+                title: '镗单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
+                field: 'tangshiji',
+                title: '镗实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'aa',
+                title: '割工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'ab',
+                title: '割单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
+                field: 'geshiji',
+                title: '割实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'ac',
+                title: '磨工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'ad',
+                title: '磨单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'moshiji',
+                title: '磨实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
+                field: 'ae',
+                title: '数控铣工时',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'af',
+                title: '数控铣单价',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
+                field: 'skxshiji',
+                title: '数控铣实际工时',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'ag',
+                title: '立车',
+                align: 'center',
+                sortable: true,
+                width: 80,
+                class: 'editable'
+            }, {
+                field: 'ah',
+                title: '立车单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'licheshiji',
+                title: '立车实际工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            },{
+                field: 'ai',
+                title: '电火花',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'aj',
+                title: '电火花单价',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'dianhuohuashiji',
+                title: '电火花实际工时',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
+                field: 'ak',
+                title: '中走丝',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'al',
+                title: '中走丝单价',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
+                field: 'zhongzuosishiji',
+                title: '中走丝实际工时',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
+                field: 'jingmixianqiege',
+                title: '精密线切割',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'am',
+                title: '下料',
+                align: 'center',
+                sortable: true,
+                width: 80,
+                class: 'editable'
+            },{
+                field: 'hanjiegongshi', // 注意：这里用的是 hanjiegongshi 而不是 am
+                title: '焊接工时',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'an',
+                title: '深孔钻',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'ao',
+                title: '回厂日期',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'ap',
+                title: '出厂日期',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            }, {
+                field: 'ay',
+                title: '订单要求交货时间',
+                align: 'center',
+                sortable: true,
+                width: 160,
+                class: 'editable'
+            }, {
+                field: 'aq',
+                title: '铣',
+                align: 'center',
+                sortable: true,
+                width: 80,
+                class: 'editable'
+            }, {
+                field: 'ar',
+                title: '车',
+                align: 'center',
+                sortable: true,
+                width: 80,
+                class: 'editable'
+            }, {
+                field: 'aas',
+                title: '登记员',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'at',
+                title: '备注',
+                align: 'center',
+                sortable: true,
+                width: 150,
+                class: 'editable'
+            }
+        ],
+        onPostBody: function() {
+            console.log('表格渲染完成');
+            // 启用单元格编辑
+            setTimeout(function() {
+                enableCellEditing();
+            }, 100);
+            // 初始化拖动
+            setTimeout(function() {
+                initTableDragScroll();
+            }, 300);
+
+            // 表格渲染完成后启用单元格编辑
+            enableCellEditing();
+        },
+        onClickRow: function (row, $element) {
+            let isSelect = $element.hasClass('selected')
+            if (isSelect) {
+                $element.removeClass('selected')
+            } else {
+                $element.addClass('selected')
+            }
+        },
+        onDblClickRow: function(row, $element) {
+            handleRowDoubleClick(row);
+        }
+
+    });
+
+    // 强制刷新表格视图
+    $('#userTable').bootstrapTable('load', data);
+    $('#userTable').bootstrapTable('resetView');
 }

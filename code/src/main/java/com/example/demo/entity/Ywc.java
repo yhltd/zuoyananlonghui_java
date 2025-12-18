@@ -119,4 +119,23 @@ public class Ywc {
     private String ay;
 
     private String riqi;
+
+
+
+    private String lingjianhao;
+    private String qianshiji;
+    private String tangshiji;
+    private String geshiji;
+    private String moshiji;
+    private String licheshiji;
+    private String dianhuohuashiji;
+    private String zhongzuosishiji;
+    private String jingmixianqiege;
+    private String hanjiegongshi;
+    private String dengjiriqi;
+    private String shijijiaohuoriqi;
+    private String muban;
+    private String xianshiji;
+    private String cheshiji;
+    private String skxshiji;
 }

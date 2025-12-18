@@ -46,7 +46,7 @@ public class LoginController {
             System.out.println("softTime: " + softTime);
 
             if (softTime.size() == 0) {
-                return ResultInfo.error(-1, "工具到期，请联系我公司续费。");
+                return ResultInfo.error(-1, "友情提示：感谢您的使用，系統已到期，请及时联系续费以免影响使用，官方微信号：1623005800");
             }else{
                 if(softTime.get(0).getEndtime() != null){
                     endtime = softTime.get(0).getEndtime().trim();
@@ -71,10 +71,10 @@ public class LoginController {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
                 if(!mark1.equals("a8xd2s")){
                     if(endtime == ""){
-                        return ResultInfo.error(-1, "工具到期，请联系我公司续费");
+                        return ResultInfo.error(-1, "友情提示：感谢您的使用，系統已到期，请及时联系续费以免影响使用，官方微信号：1623005800");
                     }
                     if(mark2 == ""){
-                        return ResultInfo.error(-1, "服务器到期，请联系我公司续费");
+                        return ResultInfo.error(-1, "友情提示：感谢您的使用，您租用的服务已到期，请及时联系续费以免影响使用，官方微信号：1623005800");
                     }
                     Date enddate = sdf.parse(endtime);
                     Date fuwudate = sdf.parse(mark2);
@@ -82,10 +82,10 @@ public class LoginController {
                     String this_time = sdf.format(now);
                     now = sdf.parse(this_time);
                     if(now.getTime() > enddate.getTime()){
-                        return ResultInfo.error(-1, "工具到期，请联系我公司续费");
+                        return ResultInfo.error(-1, "友情提示：感谢您的使用，系統已到期，请及时联系续费以免影响使用，官方微信号：1623005800");
                     }
                     if(now.getTime() > fuwudate.getTime()){
-                        return ResultInfo.error(-1, "服务器到期，请联系我公司续费");
+                        return ResultInfo.error(-1, "友情提示：感谢您的使用，您租用的服务已到期，请及时联系续费以免影响使用，官方微信号：1623005800");
                     }
                 }
 //

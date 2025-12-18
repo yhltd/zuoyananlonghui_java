@@ -21,6 +21,14 @@
     <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table-resizable.js"></script>
     <script type="text/javascript" src="../js/xlsx.full.min.js"></script>
 
+    <!-- 引入CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.22.1/dist/extensions/fixed-header/bootstrap-table-fixed-header.min.css">
+
+    <!-- 引入JS -->
+    <script src="https://unpkg.com/bootstrap-table@1.22.1/dist/extensions/fixed-header/bootstrap-table-fixed-header.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.22.1/dist/extensions/fixed-columns/bootstrap-table-fixed-columns.min.css">
+    <script src="https://unpkg.com/bootstrap-table@1.22.1/dist/extensions/fixed-columns/bootstrap-table-fixed-columns.min.js"></script>
+
     <link rel="stylesheet" href="../css/sweetalert.css">
     <script type="text/javascript" src="../js/sweetalert-dev.js"></script>
 
@@ -476,7 +484,14 @@
                                 <input id="add-e" name="e" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 工艺规程状态 - 根据表格字段改为 zhuangtai -->
+                        <!-- 零件号 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-lingjianhao" class="form-label-custom">零件号</label>
+                                <input id="add-lingjianhao" name="lingjianhao" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 工艺规程状态 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-zhuangtai" class="form-label-custom">工艺规程状态</label>
@@ -525,269 +540,350 @@
                                 <input id="add-l" name="l" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-
-                        <!-- 以下是需要重新调整的字段 -->
-
-                        <!-- 序合计 - 表格中是 av 字段 -->
+                        <!-- 序合计 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-av" class="form-label-custom">序合计</label>
                                 <input id="add-av" name="av" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 重量 - 表格中是 aw 字段 -->
+                        <!-- 重量 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-aw" class="form-label-custom">重量</label>
                                 <input id="add-aw" name="aw" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 工件尺寸 - 表格中是 ax 字段 -->
+                        <!-- 工件尺寸 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-ax" class="form-label-custom">工件尺寸</label>
                                 <input id="add-ax" name="ax" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 单价元 - 表格中是 m 字段 -->
+                        <!-- 单价元 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-m" class="form-label-custom">单价元</label>
                                 <input id="add-m" name="m" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 合计金额 - 表格中是 n 字段 -->
+                        <!-- 合计金额 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-n" class="form-label-custom">合计金额</label>
                                 <input id="add-n" name="n" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 铣工时 - 表格中是 o 字段 -->
+                        <!-- 铣工时 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-o" class="form-label-custom">铣工时</label>
                                 <input id="add-o" name="o" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 铣单价 - 表格中是 p 字段 -->
+                        <!-- 铣单价 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-p" class="form-label-custom">铣单价</label>
                                 <input id="add-p" name="p" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 车工时 - 表格中是 q 字段 -->
+                        <!-- 铣实际工时 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-xianshiji" class="form-label-custom">铣实际工时</label>
+                                <input id="add-xianshiji" name="xianshiji" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 车工时 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-q" class="form-label-custom">车工时</label>
                                 <input id="add-q" name="q" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 车单价 - 表格中是 r 字段 -->
+                        <!-- 车单价 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-r" class="form-label-custom">车单价</label>
                                 <input id="add-r" name="r" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 钳工时 - 表格中是 s 字段 -->
+                        <!-- 车实际工时 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-cheshiji" class="form-label-custom">车实际工时</label>
+                                <input id="add-cheshiji" name="cheshiji" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 钳工时 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-s" class="form-label-custom">钳工时</label>
                                 <input id="add-s" name="s" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 钳单价 - 表格中是 t 字段 -->
+                        <!-- 钳单价 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-t" class="form-label-custom">钳单价</label>
                                 <input id="add-t" name="t" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 整件外委工时 - 表格中是 u 字段 -->
+                        <!-- 钳实际工时 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-qianshiji" class="form-label-custom">钳实际工时</label>
+                                <input id="add-qianshiji" name="qianshiji" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 整件外委工时 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-u" class="form-label-custom">整件外委工时</label>
                                 <input id="add-u" name="u" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 整件外委单位 - 表格中是 v 字段 -->
+                        <!-- 整件外委单位 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-v" class="form-label-custom">整件外委单位</label>
                                 <input id="add-v" name="v" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 外委工时 - 表格中是 w 字段 -->
+                        <!-- 外委工时 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-w" class="form-label-custom">外委工时</label>
                                 <input id="add-w" name="w" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 外委单价 - 表格中是 x 字段 -->
+                        <!-- 外委单价 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-x" class="form-label-custom">外委单价</label>
                                 <input id="add-x" name="x" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 镗工时 - 表格中是 y 字段 -->
+                        <!-- 镗工时 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-y" class="form-label-custom">镗工时</label>
                                 <input id="add-y" name="y" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 镗单价 - 表格中是 z 字段 -->
+                        <!-- 镗单价 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-z" class="form-label-custom">镗单价</label>
                                 <input id="add-z" name="z" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 割工时 - 表格中是 aa 字段 -->
+                        <!-- 镗实际工时 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-tangshiji" class="form-label-custom">镗实际工时</label>
+                                <input id="add-tangshiji" name="tangshiji" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 割工时 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-aa" class="form-label-custom">割工时</label>
                                 <input id="add-aa" name="aa" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 割单价 - 表格中是 ab 字段 -->
+                        <!-- 割单价 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-ab" class="form-label-custom">割单价</label>
                                 <input id="add-ab" name="ab" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 磨工时 - 表格中是 ac 字段 -->
+                        <!-- 割实际工时 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-geshiji" class="form-label-custom">割实际工时</label>
+                                <input id="add-geshiji" name="geshiji" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 磨工时 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-ac" class="form-label-custom">磨工时</label>
                                 <input id="add-ac" name="ac" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 磨单价 - 表格中是 ad 字段 -->
+                        <!-- 磨单价 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-ad" class="form-label-custom">磨单价</label>
                                 <input id="add-ad" name="ad" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 数控铣工时 - 表格中是 ae 字段 -->
+                        <!-- 磨实际工时 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-moshiji" class="form-label-custom">磨实际工时</label>
+                                <input id="add-moshiji" name="moshiji" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 数控铣工时 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-ae" class="form-label-custom">数控铣工时</label>
                                 <input id="add-ae" name="ae" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 数控铣单价 - 表格中是 af 字段 -->
+                        <!-- 数控铣单价 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-af" class="form-label-custom">数控铣单价</label>
                                 <input id="add-af" name="af" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 立车 - 表格中是 ag 字段 -->
+                        <!-- 数控铣实际工时 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-skxshiji" class="form-label-custom">数控铣实际工时</label>
+                                <input id="add-skxshiji" name="skxshiji" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 立车 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-ag" class="form-label-custom">立车</label>
                                 <input id="add-ag" name="ag" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 立车单价 - 表格中是 ah 字段 -->
+                        <!-- 立车单价 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-ah" class="form-label-custom">立车单价</label>
                                 <input id="add-ah" name="ah" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 电火花 - 表格中是 ai 字段 -->
+                        <!-- 立车实际工时 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-licheshiji" class="form-label-custom">立车实际工时</label>
+                                <input id="add-licheshiji" name="licheshiji" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 电火花 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-ai" class="form-label-custom">电火花</label>
                                 <input id="add-ai" name="ai" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 电火花单价 - 表格中是 aj 字段 -->
+                        <!-- 电火花单价 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-aj" class="form-label-custom">电火花单价</label>
                                 <input id="add-aj" name="aj" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 中走丝 - 表格中是 ak 字段 -->
+                        <!-- 电火花实际工时 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-dianhuohuashiji" class="form-label-custom">电火花实际工时</label>
+                                <input id="add-dianhuohuashiji" name="dianhuohuashiji" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 中走丝 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-ak" class="form-label-custom">中走丝</label>
                                 <input id="add-ak" name="ak" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 中走丝单价 - 表格中是 al 字段 -->
+                        <!-- 中走丝单价 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-al" class="form-label-custom">中走丝单价</label>
                                 <input id="add-al" name="al" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 下料 - 表格中是 am 字段 -->
+                        <!-- 中走丝实际工时 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-zhongzuosishiji" class="form-label-custom">中走丝实际工时</label>
+                                <input id="add-zhongzuosishiji" name="zhongzuosishiji" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 精密线切割 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-jingmixianqiege" class="form-label-custom">精密线切割</label>
+                                <input id="add-jingmixianqiege" name="jingmixianqiege" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 下料 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-am" class="form-label-custom">下料</label>
                                 <input id="add-am" name="am" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 深孔钻 - 表格中是 an 字段 -->
+                        <!-- 深孔钻 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-an" class="form-label-custom">深孔钻</label>
                                 <input id="add-an" name="an" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 回厂日期 - 表格中是 ao 字段 -->
+                        <!-- 焊接工时 -->
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-p" class="form-label-custom">焊接工时</label>
+                                <input id="add-p" name="p" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <!-- 回厂日期 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-ao" class="form-label-custom">回厂日期</label>
                                 <input id="add-ao" name="ao" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 出厂日期 - 表格中是 ap 字段 -->
+                        <!-- 出厂日期 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-ap" class="form-label-custom">出厂日期</label>
                                 <input id="add-ap" name="ap" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 订单要求交货时间 - 表格中是 ay 字段 -->
+                        <!-- 订单要求交货时间 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-ay" class="form-label-custom">订单要求交货时间</label>
                                 <input id="add-ay" name="ay" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 铣 - 表格中是 aq 字段 -->
+                        <!-- 铣 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-aq" class="form-label-custom">铣</label>
                                 <input id="add-aq" name="aq" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 车 - 表格中是 ar 字段 -->
+                        <!-- 车 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-ar" class="form-label-custom">车</label>
                                 <input id="add-ar" name="ar" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 登记员 - 表格中是 aas 字段 -->
+                        <!-- 登记员 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-aas" class="form-label-custom">登记员</label>
                                 <input id="add-aas" name="aas" type="text" class="form-control form-control-custom" autocomplete="off">
                             </div>
                         </div>
-                        <!-- 备注 - 表格中是 at 字段 -->
+                        <!-- 备注 -->
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="add-at" class="form-label-custom">备注</label>

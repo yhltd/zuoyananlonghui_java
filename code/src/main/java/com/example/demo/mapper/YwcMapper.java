@@ -23,7 +23,10 @@ public interface YwcMapper extends BaseMapper<Ywc> {
             "          t.id, t.C, t.D, t.E, t.F, t.G, t.H, t.I, t.J, t.K, t.L, t.M, t.N, t.O, t.P, t.Q, t.R, t.S, t.T, t.U, t.V, t.W, t.X, t.Y, t.Z, " +
             "          t.AA, t.AB, t.AC, t.AD, t.AE, t.AF, t.AG, t.AH, t.AI, t.AJ, t.AK, t.AL, t.AM, t.AN, t.AO, t.AP, t.AQ, t.AR, " +
             "          t.[AS] as aas, t.AT, " +
-            "          t.hetong_zhuangtai, t.AU, t.AV, t.AW, t.AX, t.AY, t.riqi " +
+            "          t.hetong_zhuangtai, t.AU, t.AV, t.AW, t.AX, t.AY, t.riqi, " +
+            "          t.lingjianhao, t.xianshiji, t.cheshiji, t.qianshiji, t.tangshiji, t.geshiji, t.moshiji, " +
+            "          t.skxshiji, t.licheshiji, t.dianhuohuashiji, t.zhongzuosishiji, " +
+            "          t.jingmixianqiege, t.hanjiegongshi, t.dengjiriqi, t.shijijiaohuoriqi, t.muban " +
             "   FROM hetong_jilu t " +
             "   WHERE 1=1 " +
             "   AND hetong_zhuangtai IN ('未对账', '已对账') " +
@@ -67,8 +70,11 @@ public interface YwcMapper extends BaseMapper<Ywc> {
     @Select("SELECT " +
             "id, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, " +
             "AA, AB, AC, AD, AE, AF, AG, AH, AI, AJ, AK, AL, AM, AN, AO, AP, AQ, AR, " +
-            "[AS] as aas, AT, " +  // 关键：使用 [AS] 转义
-            "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi " +
+            "[AS] as aas, AT, " +
+            "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi, " +
+            "lingjianhao, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
+            "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
+            "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
             "FROM hetong_jilu WHERE hetong_zhuangtai IN ('未对账', '已对账')")
     List<Ywc> getList();
 
@@ -80,7 +86,23 @@ public interface YwcMapper extends BaseMapper<Ywc> {
             "[aa] = #{aa}, [ab] = #{ab}, [ac] = #{ac}, [ad] = #{ad}, [ae] = #{ae}, [af] = #{af}, [ag] = #{ag}, " +
             "[ah] = #{ah}, [ai] = #{ai}, [aj] = #{aj}, [ak] = #{ak}, [al] = #{al}, [am] = #{am}, [an] = #{an}, " +
             "[ao] = #{ao}, [ap] = #{ap}, [aq] = #{aq}, [ar] = #{ar}, [as] = #{as}, [at] = #{at}, [au] = #{au}, " +
-            "[av] = #{av}, [aw] = #{aw}, [ax] = #{ax} " +
+            "[av] = #{av}, [aw] = #{aw}, [ax] = #{ax}, " +
+            "lingjianhao = #{lingjianhao}, " +
+            "xianshiji = #{xianshiji}, " +
+            "cheshiji = #{cheshiji}, " +
+            "qianshiji = #{qianshiji}, " +
+            "tangshiji = #{tangshiji}, " +
+            "geshiji = #{geshiji}, " +
+            "moshiji = #{moshiji}, " +
+            "skxshiji = #{skxshiji}, " +
+            "licheshiji = #{licheshiji}, " +
+            "dianhuohuashiji = #{dianhuohuashiji}, " +
+            "zhongzuosishiji = #{zhongzuosishiji}, " +
+            "jingmixianqiege = #{jingmixianqiege}, " +
+            "hanjiegongshi = #{hanjiegongshi}, " +
+            "dengjiriqi = #{dengjiriqi}, " +
+            "shijijiaohuoriqi = #{shijijiaohuoriqi}, " +
+            "muban = #{muban} " +
             "WHERE id = #{id}")
     boolean update(Ywc ywc);
 
@@ -137,6 +159,22 @@ public interface YwcMapper extends BaseMapper<Ywc> {
             "<if test='params.ax != null'>[ax] = #{params.ax},</if>" +
             "<if test='params.ay != null'>[ay] = #{params.ay},</if>" +
             "<if test='params.hetong_zhuangtai != null'>hetong_zhuangtai = #{params.hetong_zhuangtai},</if>" +
+            "<if test='params.lingjianhao != null'>lingjianhao = #{params.lingjianhao},</if>" +
+            "<if test='params.xianshiji != null'>xianshiji = #{params.xianshiji},</if>" +
+            "<if test='params.cheshiji != null'>cheshiji = #{params.cheshiji},</if>" +
+            "<if test='params.qianshiji != null'>qianshiji = #{params.qianshiji},</if>" +
+            "<if test='params.tangshiji != null'>tangshiji = #{params.tangshiji},</if>" +
+            "<if test='params.geshiji != null'>geshiji = #{params.geshiji},</if>" +
+            "<if test='params.moshiji != null'>moshiji = #{params.moshiji},</if>" +
+            "<if test='params.skxshiji != null'>skxshiji = #{params.skxshiji},</if>" +
+            "<if test='params.licheshiji != null'>licheshiji = #{params.licheshiji},</if>" +
+            "<if test='params.dianhuohuashiji != null'>dianhuohuashiji = #{params.dianhuohuashiji},</if>" +
+            "<if test='params.zhongzuosishiji != null'>zhongzuosishiji = #{params.zhongzuosishiji},</if>" +
+            "<if test='params.jingmixianqiege != null'>jingmixianqiege = #{params.jingmixianqiege},</if>" +
+            "<if test='params.hanjiegongshi != null'>hanjiegongshi = #{params.hanjiegongshi},</if>" +
+            "<if test='params.dengjiriqi != null'>dengjiriqi = #{params.dengjiriqi},</if>" +
+            "<if test='params.shijijiaohuoriqi != null'>shijijiaohuoriqi = #{params.shijijiaohuoriqi},</if>" +
+            "<if test='params.muban != null'>muban = #{params.muban},</if>" +
             "</set>" +
             "WHERE id = #{id}" +
             "</script>")
@@ -152,8 +190,11 @@ public interface YwcMapper extends BaseMapper<Ywc> {
             "SELECT " +
             "id, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, " +
             "AA, AB, AC, AD, AE, AF, AG, AH, AI, AJ, AK, AL, AM, AN, AO, AP, AQ, AR, " +
-            "[AS] as aas, AT, " +  // 关键：使用 AS as aas 明确映射
-            "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi " +
+            "[AS] as aas, AT, " +
+            "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi, " +
+            "lingjianhao, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
+            "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
+            "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
             "FROM hetong_jilu " +
             "WHERE hetong_zhuangtai IN ('已对账', '未对账') " +
             "<if test='name != null and name != \"\"'>" +

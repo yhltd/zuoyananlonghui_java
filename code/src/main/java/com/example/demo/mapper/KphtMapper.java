@@ -20,8 +20,11 @@ public interface KphtMapper extends BaseMapper<Kpht> {
     @Select("SELECT " +
             "id, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, " +
             "AA, AB, AC, AD, AE, AF, AG, AH, AI, AJ, AK, AL, AM, AN, AO, AP, AQ, AR, " +
-            "[AS] as aas, AT, " +  // 关键：使用 [AS] 转义
-            "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi " +
+            "[AS] as aas, AT, " +
+            "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi, " +
+            "lingjianhao, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
+            "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
+            "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
             "FROM hetong_jilu WHERE hetong_zhuangtai IN ('未开票', '已开票')")
     List<Kpht> getList();
 
@@ -40,7 +43,23 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "           AT as at, " +
             "           hetong_zhuangtai as hetongzhuangtai, " +
             "           AU as au, AV as av, AW as aw, AX as ax, AY as ay, " +
-            "           riqi as riqi " +
+            "           riqi as riqi, " +
+            "           lingjianhao as lingjianhao, " +
+            "           xianshiji as xianshiji, " +
+            "           cheshiji as cheshiji, " +
+            "           qianshiji as qianshiji, " +
+            "           tangshiji as tangshiji, " +
+            "           geshiji as geshiji, " +
+            "           moshiji as moshiji, " +
+            "           skxshiji as skxshiji, " +
+            "           licheshiji as licheshiji, " +
+            "           dianhuohuashiji as dianhuohuashiji, " +
+            "           zhongzuosishiji as zhongzuosishiji, " +
+            "           jingmixianqiege as jingmixianqiege, " +
+            "           hanjiegongshi as hanjiegongshi, " +
+            "           dengjiriqi as dengjiriqi, " +
+            "           shijijiaohuoriqi as shijijiaohuoriqi, " +
+            "           muban as muban " +
             "    FROM hetong_jilu " +
             "    <where>" +
             "        hetong_zhuangtai IN ('未开票', '已开票')" +
@@ -79,7 +98,23 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "[aa] = #{aa}, [ab] = #{ab}, [ac] = #{ac}, [ad] = #{ad}, [ae] = #{ae}, [af] = #{af}, [ag] = #{ag}, " +
             "[ah] = #{ah}, [ai] = #{ai}, [aj] = #{aj}, [ak] = #{ak}, [al] = #{al}, [am] = #{am}, [an] = #{an}, " +
             "[ao] = #{ao}, [ap] = #{ap}, [aq] = #{aq}, [ar] = #{ar}, [as] = #{as}, [at] = #{at}, [au] = #{au}, " +
-            "[av] = #{av}, [aw] = #{aw}, [ax] = #{ax} " +
+            "[av] = #{av}, [aw] = #{aw}, [ax] = #{ax}, " +
+            "lingjianhao = #{lingjianhao}, " +
+            "xianshiji = #{xianshiji}, " +
+            "cheshiji = #{cheshiji}, " +
+            "qianshiji = #{qianshiji}, " +
+            "tangshiji = #{tangshiji}, " +
+            "geshiji = #{geshiji}, " +
+            "moshiji = #{moshiji}, " +
+            "skxshiji = #{skxshiji}, " +
+            "licheshiji = #{licheshiji}, " +
+            "dianhuohuashiji = #{dianhuohuashiji}, " +
+            "zhongzuosishiji = #{zhongzuosishiji}, " +
+            "jingmixianqiege = #{jingmixianqiege}, " +
+            "hanjiegongshi = #{hanjiegongshi}, " +
+            "dengjiriqi = #{dengjiriqi}, " +
+            "shijijiaohuoriqi = #{shijijiaohuoriqi}, " +
+            "muban = #{muban} " +
             "WHERE id = #{id}")
     boolean update(Kpht kpht);
 
@@ -136,6 +171,22 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "<if test='params.ax != null'>[ax] = #{params.ax},</if>" +
             "<if test='params.ay != null'>[ay] = #{params.ay},</if>" +
             "<if test='params.hetong_zhuangtai != null'>hetong_zhuangtai = #{params.hetong_zhuangtai},</if>" +
+            "<if test='params.lingjianhao != null'>lingjianhao = #{params.lingjianhao},</if>" +
+            "<if test='params.xianshiji != null'>xianshiji = #{params.xianshiji},</if>" +
+            "<if test='params.cheshiji != null'>cheshiji = #{params.cheshiji},</if>" +
+            "<if test='params.qianshiji != null'>qianshiji = #{params.qianshiji},</if>" +
+            "<if test='params.tangshiji != null'>tangshiji = #{params.tangshiji},</if>" +
+            "<if test='params.geshiji != null'>geshiji = #{params.geshiji},</if>" +
+            "<if test='params.moshiji != null'>moshiji = #{params.moshiji},</if>" +
+            "<if test='params.skxshiji != null'>skxshiji = #{params.skxshiji},</if>" +
+            "<if test='params.licheshiji != null'>licheshiji = #{params.licheshiji},</if>" +
+            "<if test='params.dianhuohuashiji != null'>dianhuohuashiji = #{params.dianhuohuashiji},</if>" +
+            "<if test='params.zhongzuosishiji != null'>zhongzuosishiji = #{params.zhongzuosishiji},</if>" +
+            "<if test='params.jingmixianqiege != null'>jingmixianqiege = #{params.jingmixianqiege},</if>" +
+            "<if test='params.hanjiegongshi != null'>hanjiegongshi = #{params.hanjiegongshi},</if>" +
+            "<if test='params.dengjiriqi != null'>dengjiriqi = #{params.dengjiriqi},</if>" +
+            "<if test='params.shijijiaohuoriqi != null'>shijijiaohuoriqi = #{params.shijijiaohuoriqi},</if>" +
+            "<if test='params.muban != null'>muban = #{params.muban},</if>" +
             "</set>" +
             "WHERE id = #{id}" +
             "</script>")
@@ -151,8 +202,11 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "SELECT " +
             "id, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, " +
             "AA, AB, AC, AD, AE, AF, AG, AH, AI, AJ, AK, AL, AM, AN, AO, AP, AQ, AR, " +
-            "[AS] as aas, AT, " +  // 关键：使用 AS as aas 明确映射
-            "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi " +
+            "[AS] as aas, AT, " +
+            "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi, " +
+            "lingjianhao, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
+            "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
+            "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
             "FROM hetong_jilu " +
             "WHERE hetong_zhuangtai IN ('未开票', '已开票') " +
             "<if test='name != null and name != \"\"'>" +
