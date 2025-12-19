@@ -2,20 +2,16 @@ package com.example.demo.mapper;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.example.demo.entity.*;
+import com.example.demo.entity.Kpht;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author hui
- * @date 2025/11/25 9:32
- */
 @Mapper
 @Repository
-public interface KphtMapper extends BaseMapper<Kpht> {
+public interface XkphtMapper extends BaseMapper<Kpht> {
 
     @Select("SELECT " +
             "id, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, " +
@@ -26,7 +22,7 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
             "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
             "FROM hetong_jilu WHERE hetong_zhuangtai IN ('未开票', '已开票') " +
-            "AND ISNULL(muban, '') != '新'")  // 新增条件
+            "AND muban = '新'")  // 新增条件
     List<Kpht> getList();
 
 
@@ -64,7 +60,7 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "    FROM hetong_jilu " +
             "    <where>" +
             "        hetong_zhuangtai IN ('未开票', '已开票')" +
-            "        AND ISNULL(muban, '') != '新' " +  // 新增条件
+            "        AND muban = '新' " +  // 新增条件
             "        <if test='ew != null'>" +
             "            <trim prefix=' AND ' prefixOverrides='AND |OR '>" +
             "                ${ew.sqlSegment}" +
@@ -83,7 +79,7 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "SELECT COUNT(*) FROM hetong_jilu " +
             "<where>" +
             "    hetong_zhuangtai IN ('未开票', '已开票')" +
-            "    AND ISNULL(muban, '') != '新' " +  // 新增条件
+            "    AND muban = '新' " +  // 新增条件
             "    <if test='ew != null'>" +
             "        <trim prefix=' AND ' prefixOverrides='AND |OR '>" +  // 单引号属性值
             "            ${ew.sqlSegment}" +
@@ -212,7 +208,7 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
             "FROM hetong_jilu " +
             "WHERE hetong_zhuangtai IN ('未开票', '已开票') " +
-            "AND ISNULL(muban, '') != '新' " +  // 新增条件
+            "AND muban = '新' " +  // 新增条件
             "<if test='name != null and name != \"\"'>" +
             "   AND C LIKE '%' + #{name} + '%'" +
             "</if>" +

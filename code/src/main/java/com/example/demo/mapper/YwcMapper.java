@@ -30,6 +30,7 @@ public interface YwcMapper extends BaseMapper<Ywc> {
             "   FROM hetong_jilu t " +
             "   WHERE 1=1 " +
             "   AND hetong_zhuangtai IN ('未对账', '已对账') " +
+        "       AND ISNULL(muban, '') != '新' " +
             "   <if test='ew != null and ew.sqlSegment != null and ew.sqlSegment != \"\"'>" +
             "     <choose>" +
             "       <when test='ew.sqlSegment.contains(\"WHERE\")'>" +
@@ -52,6 +53,7 @@ public interface YwcMapper extends BaseMapper<Ywc> {
             "FROM hetong_jilu " +
             "WHERE 1=1 " +
             "AND hetong_zhuangtai IN ('未对账', '已对账') " +
+            "AND ISNULL(muban, '') != '新' " +
             "<if test='ew != null and ew.sqlSegment != null and ew.sqlSegment != \"\"'>" +
             "  <choose>" +
             "    <when test='ew.sqlSegment.contains(\"WHERE\")'>" +
@@ -75,7 +77,8 @@ public interface YwcMapper extends BaseMapper<Ywc> {
             "lingjianhao, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
             "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
             "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
-            "FROM hetong_jilu WHERE hetong_zhuangtai IN ('未对账', '已对账')")
+            "FROM hetong_jilu WHERE hetong_zhuangtai IN ('未对账', '已对账') " +
+            "AND ISNULL(muban, '') != '新'")
     List<Ywc> getList();
 
 
@@ -197,6 +200,7 @@ public interface YwcMapper extends BaseMapper<Ywc> {
             "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
             "FROM hetong_jilu " +
             "WHERE hetong_zhuangtai IN ('已对账', '未对账') " +
+            "AND ISNULL(muban, '') != '新' " +
             "<if test='name != null and name != \"\"'>" +
             "   AND C LIKE '%' + #{name} + '%'" +
             "</if>" +

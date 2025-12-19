@@ -158,6 +158,11 @@ $(function () {
         swal("刷新成功", "已显示所有数据", "success");
     });
 
+    //计算
+    $("#calculate-btn").click(function () {
+        calculateSelectedRows();
+    });
+
     // 导出按钮事件
     $('#export-btn').off('click').on('click', function() {
         console.log('导出Excel');
@@ -783,22 +788,22 @@ function initializeBootstrapTable(data) {
                 width: 120,
                 class: 'editable'
             },
-            {
-                field: 'shijijiaohuoriqi',
-                title: '实际交货日期',
-                align: 'center',
-                sortable: true,
-                width: 120,
-                class: 'editable'
-            },
-            {
-                field: 'ay',
-                title: '订单要求交货时间',
-                align: 'center',
-                sortable: true,
-                width: 160,
-                class: 'editable'
-            },
+            // {
+            //     field: 'shijijiaohuoriqi',
+            //     title: '实际交货日期',
+            //     align: 'center',
+            //     sortable: true,
+            //     width: 120,
+            //     class: 'editable'
+            // },
+            // {
+            //     field: 'ay',
+            //     title: '订单要求交货时间',
+            //     align: 'center',
+            //     sortable: true,
+            //     width: 160,
+            //     class: 'editable'
+            // },
             {
                 field: 'aq',
                 title: '铣',
@@ -1552,8 +1557,8 @@ function createExcelFile(data, filename) {
                 '回厂日期': item.ao || '',
                 '登记日期': item.dengjiriqi || '',
                 '出厂日期': item.ap || '',
-                '实际交货日期': item.shijijiaohuoriqi || '',
-                '订单要求交货时间': item.ay || '',
+                // '实际交货日期': item.shijijiaohuoriqi || '',
+                // '订单要求交货时间': item.ay || '',
                 '铣': item.aq || '',
                 '车': item.ar || '',
                 '登记员': item.aas || '',
@@ -1579,9 +1584,8 @@ function createExcelFile(data, filename) {
             { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
             { wch: 12 }, { wch: 12 }, { wch: 8 }, { wch: 10 },
             { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 12 },
-            { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 },
-            { wch: 16 }, { wch: 8 }, { wch: 8 }, { wch: 10 },
-            { wch: 15 }
+            { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 8 },
+            { wch: 8 }, { wch: 10 },{ wch: 15 }
         ];
         ws['!cols'] = colWidths;
 
@@ -1767,17 +1771,17 @@ function setTable(data) {
                 sortable: true,
                 width: 120,
                 class: 'editable'
-            },
-            {
-                field: 'lingjianhao',
-                title: '零件号',
+            },{
+                field: 'e',
+                title: '任务号',
                 align: 'center',
                 sortable: true,
                 width: 120,
                 class: 'editable'
-            },{
-                field: 'e',
-                title: '任务号',
+            },
+            {
+                field: 'lingjianhao',
+                title: '零件号',
                 align: 'center',
                 sortable: true,
                 width: 120,
@@ -2225,4 +2229,59 @@ function setTable(data) {
     // 强制刷新表格视图
     $('#userTable').bootstrapTable('load', data);
     $('#userTable').bootstrapTable('resetView');
+}
+
+
+function calculateSelectedRows() {
+
+    // 获取选中的行
+    var selectedRows = getSelectedRows();
+    console.log('选中的行:', selectedRows);
+
+    if (selectedRows.length != 1) {
+        swal("请选择", "请至少选择行数据进行计算", "warning");
+        return;
+    }
+
+    // 收集选中行的ID
+    var idList = [];
+    selectedRows.forEach(function(row) {
+        if (row.id) {
+            idList.push(row.id);
+        }
+    });
+
+    if (idList.length === 0) {
+        swal("错误", "未找到有效的行ID", "error");
+        return;
+    }
+
+    console.log('准备计算的行ID:', idList);
+
+    $.ajax({
+        type: 'post',
+        url: '/ywc/updateField',
+        data: JSON.stringify({
+            id: idList,
+        }),
+        dataType: 'json',
+        contentType: 'application/json;charset=utf-8',
+        success: function(res) {
+            console.log('更新响应:', res);
+            if (res.code == 200) {
+                $cell.text(newValue);
+                getList(currentPage);
+                swal("计算成功", res.msg, "error");
+            } else {
+                $cell.text(originalValue);
+                swal("计算失败", res.msg, "error");
+            }
+        },
+        error: function(xhr, status, error) {
+            $cell.text(originalValue);
+            console.error('更新请求失败:', error);
+            swal("计算失败", "网络错误，请重试", "error");
+        }
+    });
+
 }

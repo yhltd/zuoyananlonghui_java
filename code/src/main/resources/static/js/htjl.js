@@ -77,6 +77,27 @@ $(function () {
         $('#importModal').modal('show');
     });
 
+    // 保存列配置并导出
+    $('#saveColumnConfigBtn').click(function() {
+        // 收集选择的列
+        var columnConfig = {};
+
+        $('.column-checkbox').each(function() {
+            var field = $(this).val();
+            var isChecked = $(this).is(':checked');
+            columnConfig[field] = isChecked;
+        });
+
+        // 保存到localStorage
+        localStorage.setItem('exportColumnConfig_htjl', JSON.stringify(columnConfig));
+
+        // 关闭列选择模态框
+        $('#columnSelectModal').modal('hide');
+
+        // 显示导出设置模态框
+        showExportModal();
+    });
+
     // 文件选择事件
     $('#simpleExcelFile').change(function(e) {
         var file = e.target.files[0];
@@ -317,7 +338,7 @@ $(function () {
     // 导出按钮事件
     $('#export-btn').off('click').on('click', function() {
         console.log('导出Excel');
-        showExportModal();
+        showColumnSelectModal(); // 先显示列选择模态框
     });
 
     // 绑定确认导出事件
@@ -1974,6 +1995,58 @@ function bindReturnOrderEvents() {
     });
 // 添加打印按钮事件绑定
     $('#print-btn').off('click').on('click', function() {
+        var returnCustomer = $('#return-customer').val();
+        var returnDate = $('#return-date').val();
+        var returnNo = $('#return-no').val();
+        var returnPhone = $('#return-phone').val();
+
+        // 检测逻辑
+        if (!returnCustomer) {
+            swal("保存失败", "请填写退货客户", "error");
+            return;
+        }
+        if (!returnDate) {
+            swal("保存失败", "请选择退货日期", "error");
+            return;
+        }
+        if (!returnNo) {
+            swal("保存失败", "请生成退货单号", "error");
+            return;
+        }
+        if (!returnPhone) {
+            swal("保存失败", "请填写退货电话", "error");
+            return;
+        }
+
+
+        //------------------------
+
+        // 先检查退货单号是否已存在
+        checkReturnNoExists(returnNo, function(exists, count) {
+            if (exists) {
+                // 使用alert对话框提示用户
+                var userChoice = confirm(`退货单号 ${returnNo} 在数据库中已有 ${count} 条记录\n\n是否要删除原有数据并保存新数据？`);
+
+                if (userChoice) {
+                    // 用户点击"确定" - 先删除已有数据，再保存新数据
+                    deleteExistingReturnOrder(returnNo, function() {
+                        // 删除成功后保存新数据
+                        saveReturnOrderData();
+                    });
+                } else {
+                    // 用户点击"取消" - 清空页面表格
+                    clearReturnForm();
+                    alert("已清空页面表格，请重新填写数据");
+                }
+            } else {
+                // 直接保存数据
+                saveReturnOrderData();
+            }
+        });
+
+
+
+
         printReturnOrder();
     });
     // 保存退货单按钮点击事件
@@ -2855,6 +2928,13 @@ function clearReturnForm() {
 
 // 显示导出设置模态框
 function showExportModal() {
+    // 检查是否有选择的列
+    if (!window.selectedExportColumns || window.selectedExportColumns.length === 0) {
+        swal('请至少选择一列进行导出');
+        $('#columnSelectModal').modal('show');
+        return;
+    }
+
     var defaultFileName = '合同记录_' + getCurrentDate();
     $('#export-filename').val(defaultFileName);
     $('#exportModal').modal('show');
@@ -2890,14 +2970,14 @@ function formatDate(date, format) {
 
 // 导出到Excel功能
 function exportToExcel(filename) {
-    console.log('开始导出Excel:', filename);
+    console.log('开始导出Excel，选择的列:', window.selectedExportColumns);
 
     showExportLoading();
 
-    // 获取所有数据（注意：这里需要根据实际接口调整）
+    // 获取所有数据
     $ajax({
         type: 'post',
-        url: '/htjl/getListExcludeThjl', // 需要后端提供获取所有数据的接口
+        url: '/htjl/getListExcludeThjl',
         contentType: 'application/json',
         data: JSON.stringify({
             pageNum: 1,
@@ -2909,7 +2989,7 @@ function exportToExcel(filename) {
 
         if (res.code === 200 && res.data && res.data.records && res.data.records.length > 0) {
             console.log('获取到数据，开始导出:', res.data.records.length, '条记录');
-            createExcelFile(res.data.records, filename);
+            createExcelFile(res.data.records, filename, window.selectedExportColumns);
         } else {
             swal('没有数据可以导出');
         }
@@ -2917,78 +2997,52 @@ function exportToExcel(filename) {
 }
 
 // 创建Excel文件
-function createExcelFile(data, filename) {
+function createExcelFile(data, filename, selectedColumns) {
     try {
-        // 检查 SheetJS 是否已加载
         if (typeof XLSX === 'undefined') {
             swal('导出功能初始化失败，请刷新页面重试');
             return;
         }
 
-        // 准备Excel数据 - 根据表格列顺序
+        // 获取列定义
+        var allColumns = getTableColumnDefinitions();
+
+        // 筛选并排序选择的列
+        var columnsToExport = [];
+        selectedColumns.forEach(function(field) {
+            var columnDef = allColumns.find(function(col) {
+                return col.field === field;
+            });
+            if (columnDef) {
+                columnsToExport.push(columnDef);
+            }
+        });
+
+        // 准备Excel数据
         var excelData = data.map(function(item) {
-            return {
-                '业务单位': item.c || '',
-                '合同号': item.d || '',
-                '任务号': item.e || '',
-                '零件号': item.lingjianhao || '',
-                '工艺规程状态': item.zhuangtai || calculateProcessStatus(item),
-                '工序': item.g || '',
-                '名称': item.h || '',
-                '图号': item.i || '',
-                '单位': item.j || '',
-                '数量': item.k || '',
-                '材质': item.l || '',
-                '序合计': item.av || '',
-                '重量': item.aw || '',
-                '工件尺寸': item.ax || '',
-                '单价元': item.m || '',
-                '合计金额': item.n || '',
-                '铣工时': item.o || '',
-                '铣单价': item.p || '',
-                '实际工时（铣）': item.xianshiji || '',
-                '车工时': item.q || '',
-                '车单价': item.r || '',
-                '实际工时（车）': item.cheshiji || '',
-                '钳工时': item.s || '',
-                '钳单价': item.t || '',
-                '实际工时（钳）': item.qianshiji || '',
-                '整件外委工时': item.u || '',
-                '整件外委单位': item.v || '',
-                '外委工时': item.w || '',
-                '外委单价': item.x || '',
-                '镗工时': item.y || '',
-                '镗单价': item.z || '',
-                '实际工时（镗）': item.tangshiji || '',
-                '割工时': item.aa || '',
-                '割单价': item.ab || '',
-                '实际工时（割）': item.geshiji || '',
-                '磨工时': item.ac || '',
-                '磨单价': item.ad || '',
-                '实际工时（磨）': item.moshiji || '',
-                '数控铣工时': item.ae || '',
-                '数控铣单价': item.af || '',
-                '实际工时（数控铣）': item.skxshiji || '',
-                '立车': item.ag || '',
-                '立车单价': item.ah || '',
-                '实际工时（立车）': item.licheshiji || '',
-                '电火花': item.ai || '',
-                '电火花单价': item.aj || '',
-                '实际工时（电火花）': item.dianhuohuashiji || '',
-                '中走丝': item.ak || '',
-                '中走丝单价': item.al || '',
-                '实际工时（中走丝）': item.zhongzuosishiji || '',
-                '精密线切割': item.jingmixianqiege || '',
-                '下料': item.am || '',
-                '深孔钻': item.an || '',
-                '回厂日期': item.ao || '',
-                '出厂日期': item.ap || '',
-                '订单要求交货时间': item.ay || '',
-                '铣': item.aq || '',
-                '车': item.ar || '',
-                '登记员': item.aas || '',
-                '备注': item.at || ''
-            };
+            var row = {};
+
+            columnsToExport.forEach(function(column) {
+                var value = item[column.field];
+
+                // 特殊处理工艺规程状态
+                if (column.field === 'zhuangtai') {
+                    row[column.title] = calculateProcessStatus(item);
+                } else {
+                    // 处理其他字段
+                    if (value === null || value === undefined || value === '') {
+                        row[column.title] = '';
+                    } else if (column.field === 'ao' || column.field === 'ap' || column.field === 'ay') {
+                        // 日期字段
+                        row[column.title] = formatExcelDate(value);
+                    } else {
+                        // 其他字段
+                        row[column.title] = value.toString();
+                    }
+                }
+            });
+
+            return row;
         });
 
         // 创建工作簿
@@ -2998,20 +3052,9 @@ function createExcelFile(data, filename) {
         var ws = XLSX.utils.json_to_sheet(excelData);
 
         // 设置列宽
-        var colWidths = [
-            { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
-            { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 8 },
-            { wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 8 },
-            { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 10 },
-            { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
-            { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 10 },
-            { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
-            { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 },
-            { wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 12 },
-            { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 },
-            { wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 8 },
-            { wch: 8 }, { wch: 10 }, { wch: 15 }
-        ];
+        var colWidths = columnsToExport.map(function(column) {
+            return { wch: Math.min(Math.max(column.title.length * 1.5, 8), 25) };
+        });
         ws['!cols'] = colWidths;
 
         // 添加工作表
@@ -3020,11 +3063,15 @@ function createExcelFile(data, filename) {
         // 导出文件
         XLSX.writeFile(wb, filename);
 
-        console.log('Excel文件导出成功:', filename);
+        console.log('Excel文件导出成功:', filename, '包含列:', selectedColumns.length);
 
         // 显示成功消息
         setTimeout(function() {
-            swal(`导出成功！\n文件名：${filename}`);
+            swal({
+                title: '导出成功！',
+                text: `文件名：${filename}\n包含 ${selectedColumns.length} 个列`,
+                icon: 'success'
+            });
         }, 500);
 
     } catch (error) {
@@ -4038,75 +4085,213 @@ function showImportResult(isSuccess, message) {
 function printReturnOrder() {
     console.log('开始打印退货单...');
 
-    // 创建一个打印样式
-    var printStyle = `
-        <style>
-            @media print {
-                body * {
-                    visibility: hidden;
-                }
-                #return-print-section, #return-print-section * {
-                    visibility: visible;
-                }
-                #return-print-section {
-                    position: absolute;
-                    left: 0;
-                    top: 0;
-                    width: 100%;
-                    padding: 20px;
-                }
-                .no-print {
-                    display: none !important;
-                }
-                /* 表格样式 */
-                .print-table {
-                    border-collapse: collapse;
-                    width: 100%;
-                    margin-top: 20px;
-                }
-                .print-table th, .print-table td {
-                    border: 1px solid #000;
-                    padding: 8px;
-                    text-align: center;
-                    font-size: 12px;
-                }
-                .print-table th {
-                    background-color: #f2f2f2;
-                    font-weight: bold;
-                }
-                .print-info {
-                    margin-bottom: 15px;
-                    line-height: 2;
-                }
-                .print-title {
-                    text-align: center;
-                    font-size: 20px;
-                    font-weight: bold;
-                    margin-bottom: 20px;
-                }
-            }
-        </style>
-    `;
+    // 创建打印窗口
+    var printWindow = window.open('', '_blank', 'width=800,height=600');
 
-    // 添加打印样式到页面
-    $('head').append(printStyle);
-
-    // 构建打印内容
+    // 构建打印内容 - 注意这里只包含打印内容，不包含操作按钮
     var printContent = buildReturnOrderPrintContent();
 
-    // 创建打印区域
-    var printSection = $('<div id="return-print-section"></div>').html(printContent);
-    $('body').append(printSection);
+    // 写入打印内容
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>退货单打印</title>
+            <style>
+                @media print {
+                    /* 打印时隐藏所有不需要的元素 */
+                    .no-print, .print-actions, button, .print-prompt {
+                        display: none !important;
+                    }
+                    
+                    /* 打印设置 */
+                    @page {
+                        size: auto;
+                        margin: 15mm;
+                    }
+                    
+                    body {
+                        margin: 0;
+                        padding: 0;
+                        background: white !important;
+                        color: black !important;
+                        font-size: 12pt;
+                    }
+                    
+                    /* 表格样式 - 只有白色背景和黑色边框 */
+                    table {
+                        border-collapse: collapse !important;
+                        width: 100% !important;
+                        margin: 10px 0 !important;
+                        background: white !important;
+                    }
+                    
+                    th, td {
+                        border: 1px solid #000 !important;
+                        padding: 5px 8px !important;
+                        text-align: center !important;
+                        background: white !important;
+                        color: black !important;
+                        font-size: 11pt !important;
+                    }
+                    
+                    th {
+                        font-weight: bold !important;
+                    }
+                    
+                    /* 标题和文字样式 */
+                    .print-title {
+                        text-align: center !important;
+                        font-size: 16pt !important;
+                        font-weight: bold !important;
+                        margin: 15px 0 !important;
+                        color: black !important;
+                    }
+                    
+                    .print-info {
+                        margin: 8px 0 !important;
+                        line-height: 1.6 !important;
+                        color: black !important;
+                    }
+                    
+                    /* 确保所有背景都是白色，文字是黑色 */
+                    * {
+                        background: white !important;
+                        color: black !important;
+                    }
+                }
+                
+                /* 屏幕预览样式 - 包含按钮用于预览 */
+                @media screen {
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 20px;
+                        background: #f5f5f5;
+                    }
+                    
+                    .print-container {
+                        background: white;
+                        padding: 20px;
+                        max-width: 800px;
+                        margin: 0 auto;
+                        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                    }
+                    
+                    .print-table {
+                        border-collapse: collapse;
+                        width: 100%;
+                        margin: 20px 0;
+                    }
+                    
+                    .print-table th,
+                    .print-table td {
+                        border: 1px solid #ddd;
+                        padding: 8px;
+                        text-align: center;
+                    }
+                    
+                    .print-table th {
+                        background-color: #f8f9fa;
+                        font-weight: bold;
+                    }
+                    
+                    .print-title {
+                        text-align: center;
+                        font-size: 20px;
+                        font-weight: bold;
+                        margin-bottom: 20px;
+                        color: #333;
+                    }
+                    
+                    .print-info {
+                        margin-bottom: 10px;
+                        line-height: 1.8;
+                    }
+                    
+                    /* 打印操作区域 - 在打印时隐藏 */
+                    .print-actions {
+                        margin-top: 20px;
+                        text-align: center;
+                        padding: 20px;
+                        background: #f8f9fa;
+                        border-top: 1px solid #ddd;
+                    }
+                    
+                    .print-btn {
+                        padding: 10px 20px;
+                        margin: 0 10px;
+                        background: #007bff;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 14px;
+                    }
+                    
+                    .print-btn:hover {
+                        background: #0056b3;
+                    }
+                    
+                    .print-btn.cancel {
+                        background: #6c757d;
+                    }
+                    
+                    .print-btn.cancel:hover {
+                        background: #545b62;
+                    }
+                    
+                    /* 提示文字 - 在打印时隐藏 */
+                    .print-prompt {
+                        margin-top: 10px;
+                        color: #666;
+                        font-size: 12px;
+                        font-style: italic;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="print-container">
+                ${printContent}
+            </div>
+            
+            <!-- 这个div在打印时会自动隐藏 -->
+            <div class="print-actions no-print">
+                <button class="print-btn" onclick="window.print()">
+                    <i class="bi bi-printer"></i> 打印
+                </button>
+                <button class="print-btn cancel" onclick="window.close()">
+                    <i class="bi bi-x"></i> 关闭
+                </button>
+                <!-- 这个提示在打印时会隐藏 -->
+                <p class="print-prompt no-print">
+                    提示：点击"打印"按钮使用浏览器打印功能，可以选择纸张大小和方向
+                </p>
+            </div>
+            
+            <script>
+                // 添加图标支持
+                document.addEventListener('DOMContentLoaded', function() {
+                    var link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css';
+                    document.head.appendChild(link);
+                });
+            </script>
+        </body>
+        </html>
+    `);
 
-    // 执行打印
-    window.print();
+    printWindow.document.close();
 
-    // 清理打印区域
-    setTimeout(function() {
-        $('#return-print-section').remove();
-        $('head style:last-child').remove();
-    }, 100);
+    // 等待内容加载完成后自动触发打印（可选）
+    printWindow.onload = function() {
+        // 如果想要预览而不自动打印，注释掉下面这行
+        // printWindow.print();
+    };
 }
+
 
 function buildReturnOrderPrintContent() {
     // 构建表格行
@@ -4128,8 +4313,8 @@ function buildReturnOrderPrintContent() {
                     <td>${$row.find('input[name="drawingNo"]').val() || ''}</td>
                     <td>${$row.find('input[name="unit"]').val() || ''}</td>
                     <td>${$row.find('input[name="quantity"]').val() || ''}</td>
-                    <td>${$row.find('input[name="unitPrice"]').val() || ''}</td>
-                    <td>${$row.find('input[name="amount"]').val() || ''}</td>
+                    <td>${parseFloat($row.find('input[name="unitPrice"]').val() || 0).toFixed(2)}</td>
+                    <td>${parseFloat($row.find('input[name="amount"]').val() || 0).toFixed(2)}</td>
                     <td>${$row.find('input[name="material"]').val() || ''}</td>
                     <td>${$row.find('input[name="weight"]').val() || ''}</td>
                     <td>${$row.find('input[name="returnDate"]').val() || ''}</td>
@@ -4145,8 +4330,12 @@ function buildReturnOrderPrintContent() {
         tableRows = '<tr><td colspan="14" style="text-align: center;">暂无退货明细</td></tr>';
     }
 
+    // 计算合计金额
+    var totalAmount = $('#total-amount').text() || '0.00';
+    var totalAmountChinese = $('#total-amount-chinese').text() || '零元整';
+
     return `
-        <div class="print-container">
+        <div class="print-content">
             <div class="print-title">退货单</div>
             
             <div class="print-info">
@@ -4181,16 +4370,20 @@ function buildReturnOrderPrintContent() {
             </table>
             
             <div class="print-info" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #000;">
-                <div><strong>合计金额(大写)：</strong>${$('#total-amount-chinese').text()}</div>
-                <div><strong>合计金额：</strong>${$('#total-amount').text()}</div>
+                <div><strong>合计金额(大写)：</strong>${totalAmountChinese}</div>
+                <div><strong>合计金额(小写)：</strong>${totalAmount}</div>
             </div>
             
             <div class="print-info" style="margin-top: 30px;">
                 <div style="display: flex; justify-content: space-between;">
-                    <div><strong>地址：</strong>${$('#company-address').val() || ''}</div>
-                    <div><strong>电话：</strong>${$('#company-phone').val() || ''}</div>
-                    <div><strong>客户签字：</strong>${$('#customer-signature').val() || ''}</div>
+                    <div style="flex: 1;"><strong>地址：</strong>${$('#company-address').val() || ''}</div>
+                    <div style="flex: 1; text-align: center;"><strong>电话：</strong>${$('#company-phone').val() || ''}</div>
+                    <div style="flex: 1; text-align: right;"><strong>客户签字：</strong>${$('#customer-signature').val() || ''}</div>
                 </div>
+            </div>
+            
+            <div class="print-info" style="margin-top: 40px; font-size: 10pt; color: #666;">
+                <div>打印时间：${new Date().toLocaleString()}</div>
             </div>
         </div>
     `;
@@ -4340,6 +4533,271 @@ function initTableDragScroll() {
     });
 
     console.log('表格拖动滚动初始化完成');
+}
+
+//--------------导出列可选择----------------
+
+// 显示列选择模态框
+function showColumnSelectModal() {
+    // 先加载列配置
+    loadColumnConfig();
+
+    // 显示模态框
+    $('#columnSelectModal').modal('show');
+}
+
+// 加载列配置
+function loadColumnConfig() {
+    // 从localStorage加载用户配置，如果没有则使用默认配置
+    var savedConfig = localStorage.getItem('exportColumnConfig_htjl');
+    var columnConfig = {};
+
+    if (savedConfig) {
+        try {
+            columnConfig = JSON.parse(savedConfig);
+        } catch (e) {
+            console.error('加载列配置失败:', e);
+        }
+    }
+
+    // 获取表格的所有列定义
+    var tableColumns = getTableColumnDefinitions();
+
+    // 生成列选择界面
+    generateColumnCheckboxes(tableColumns, columnConfig);
+
+    // 初始化事件
+    initColumnSelectEvents();
+}
+
+// 获取表格列定义
+function getTableColumnDefinitions() {
+    return [
+        { field: 'c', title: '业务单位', category: '基础信息', default: true },
+        { field: 'd', title: '合同号', category: '基础信息', default: true },
+        { field: 'e', title: '任务号', category: '基础信息', default: true },
+        { field: 'lingjianhao', title: '零件号', category: '基础信息', default: false },
+        { field: 'zhuangtai', title: '工艺规程状态', category: '状态', default: true },
+        { field: 'g', title: '工序', category: '基础信息', default: false },
+        { field: 'h', title: '名称', category: '基础信息', default: true },
+        { field: 'i', title: '图号', category: '基础信息', default: true },
+        { field: 'j', title: '单位', category: '基础信息', default: true },
+        { field: 'k', title: '数量', category: '基础信息', default: true },
+        { field: 'l', title: '材质', category: '基础信息', default: true },
+        { field: 'av', title: '序合计', category: '财务', default: false },
+        { field: 'aw', title: '重量', category: '物理属性', default: false },
+        { field: 'ax', title: '工件尺寸', category: '物理属性', default: false },
+        { field: 'm', title: '单价元', category: '财务', default: true },
+        { field: 'n', title: '合计金额', category: '财务', default: true },
+        { field: 'o', title: '铣工时', category: '工时', default: false },
+        { field: 'p', title: '铣单价', category: '财务', default: false },
+        { field: 'xianshiji', title: '铣实际工时', category: '工时', default: false },
+        { field: 'q', title: '车工时', category: '工时', default: false },
+        { field: 'r', title: '车单价', category: '财务', default: false },
+        { field: 'cheshiji', title: '车实际工时', category: '工时', default: false },
+        { field: 's', title: '钳工时', category: '工时', default: false },
+        { field: 't', title: '钳单价', category: '财务', default: false },
+        { field: 'qianshiji', title: '钳实际工时', category: '工时', default: false },
+        { field: 'u', title: '整件外委工时', category: '工时', default: false },
+        { field: 'v', title: '整件外委单位', category: '基础信息', default: false },
+        { field: 'w', title: '外委工时', category: '工时', default: false },
+        { field: 'x', title: '外委单价', category: '财务', default: false },
+        { field: 'y', title: '镗工时', category: '工时', default: false },
+        { field: 'z', title: '镗单价', category: '财务', default: false },
+        { field: 'tangshiji', title: '镗实际工时', category: '工时', default: false },
+        { field: 'aa', title: '割工时', category: '工时', default: false },
+        { field: 'ab', title: '割单价', category: '财务', default: false },
+        { field: 'geshiji', title: '割实际工时', category: '工时', default: false },
+        { field: 'ac', title: '磨工时', category: '工时', default: false },
+        { field: 'ad', title: '磨单价', category: '财务', default: false },
+        { field: 'moshiji', title: '磨实际工时', category: '工时', default: false },
+        { field: 'ae', title: '数控铣工时', category: '工时', default: false },
+        { field: 'af', title: '数控铣单价', category: '财务', default: false },
+        { field: 'skxshiji', title: '数控铣实际工时', category: '工时', default: false },
+        { field: 'ag', title: '立车', category: '设备', default: false },
+        { field: 'ah', title: '立车单价', category: '财务', default: false },
+        { field: 'licheshiji', title: '立车实际工时', category: '工时', default: false },
+        { field: 'ai', title: '电火花', category: '设备', default: false },
+        { field: 'aj', title: '电火花单价', category: '财务', default: false },
+        { field: 'dianhuohuashiji', title: '电火花实际工时', category: '工时', default: false },
+        { field: 'ak', title: '中走丝', category: '设备', default: false },
+        { field: 'al', title: '中走丝单价', category: '财务', default: false },
+        { field: 'zhongzuosishiji', title: '中走丝实际工时', category: '工时', default: false },
+        { field: 'jingmixianqiege', title: '精密线切割', category: '设备', default: false },
+        { field: 'am', title: '下料', category: '工序', default: false },
+        { field: 'an', title: '深孔钻', category: '工序', default: false },
+        { field: 'p', title: '焊接工时', category: '工时', default: false },
+        { field: 'ao', title: '回厂日期', category: '日期', default: false },
+        { field: 'ap', title: '出厂日期', category: '日期', default: false },
+        { field: 'ay', title: '订单要求交货时间', category: '日期', default: false },
+        { field: 'aq', title: '铣', category: '工序', default: false },
+        { field: 'ar', title: '车', category: '工序', default: false },
+        { field: 'aas', title: '登记员', category: '人员', default: false },
+        { field: 'at', title: '备注', category: '其他', default: true }
+    ];
+}
+
+// 生成列复选框
+function generateColumnCheckboxes(columns, config) {
+    var container = $('#columnCheckboxesContainer');
+    container.empty();
+
+    // 按分类分组
+    var categories = {};
+    columns.forEach(function(column) {
+        if (!categories[column.category]) {
+            categories[column.category] = [];
+        }
+        categories[column.category].push(column);
+    });
+
+    // 生成HTML
+    Object.keys(categories).forEach(function(category) {
+        var categoryColumns = categories[category];
+
+        var categoryHtml = `
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-light py-2">
+                        <h6 class="mb-0">
+                            <i class="bi bi-folder me-2"></i>
+                            ${category}
+                            <small class="text-muted">(${categoryColumns.length}列)</small>
+                        </h6>
+                    </div>
+                    <div class="card-body p-2">
+                        <div class="column-list">
+        `;
+
+        categoryColumns.forEach(function(column) {
+            var isChecked = config[column.field] !== undefined ?
+                config[column.field] : column.default;
+
+            categoryHtml += `
+                <div class="form-check mb-1 column-item">
+                    <input class="form-check-input column-checkbox" 
+                           type="checkbox" 
+                           value="${column.field}" 
+                           id="col_${column.field}"
+                           ${isChecked ? 'checked' : ''}>
+                    <label class="form-check-label" for="col_${column.field}">
+                        ${column.title}
+                        <small class="text-muted">(${column.field})</small>
+                    </label>
+                </div>
+            `;
+        });
+
+        categoryHtml += `
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.append(categoryHtml);
+    });
+
+    updateSelectedPreview();
+}
+
+// 初始化列选择事件
+function initColumnSelectEvents() {
+    // 搜索功能
+    $('#columnSearch').on('input', function() {
+        var searchText = $(this).val().toLowerCase();
+
+        $('.column-item').each(function() {
+            var label = $(this).find('label').text().toLowerCase();
+            if (searchText === '' || label.includes(searchText)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+
+    // 全选
+    $('#selectAllColumns').click(function() {
+        $('.column-checkbox').prop('checked', true);
+        updateSelectedPreview();
+    });
+
+    // 全不选
+    $('#deselectAllColumns').click(function() {
+        $('.column-checkbox').prop('checked', false);
+        updateSelectedPreview();
+    });
+
+    // 常用列
+    $('#selectCommonColumns').click(function() {
+        var commonFields = ['c', 'd', 'e', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'zhuangtai', 'at'];
+
+        $('.column-checkbox').each(function() {
+            var field = $(this).val();
+            $(this).prop('checked', commonFields.includes(field));
+        });
+
+        updateSelectedPreview();
+    });
+
+    // 单个复选框变化
+    $(document).on('change', '.column-checkbox', function() {
+        updateSelectedPreview();
+    });
+}
+
+// 更新已选择列预览
+function updateSelectedPreview() {
+    var selected = [];
+    var selectedFields = [];
+
+    $('.column-checkbox:checked').each(function() {
+        var field = $(this).val();
+        var label = $(this).siblings('label').text().split('(')[0].trim();
+
+        selected.push(label);
+        selectedFields.push(field);
+    });
+
+    $('#selectedCount').text(selected.length);
+
+    var preview = $('#selectedColumnsPreview');
+    if (selected.length > 0) {
+        preview.html('<div class="selected-columns-list">' +
+            selected.map(function(item) {
+                return '<span class="badge badge-primary mr-1 mb-1">' + item + '</span>';
+            }).join('') + '</div>');
+    } else {
+        preview.html('<small class="text-muted">尚未选择任何列</small>');
+    }
+
+    // 保存到全局变量
+    window.selectedExportColumns = selectedFields;
+}
+
+
+
+// 日期格式化辅助函数
+function formatExcelDate(dateValue) {
+    if (!dateValue) return '';
+
+    try {
+        var date = new Date(dateValue);
+        if (isNaN(date.getTime())) {
+            return dateValue.toString();
+        }
+
+        // 格式化为 YYYY-MM-DD
+        var year = date.getFullYear();
+        var month = String(date.getMonth() + 1).padStart(2, '0');
+        var day = String(date.getDate()).padStart(2, '0');
+
+        return year + '-' + month + '-' + day;
+    } catch (error) {
+        console.error('日期格式化错误:', error);
+        return dateValue.toString();
+    }
 }
 
 

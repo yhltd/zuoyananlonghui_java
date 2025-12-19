@@ -2,20 +2,68 @@ package com.example.demo.mapper;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.example.demo.entity.*;
+import com.example.demo.entity.Ywc;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author hui
- * @date 2025/11/25 9:32
- */
 @Mapper
 @Repository
-public interface KphtMapper extends BaseMapper<Kpht> {
+public interface XywcMapper extends BaseMapper<Ywc> {
+
+    @Select("<script>" +
+            "SELECT * FROM (" +
+            "   SELECT ROW_NUMBER() OVER (ORDER BY id DESC) as row_num, " +
+            "          t.id, t.C, t.D, t.E, t.F, t.G, t.H, t.I, t.J, t.K, t.L, t.M, t.N, t.O, t.P, t.Q, t.R, t.S, t.T, t.U, t.V, t.W, t.X, t.Y, t.Z, " +
+            "          t.AA, t.AB, t.AC, t.AD, t.AE, t.AF, t.AG, t.AH, t.AI, t.AJ, t.AK, t.AL, t.AM, t.AN, t.AO, t.AP, t.AQ, t.AR, " +
+            "          t.[AS] as aas, t.AT, " +
+            "          t.hetong_zhuangtai, t.AU, t.AV, t.AW, t.AX, t.AY, t.riqi, " +
+            "          t.lingjianhao, t.xianshiji, t.cheshiji, t.qianshiji, t.tangshiji, t.geshiji, t.moshiji, " +
+            "          t.skxshiji, t.licheshiji, t.dianhuohuashiji, t.zhongzuosishiji, " +
+            "          t.jingmixianqiege, t.hanjiegongshi, t.dengjiriqi, t.shijijiaohuoriqi, t.muban " +
+            "   FROM hetong_jilu t " +
+            "   WHERE 1=1 " +
+            "   AND hetong_zhuangtai IN ('未对账', '已对账') " +
+            "   AND muban = '新' " +
+            "   <if test='ew != null and ew.sqlSegment != null and ew.sqlSegment != \"\"'>" +
+            "     <choose>" +
+            "       <when test='ew.sqlSegment.contains(\"WHERE\")'>" +
+            "         AND ${ew.sqlSegment.replace(\"WHERE\", \"\").trim()}" +
+            "       </when>" +
+            "       <otherwise>" +
+            "         AND ${ew.sqlSegment}" +
+            "       </otherwise>" +
+            "     </choose>" +
+            "   </if>" +
+            ") as temp " +
+            "WHERE row_num BETWEEN #{start} AND #{end}" +
+            "</script>")
+    List<Ywc> selectForPage(@Param("start") long start,
+                            @Param("end") long end,
+                            @Param("ew") Wrapper<Ywc> wrapper);
+
+    @Select("<script>" +
+            "SELECT COUNT(*) " +
+            "FROM hetong_jilu " +
+            "WHERE 1=1 " +
+            "AND hetong_zhuangtai IN ('未对账', '已对账') " +
+            "AND muban = '新' " +
+            "<if test='ew != null and ew.sqlSegment != null and ew.sqlSegment != \"\"'>" +
+            "  <choose>" +
+            "    <when test='ew.sqlSegment.contains(\"WHERE\")'>" +
+            "      AND ${ew.sqlSegment.replace(\"WHERE\", \"\").trim()}" +
+            "    </when>" +
+            "    <otherwise>" +
+            "      AND ${ew.sqlSegment}" +
+            "    </otherwise>" +
+            "  </choose>" +
+            "</if>" +
+            "</script>")
+    Long selectCountForPage(@Param("ew") Wrapper<Ywc> wrapper);
+
+
 
     @Select("SELECT " +
             "id, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, " +
@@ -25,73 +73,9 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "lingjianhao, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
             "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
             "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
-            "FROM hetong_jilu WHERE hetong_zhuangtai IN ('未开票', '已开票') " +
-            "AND ISNULL(muban, '') != '新'")  // 新增条件
-    List<Kpht> getList();
-
-
-    @Select("<script>" +
-            "SELECT * FROM (" +
-            "    SELECT ROW_NUMBER() OVER (ORDER BY id ASC) as rn, " +
-            "           id as id, " +
-            "           C as c, D as d, E as e, F as f, G as g, H as h, I as i, J as j, K as k, " +
-            "           L as l, M as m, N as n, O as o, P as p, Q as q, R as r, S as s, T as t, " +
-            "           U as u, V as v, W as w, X as x, Y as y, Z as z, " +
-            "           AA as aa, AB as ab, AC as ac, AD as ad, AE as ae, AF as af, AG as ag, " +
-            "           AH as ah, AI as ai, AJ as aj, AK as ak, AL as al, AM as am, AN as an, " +
-            "           AO as ao, AP as ap, AQ as aq, AR as ar, " +
-            "           [AS] as aas, " +
-            "           AT as at, " +
-            "           hetong_zhuangtai as hetongzhuangtai, " +
-            "           AU as au, AV as av, AW as aw, AX as ax, AY as ay, " +
-            "           riqi as riqi, " +
-            "           lingjianhao as lingjianhao, " +
-            "           xianshiji as xianshiji, " +
-            "           cheshiji as cheshiji, " +
-            "           qianshiji as qianshiji, " +
-            "           tangshiji as tangshiji, " +
-            "           geshiji as geshiji, " +
-            "           moshiji as moshiji, " +
-            "           skxshiji as skxshiji, " +
-            "           licheshiji as licheshiji, " +
-            "           dianhuohuashiji as dianhuohuashiji, " +
-            "           zhongzuosishiji as zhongzuosishiji, " +
-            "           jingmixianqiege as jingmixianqiege, " +
-            "           hanjiegongshi as hanjiegongshi, " +
-            "           dengjiriqi as dengjiriqi, " +
-            "           shijijiaohuoriqi as shijijiaohuoriqi, " +
-            "           muban as muban " +
-            "    FROM hetong_jilu " +
-            "    <where>" +
-            "        hetong_zhuangtai IN ('未开票', '已开票')" +
-            "        AND ISNULL(muban, '') != '新' " +  // 新增条件
-            "        <if test='ew != null'>" +
-            "            <trim prefix=' AND ' prefixOverrides='AND |OR '>" +
-            "                ${ew.sqlSegment}" +
-            "            </trim>" +
-            "        </if>" +
-            "    </where>" +
-            ") temp " +
-            "WHERE temp.rn BETWEEN #{start} + 1 AND #{start} + #{end}" +
-            "</script>")
-    List<Map<String, Object>> selectDistinctByDdhForPage(@Param("start") long start,
-                                                         @Param("end") long end,
-                                                         @Param("ew") Wrapper<Map<String, Object>> wrapper);
-
-
-    @Select("<script>" +
-            "SELECT COUNT(*) FROM hetong_jilu " +
-            "<where>" +
-            "    hetong_zhuangtai IN ('未开票', '已开票')" +
-            "    AND ISNULL(muban, '') != '新' " +  // 新增条件
-            "    <if test='ew != null'>" +
-            "        <trim prefix=' AND ' prefixOverrides='AND |OR '>" +  // 单引号属性值
-            "            ${ew.sqlSegment}" +
-            "        </trim>" +
-            "    </if>" +
-            "</where>" +
-            "</script>")
-    Long selectDistinctCount(@Param("ew") Wrapper<Map<String, Object>> wrapper);
+            "FROM hetong_jilu WHERE hetong_zhuangtai IN ('未对账', '已对账') " +
+            "AND muban = '新'")
+    List<Ywc> getList();
 
 
     @Update("UPDATE hetong_jilu SET " +
@@ -119,7 +103,7 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "shijijiaohuoriqi = #{shijijiaohuoriqi}, " +
             "muban = #{muban} " +
             "WHERE id = #{id}")
-    boolean update(Kpht kpht);
+    boolean update(Ywc ywc);
 
     @Update("<script>" +
             "UPDATE hetong_jilu " +
@@ -211,13 +195,13 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
             "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
             "FROM hetong_jilu " +
-            "WHERE hetong_zhuangtai IN ('未开票', '已开票') " +
-            "AND ISNULL(muban, '') != '新' " +  // 新增条件
+            "WHERE hetong_zhuangtai IN ('已对账', '未对账') " +
+            "AND muban = '新' " +
             "<if test='name != null and name != \"\"'>" +
             "   AND C LIKE '%' + #{name} + '%'" +
             "</if>" +
             "</script>")
-    List<Kpht> queryList(String name);
+    List<Ywc> queryList(String name);
 
     @Select("SELECT num FROM gongxu WHERE name = #{name}")
     String getGongxuNumByName(String name);

@@ -1527,6 +1527,57 @@ function bindReturnOrderEvents() {
     });
 // 添加打印按钮事件绑定
     $('#print-btn').off('click').on('click', function() {
+
+        // 检测必填字段
+        var returnCustomer = $('#return-customer').val();
+        var returnDate = $('#return-date').val();
+        var returnNo = $('#return-no').val();
+        var returnPhone = $('#return-phone').val();
+
+        // 检测逻辑
+        if (!returnCustomer) {
+            swal("保存失败", "请填写退货客户", "error");
+            return;
+        }
+        if (!returnDate) {
+            swal("保存失败", "请选择退货日期", "error");
+            return;
+        }
+        if (!returnNo) {
+            swal("保存失败", "请生成退货单号", "error");
+            return;
+        }
+        if (!returnPhone) {
+            swal("保存失败", "请填写退货电话", "error");
+            return;
+        }
+
+
+        //------------------------
+
+        // 先检查退货单号是否已存在
+        checkReturnNoExists(returnNo, function(exists, count) {
+            if (exists) {
+                // 使用alert对话框提示用户
+                var userChoice = confirm(`退货单号 ${returnNo} 在数据库中已有 ${count} 条记录\n\n是否要删除原有数据并保存新数据？`);
+
+                if (userChoice) {
+                    // 用户点击"确定" - 先删除已有数据，再保存新数据
+                    deleteExistingReturnOrder(returnNo, function() {
+                        // 删除成功后保存新数据
+                        saveReturnOrderData();
+                    });
+                } else {
+                    // 用户点击"取消" - 清空页面表格
+                    clearReturnForm();
+                    alert("已清空页面表格，请重新填写数据");
+                }
+            } else {
+                // 直接保存数据
+                saveReturnOrderData();
+            }
+        });
+
         printReturnOrder();
     });
     // 保存退货单按钮点击事件
@@ -3492,75 +3543,213 @@ function showImportResult(isSuccess, message) {
 function printReturnOrder() {
     console.log('开始打印退货单...');
 
-    // 创建一个打印样式
-    var printStyle = `
-        <style>
-            @media print {
-                body * {
-                    visibility: hidden;
-                }
-                #return-print-section, #return-print-section * {
-                    visibility: visible;
-                }
-                #return-print-section {
-                    position: absolute;
-                    left: 0;
-                    top: 0;
-                    width: 100%;
-                    padding: 20px;
-                }
-                .no-print {
-                    display: none !important;
-                }
-                /* 表格样式 */
-                .print-table {
-                    border-collapse: collapse;
-                    width: 100%;
-                    margin-top: 20px;
-                }
-                .print-table th, .print-table td {
-                    border: 1px solid #000;
-                    padding: 8px;
-                    text-align: center;
-                    font-size: 12px;
-                }
-                .print-table th {
-                    background-color: #f2f2f2;
-                    font-weight: bold;
-                }
-                .print-info {
-                    margin-bottom: 15px;
-                    line-height: 2;
-                }
-                .print-title {
-                    text-align: center;
-                    font-size: 20px;
-                    font-weight: bold;
-                    margin-bottom: 20px;
-                }
-            }
-        </style>
-    `;
+    // 创建打印窗口
+    var printWindow = window.open('', '_blank', 'width=800,height=600');
 
-    // 添加打印样式到页面
-    $('head').append(printStyle);
-
-    // 构建打印内容
+    // 构建打印内容 - 注意这里只包含打印内容，不包含操作按钮
     var printContent = buildReturnOrderPrintContent();
 
-    // 创建打印区域
-    var printSection = $('<div id="return-print-section"></div>').html(printContent);
-    $('body').append(printSection);
+    // 写入打印内容
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>退货单打印</title>
+            <style>
+                @media print {
+                    /* 打印时隐藏所有不需要的元素 */
+                    .no-print, .print-actions, button, .print-prompt {
+                        display: none !important;
+                    }
+                    
+                    /* 打印设置 */
+                    @page {
+                        size: auto;
+                        margin: 15mm;
+                    }
+                    
+                    body {
+                        margin: 0;
+                        padding: 0;
+                        background: white !important;
+                        color: black !important;
+                        font-size: 12pt;
+                    }
+                    
+                    /* 表格样式 - 只有白色背景和黑色边框 */
+                    table {
+                        border-collapse: collapse !important;
+                        width: 100% !important;
+                        margin: 10px 0 !important;
+                        background: white !important;
+                    }
+                    
+                    th, td {
+                        border: 1px solid #000 !important;
+                        padding: 5px 8px !important;
+                        text-align: center !important;
+                        background: white !important;
+                        color: black !important;
+                        font-size: 11pt !important;
+                    }
+                    
+                    th {
+                        font-weight: bold !important;
+                    }
+                    
+                    /* 标题和文字样式 */
+                    .print-title {
+                        text-align: center !important;
+                        font-size: 16pt !important;
+                        font-weight: bold !important;
+                        margin: 15px 0 !important;
+                        color: black !important;
+                    }
+                    
+                    .print-info {
+                        margin: 8px 0 !important;
+                        line-height: 1.6 !important;
+                        color: black !important;
+                    }
+                    
+                    /* 确保所有背景都是白色，文字是黑色 */
+                    * {
+                        background: white !important;
+                        color: black !important;
+                    }
+                }
+                
+                /* 屏幕预览样式 - 包含按钮用于预览 */
+                @media screen {
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 20px;
+                        background: #f5f5f5;
+                    }
+                    
+                    .print-container {
+                        background: white;
+                        padding: 20px;
+                        max-width: 800px;
+                        margin: 0 auto;
+                        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                    }
+                    
+                    .print-table {
+                        border-collapse: collapse;
+                        width: 100%;
+                        margin: 20px 0;
+                    }
+                    
+                    .print-table th,
+                    .print-table td {
+                        border: 1px solid #ddd;
+                        padding: 8px;
+                        text-align: center;
+                    }
+                    
+                    .print-table th {
+                        background-color: #f8f9fa;
+                        font-weight: bold;
+                    }
+                    
+                    .print-title {
+                        text-align: center;
+                        font-size: 20px;
+                        font-weight: bold;
+                        margin-bottom: 20px;
+                        color: #333;
+                    }
+                    
+                    .print-info {
+                        margin-bottom: 10px;
+                        line-height: 1.8;
+                    }
+                    
+                    /* 打印操作区域 - 在打印时隐藏 */
+                    .print-actions {
+                        margin-top: 20px;
+                        text-align: center;
+                        padding: 20px;
+                        background: #f8f9fa;
+                        border-top: 1px solid #ddd;
+                    }
+                    
+                    .print-btn {
+                        padding: 10px 20px;
+                        margin: 0 10px;
+                        background: #007bff;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 14px;
+                    }
+                    
+                    .print-btn:hover {
+                        background: #0056b3;
+                    }
+                    
+                    .print-btn.cancel {
+                        background: #6c757d;
+                    }
+                    
+                    .print-btn.cancel:hover {
+                        background: #545b62;
+                    }
+                    
+                    /* 提示文字 - 在打印时隐藏 */
+                    .print-prompt {
+                        margin-top: 10px;
+                        color: #666;
+                        font-size: 12px;
+                        font-style: italic;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="print-container">
+                ${printContent}
+            </div>
+            
+            <!-- 这个div在打印时会自动隐藏 -->
+            <div class="print-actions no-print">
+                <button class="print-btn" onclick="window.print()">
+                    <i class="bi bi-printer"></i> 打印
+                </button>
+                <button class="print-btn cancel" onclick="window.close()">
+                    <i class="bi bi-x"></i> 关闭
+                </button>
+                <!-- 这个提示在打印时会隐藏 -->
+                <p class="print-prompt no-print">
+                    提示：点击"打印"按钮使用浏览器打印功能，可以选择纸张大小和方向
+                </p>
+            </div>
+            
+            <script>
+                // 添加图标支持
+                document.addEventListener('DOMContentLoaded', function() {
+                    var link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css';
+                    document.head.appendChild(link);
+                });
+            </script>
+        </body>
+        </html>
+    `);
 
-    // 执行打印
-    window.print();
+    printWindow.document.close();
 
-    // 清理打印区域
-    setTimeout(function() {
-        $('#return-print-section').remove();
-        $('head style:last-child').remove();
-    }, 100);
+    // 等待内容加载完成后自动触发打印（可选）
+    printWindow.onload = function() {
+        // 如果想要预览而不自动打印，注释掉下面这行
+        // printWindow.print();
+    };
 }
+
 
 function buildReturnOrderPrintContent() {
     // 构建表格行
@@ -3582,8 +3771,8 @@ function buildReturnOrderPrintContent() {
                     <td>${$row.find('input[name="drawingNo"]').val() || ''}</td>
                     <td>${$row.find('input[name="unit"]').val() || ''}</td>
                     <td>${$row.find('input[name="quantity"]').val() || ''}</td>
-                    <td>${$row.find('input[name="unitPrice"]').val() || ''}</td>
-                    <td>${$row.find('input[name="amount"]').val() || ''}</td>
+                    <td>${parseFloat($row.find('input[name="unitPrice"]').val() || 0).toFixed(2)}</td>
+                    <td>${parseFloat($row.find('input[name="amount"]').val() || 0).toFixed(2)}</td>
                     <td>${$row.find('input[name="material"]').val() || ''}</td>
                     <td>${$row.find('input[name="weight"]').val() || ''}</td>
                     <td>${$row.find('input[name="returnDate"]').val() || ''}</td>
@@ -3599,8 +3788,12 @@ function buildReturnOrderPrintContent() {
         tableRows = '<tr><td colspan="14" style="text-align: center;">暂无退货明细</td></tr>';
     }
 
+    // 计算合计金额
+    var totalAmount = $('#total-amount').text() || '0.00';
+    var totalAmountChinese = $('#total-amount-chinese').text() || '零元整';
+
     return `
-        <div class="print-container">
+        <div class="print-content">
             <div class="print-title">退货单</div>
             
             <div class="print-info">
@@ -3635,16 +3828,20 @@ function buildReturnOrderPrintContent() {
             </table>
             
             <div class="print-info" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #000;">
-                <div><strong>合计金额(大写)：</strong>${$('#total-amount-chinese').text()}</div>
-                <div><strong>合计金额：</strong>${$('#total-amount').text()}</div>
+                <div><strong>合计金额(大写)：</strong>${totalAmountChinese}</div>
+                <div><strong>合计金额(小写)：</strong>${totalAmount}</div>
             </div>
             
             <div class="print-info" style="margin-top: 30px;">
                 <div style="display: flex; justify-content: space-between;">
-                    <div><strong>地址：</strong>${$('#company-address').val() || ''}</div>
-                    <div><strong>电话：</strong>${$('#company-phone').val() || ''}</div>
-                    <div><strong>客户签字：</strong>${$('#customer-signature').val() || ''}</div>
+                    <div style="flex: 1;"><strong>地址：</strong>${$('#company-address').val() || ''}</div>
+                    <div style="flex: 1; text-align: center;"><strong>电话：</strong>${$('#company-phone').val() || ''}</div>
+                    <div style="flex: 1; text-align: right;"><strong>客户签字：</strong>${$('#customer-signature').val() || ''}</div>
                 </div>
+            </div>
+            
+            <div class="print-info" style="margin-top: 40px; font-size: 10pt; color: #666;">
+                <div>打印时间：${new Date().toLocaleString()}</div>
             </div>
         </div>
     `;

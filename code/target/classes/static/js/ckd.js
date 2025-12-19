@@ -50,13 +50,15 @@ function initTitleInputs() {
 
 // ==================== 出库单初始化函数 ====================
 function initReturnOrder1() {
-
     loadOrderNumbers();
     // 设置当前日期
     $('#return-date1').val(getCurrentDate1());
 
     // 绑定事件
     bindReturnOrderEvents1();
+
+    // 添加合计行
+    addTotalRow();
 
     // 初始化计算
     calculateTotalAmount1();
@@ -159,7 +161,7 @@ function fillReturnOrderTableFromData(dataRows) {
                 <td><input type="text" class="form-control form-control-sm" name="productName" value="${rowData.h || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="drawingNo" value="${rowData.i || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="unit" value="${rowData.j || ''}"></td>
-                <td><input type="number" class="form-control form-control-sm" name="quantity" value="${rowData.k || '1'}"></td>
+                <td><input type="number" class="form-control form-control-sm quantity-input" name="quantity" value="${rowData.k || '1'}"></td>
                 <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="${rowData.m || '1'}"></td>
                 <td><input type="number" class="form-control form-control-sm" name="amount" value="${amount}" readonly></td>
                 <td><input type="text" class="form-control form-control-sm" name="material" value="${rowData.l || ''}"></td>
@@ -177,7 +179,7 @@ function fillReturnOrderTableFromData(dataRows) {
         console.log('设置往来单位:', customer);
     }
 
-    // 计算总金额
+    // 计算总金额和总数量
     calculateTotalAmount1();
 
     console.log('表格填充完成，共填充', dataRows.length, '行数据');
@@ -229,6 +231,7 @@ function bindReturnOrderEvents1() {
 
     // 打印
     $('#print-outbound-btn').off('click').on('click', function() {
+        saveReturnOrder();
         printOutboundOrder();
     });
 
@@ -242,10 +245,9 @@ function bindReturnOrderEvents1() {
         showColumnSelectModal();
     });
 
-    // 实时计算金额
+    // 实时计算金额和数量 - 合并成一个事件处理
     $(document).off('input', 'input[name="quantity"], input[name="unitPrice"]').on('input', 'input[name="quantity"], input[name="unitPrice"]', function() {
         calculateRowAmount1($(this).closest('tr'));
-        calculateTotalAmount1();
     });
 
     // 更新全选状态
@@ -276,7 +278,7 @@ function addReturnRow1() {
             <td><input type="text" class="form-control form-control-sm" name="productName"></td>
             <td><input type="text" class="form-control form-control-sm" name="drawingNo"></td>
             <td><input type="text" class="form-control form-control-sm" name="unit"></td>
-            <td><input type="number" class="form-control form-control-sm" name="quantity" value="1"></td>
+            <td><input type="number" class="form-control form-control-sm quantity-input" name="quantity" value="1"></td>
             <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="0"></td>
             <td><input type="number" class="form-control form-control-sm" name="amount" value="0" readonly></td>
             <td><input type="text" class="form-control form-control-sm" name="material"></td>
@@ -286,6 +288,8 @@ function addReturnRow1() {
     `;
     table.append(newRow);
     updateRowNumbers1();
+    // 更新合计数量
+    calculateTotalQuantity1();
 }
 
 function removeSelectedRows1() {
@@ -300,7 +304,7 @@ function removeSelectedRows1() {
             $(this).closest('tr').remove();
         });
         updateRowNumbers1();
-        calculateTotalAmount1();
+        calculateTotalAmount1(); // 删除后重新计算合计
     }
 }
 
@@ -315,17 +319,40 @@ function calculateRowAmount1(row) {
     var unitPrice = parseFloat(row.find('input[name="unitPrice"]').val()) || 0;
     var amount = quantity * unitPrice;
     row.find('input[name="amount"]').val(amount.toFixed(2));
+
+    // 更新合计
+    calculateTotalAmount1();
+
     return amount;
 }
 
 function calculateTotalAmount1() {
-    var total = 0;
+    var totalAmount = 0;
+    var totalQuantity = 0;
+
     $('#return-detail-table1 tbody tr').each(function() {
-        total += calculateRowAmount1($(this));
+        var quantity = parseFloat($(this).find('input[name="quantity"]').val()) || 0;
+        var unitPrice = parseFloat($(this).find('input[name="unitPrice"]').val()) || 0;
+        var amount = quantity * unitPrice;
+
+        totalQuantity += quantity;
+        totalAmount += amount;
+
+        $(this).find('input[name="amount"]').val(amount.toFixed(2));
     });
 
-    $('#total-amount1').text(total.toFixed(2));
-    $('#total-amount-chinese1').text(numberToChinese1(total));
+    // 更新合计行
+    $('#total-quantity').val(totalQuantity);
+    $('#total-amount-display').val(totalAmount.toFixed(2));
+
+    // 更新原有的总金额显示
+    $('#total-amount1').text(totalAmount.toFixed(2));
+    $('#total-amount-chinese1').text(numberToChinese1(totalAmount));
+
+    return {
+        totalAmount: totalAmount,
+        totalQuantity: totalQuantity
+    };
 }
 
 function numberToChinese1(num) {
@@ -1301,8 +1328,12 @@ function clearChukuForm() {
         $firstRow.find('input[name="material"]').val('');
         $firstRow.find('input[name="weight"]').val('');
         $firstRow.find('input[name="remark"]').val('');
-        $firstRow.removeData('original-id'); // 移除原表id
+        $firstRow.removeData('original-id');
     }
+
+    // 重置合计行
+    $('#total-quantity').val('0');
+    $('#total-amount-display').val('0');
 
     // 设置当前日期
     $('#return-date1').val(getCurrentDate1());
@@ -1443,7 +1474,7 @@ function loadContactUnitList() {
 }
 
 
-// 修改原有的 printOutboundOrder 函数，确保它使用新的列选择
+// ==================== 简单打印函数（纯表单样式） ====================
 function printOutboundOrder() {
     console.log('开始打印出库单...');
 
@@ -1458,74 +1489,142 @@ function printOutboundOrder() {
         return;
     }
 
-    // 创建一个打印样式
-    var printStyle = `
-        <style>
-            @media print {
-                /* 隐藏所有不需要打印的元素 */
-                body > :not(#outbound-print-section) {
-                    display: none !important;
-                }
-                
-                /* 重置body样式 */
-                body {
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    background: white !important;
-                }
-                
-                /* 打印区域样式 */
-                #outbound-print-section {
-                    display: block !important;
-                    width: 100% !important;
-                    padding: 20px !important;
-                    font-family: 'Microsoft YaHei', 'SimSun', sans-serif !important;
-                    position: relative !important;
-                    left: auto !important;
-                    top: auto !important;
-                }
-                
-                /* 强制打印背景和颜色 */
+    // 计算合计数量和金额
+    var totals = calculateTotalAmount1();
+    var totalQuantity = totals.totalQuantity || 0;
+    var totalAmount = totals.totalAmount || 0;
+
+    console.log('打印合计数据 - 数量:', totalQuantity, '金额:', totalAmount);
+
+    // 创建一个新窗口用于打印
+    var printWindow = window.open('', '_blank', 'width=900,height=700');
+    printWindow.document.open();
+
+    // 构建HTML内容 - 使用统一的样式，不区分打印和屏幕
+    var printContent = `
+        <html>
+        <head>
+            <title>出库单打印</title>
+            <style>
+                /* 统一样式 - 预览和打印完全一致 */
                 * {
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
+                    box-sizing: border-box;
                 }
-            }
-            
-            /* 非打印时样式 */
-            @media screen {
-                #outbound-print-section {
-                    display: none;
+                
+                body {
+                    margin: 0;
+                    padding: 10mm; /* 与预览一致 */
+                    font-family: Arial, sans-serif;
+                    font-size: 14px;
+                    color: black;
+                    width: 210mm; /* A4宽度 */
+                    min-height: 297mm; /* A4高度 */
+                    margin: 0 auto;
                 }
-            }
-        </style>
+                
+                .print-title {
+                    text-align: center;
+                    font-size: 20px;
+                    font-weight: bold;
+                    margin-bottom: 20px;
+                }
+                
+                .print-info {
+                    margin-bottom: 20px;
+                }
+                
+                .print-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                
+                .print-table th {
+                    border: 1px solid black;
+                    padding: 5px;
+                    text-align: left;
+                    background-color: white;
+                    font-weight: bold;
+                }
+                
+                .print-table td {
+                    border: 1px solid black;
+                    padding: 5px;
+                    text-align: left;
+                }
+                
+                .total-row {
+                    display: flex;
+                    justify-content: space-around;
+                    padding: 10px 0;
+                    margin-top: 10px;
+                    border-top: 1px solid black;
+                }
+                
+                .footer {
+                    border: 1px solid black;
+                }
+                
+                .footer-top {
+                    display: flex;
+                    justify-content: space-around;
+                    border-bottom: 1px solid black;
+                    padding: 10px 0;
+                }
+                
+                .footer-bottom {
+                    display: flex;
+                    justify-content: space-around;
+                    padding: 10px 0;
+                }
+                
+                .declaration {
+                    border: 1px solid black;
+                    padding: 3px;
+                }
+                
+                .declaration div {
+                    margin-bottom: 5px;
+                }
+                
+                .declaration div:last-child {
+                    margin-bottom: 0;
+                }
+                
+                /* 控制按钮样式 - 只在屏幕显示，打印时隐藏 */
+                .print-controls {
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    z-index: 1000;
+                }
+                
+                @media print {
+                    .print-controls {
+                        display: none !important;
+                    }
+                }
+                
+                .print-btn {
+                    padding: 10px 20px;
+                    background: #2c5e9c;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    margin-left: 10px;
+                }
+                
+                .print-btn:first-child {
+                    margin-left: 0;
+                }
+                
+                .print-btn:hover {
+                    background: #1d4a7c;
+                }
+            </style>
+        </head>
+        <body>
     `;
-
-    // 添加打印样式到页面
-    $('head').append(printStyle);
-
-    // 构建打印内容（使用列选择）
-    var printContent = buildOutboundOrderPrintContent(false);
-
-    // 创建打印区域
-    var printSection = $('<div id="outbound-print-section"></div>').html(printContent);
-    $('body').append(printSection);
-
-    // 执行打印
-    window.print();
-
-    // 清理打印区域
-    setTimeout(function() {
-        $('#outbound-print-section').remove();
-        $('head style:last-child').remove();
-    }, 100);
-}
-
-function buildOutboundOrderPrintContent(forPreview = false) {
-    // 构建表格行
-    var tableRows = '';
-    var rowNumber = 1;
-    var totalAmount = 0;
 
     // 获取选中的列
     var selectedColumns = [];
@@ -1555,17 +1654,23 @@ function buildOutboundOrderPrintContent(forPreview = false) {
         }
     });
 
-    console.log('选中的列:', selectedColumns);
+    // 构建表格行
+    var tableRows = '';
+    var rowNumber = 1;
+    var calculatedTotalAmount = 0;
+    var calculatedTotalQuantity = 0;
 
     $('#return-detail-table1 tbody tr').each(function() {
         var $row = $(this);
         var contractNo = $row.find('input[name="contractNo"]').val();
+        var quantity = parseFloat($row.find('input[name="quantity"]').val()) || 0;
         var amount = parseFloat($row.find('input[name="amount"]').val()) || 0;
-        totalAmount += amount;
 
-        // 只显示有合同号的行
+        calculatedTotalAmount += amount;
+        calculatedTotalQuantity += quantity;
+
         if (contractNo && contractNo.trim() !== '') {
-            var rowHtml = '<tr>';
+            tableRows += '<tr>';
 
             selectedColumns.forEach(function(column) {
                 var cellContent = '';
@@ -1576,205 +1681,116 @@ function buildOutboundOrderPrintContent(forPreview = false) {
                     cellContent = $row.find('input[name="' + column.input + '"]').val() || '';
                 }
 
-                rowHtml += '<td>' + cellContent + '</td>';
+                tableRows += '<td>' + cellContent + '</td>';
             });
 
-            rowHtml += '</tr>';
-            tableRows += rowHtml;
+            tableRows += '</tr>';
             rowNumber++;
         }
     });
 
-    // 如果没有数据
-    if (tableRows === '') {
-        tableRows = '<tr><td colspan="' + selectedColumns.length + '" style="text-align: center;">暂无出库明细</td></tr>';
-    }
+    // 使用计算出的合计数，确保准确性
+    var displayQuantity = totalQuantity > 0 ? totalQuantity : calculatedTotalQuantity;
+    var displayAmount = totalAmount > 0 ? totalAmount : calculatedTotalAmount;
 
     // 构建表头
     var tableHeaders = '';
     selectedColumns.forEach(function(column) {
-        tableHeaders += `<th style="border: 1px solid #000; padding: 8px; background-color: #f2f2f2;">${column.name}</th>`;
+        tableHeaders += '<th>' + column.name + '</th>';
     });
 
-    // 数字转中文大写金额函数
-    function numberToChinese(num) {
-        if (isNaN(num) || num === 0) return "零元整";
+    // 使用外部定义的numberToChinese1函数
+    var chineseAmount = numberToChinese1(displayAmount);
 
-        var chineseNums = ["零", "壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖"];
-        var chineseUnits = ["", "拾", "佰", "仟"];
-        var bigUnits = ["", "万", "亿"];
+    // 完成打印内容
+    printContent += `
+        <div class="print-title">成都龙辉机械设备制造有限公司出库单</div>
+        
+        <div class="print-info">
+            <div><strong>往来单位：</strong>${$('#return-customer1').val() || ''}</div>
+            <div><strong>出库单号：</strong>${$('#return-no1').val() || ''}</div>
+            <div><strong>送货日期：</strong>${$('#return-date1').val() || ''}</div>
+        </div>
+        
+        <table class="print-table">
+            <thead>
+                <tr>${tableHeaders}</tr>
+            </thead>
+            <tbody>${tableRows}</tbody>
+        </table>
+        
+        <div class="total-row">
+            <div><strong>合计数量：</strong>${displayQuantity}</div>
+            <div><strong>合计金额(大写)：</strong>${chineseAmount}</div>
+            <div><strong>合计金额：</strong>${displayAmount.toFixed(2)} 元</div>
+        </div>
+        
+        <div class="footer">
+            <div class="footer-top">
+                <div><strong>制单人：</strong>${$('#company-address1').val() || ''}</div>
+                <div><strong>审核人：</strong>${$('#company-phone1').val() || ''}</div>
+                <div><strong>送货人：</strong>${$('#songhuoren').val() || ''}</div>
+                <div><strong>收货人：</strong>${$('#shouhuoren').val() || ''}</div>
+            </div>
+            <div class="footer-bottom">
+                <div><strong>地址：</strong>四川省成都市新都区石板滩街道石木路588号</div>
+                <div><strong>联系电话：</strong>13730601502</div>
+            </div>
+        </div>
+        
+        <div class="declaration">
+            <div><strong>声明：</strong></div>
+            <div>1. 本销售单作为确立购销双方权利义务合同；</div>
+            <div>2. 收货员当面校对产品材质、数量、规格、单价，如对本公司销售产品质量及数量有异议，请在十天内提出，逾期本公司概不负责；</div>
+            <div>3. 本合同如发生纠纷，双方协商不能解决，如协商未果则在供方当地人民法院解决，届时产生的诉讼费、律师费、差旅费等均由违约方承担。本单最终解释权归我公司所有。</div>
+        </div>
+        
+        <div class="print-controls">
+            <button class="print-btn" onclick="window.print();">立即打印</button>
+            <button class="print-btn" onclick="window.close();">关闭窗口</button>
+        </div>
+    `;
 
-        var numStr = Math.round(num * 100).toString();
-        var integerPart = numStr.slice(0, -2) || "0";
-        var decimalPart = numStr.slice(-2);
+    printContent += `
+        </body>
+        </html>
+    `;
 
-        var result = "";
+    // 写入打印窗口
+    printWindow.document.write(printContent);
+    printWindow.document.close();
 
-        // 处理整数部分
-        if (integerPart !== "0") {
-            var integerGroups = [];
-            for (var i = integerPart.length; i > 0; i -= 4) {
-                integerGroups.unshift(integerPart.slice(Math.max(0, i - 4), i));
+    // 延迟添加事件绑定，确保内容加载完成
+    setTimeout(function() {
+        try {
+            // 添加打印和关闭事件
+            var buttons = printWindow.document.querySelectorAll('.print-btn');
+            if (buttons[0]) {
+                buttons[0].onclick = function() {
+                    printWindow.print();
+                };
+            }
+            if (buttons[1]) {
+                buttons[1].onclick = function() {
+                    printWindow.close();
+                };
             }
 
-            integerGroups.forEach(function(group, index) {
-                var groupResult = "";
-                var zeroFlag = false;
-
-                for (var j = 0; j < group.length; j++) {
-                    var digit = parseInt(group[j]);
-                    var unit = chineseUnits[group.length - 1 - j];
-
-                    if (digit === 0) {
-                        zeroFlag = true;
-                    } else {
-                        if (zeroFlag) {
-                            groupResult += "零";
-                            zeroFlag = false;
-                        }
-                        groupResult += chineseNums[digit] + unit;
-                    }
+            // 添加键盘快捷键
+            printWindow.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'p') {
+                    e.preventDefault();
+                    printWindow.print();
                 }
-
-                if (groupResult !== "") {
-                    result += groupResult + bigUnits[integerGroups.length - 1 - index];
+                if (e.key === 'Escape') {
+                    printWindow.close();
                 }
             });
-        } else {
-            result = "零";
+        } catch (e) {
+            console.error('绑定事件时出错:', e);
         }
-
-        result += "元";
-
-        // 处理小数部分
-        if (decimalPart !== "00") {
-            var jiao = parseInt(decimalPart[0]);
-            var fen = parseInt(decimalPart[1]);
-
-            if (jiao > 0) {
-                result += chineseNums[jiao] + "角";
-            }
-            if (fen > 0) {
-                result += chineseNums[fen] + "分";
-            }
-        } else {
-            result += "整";
-        }
-
-        return result;
-    }
-
-    // 如果是预览模式，返回不同的HTML结构
-    if (forPreview) {
-        return `
-            <div class="print-container" style="font-family: 'Microsoft YaHei', 'SimSun', sans-serif;">
-                <div class="print-title-container" style="text-align: center; margin-bottom: 20px;">
-                    <div style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">成都龙辉机械设备制造有限公司出库单</div>
-                </div>
-                
-                <div class="print-info-row" style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                    <div style="flex: 1; padding-right: 10px;"><strong>往来单位：</strong>${$('#return-customer1').val() || ''}</div>
-                    <div style="flex: 1; padding-right: 10px;"><strong>出库单号：</strong>${$('#return-no1').val() || ''}</div>
-                    <div style="flex: 1;"><strong>送货日期：</strong>${$('#return-date1').val() || ''}</div>
-                </div>
-                
-                <table class="print-table" style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
-                    <thead>
-                        <tr>
-                            ${tableHeaders}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${tableRows}
-                    </tbody>
-                </table>
-                
-                <div style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #000;">
-                    <div><strong>合计金额(大写)：</strong>${numberToChinese(totalAmount)}</div>
-                    <div><strong>合计金额：</strong>${totalAmount.toFixed(2)} 元</div>
-                </div>
-                
-                <div class="footer-row" style="display: flex; justify-content: space-between; margin-top: 30px;">
-                    <div style="flex: 1; padding-right: 10px;">
-                        <div><strong>制单人：</strong>${$('#company-address1').val() || ''}</div>
-                        <div><strong>送货人：</strong>${$('#songhuoren').val() || ''}</div>
-                    </div>
-                    <div style="flex: 1; padding-right: 10px;">
-                        <div><strong>审核人：</strong>${$('#company-phone1').val() || ''}</div>
-                        <div><strong>收货人：</strong>${$('#shouhuoren').val() || ''}</div>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #000;">
-                    <div><strong>地址：</strong>四川省成都市新都区石板滩街道石木路588号</div>
-                    <div><strong>联系电话：</strong>13730601502</div>
-                </div>
-                
-                <div style="margin-top: 15px; font-size: 12px; line-height: 1.5;">
-                    <div><strong>声明：</strong></div>
-                    <div>1. 本销售单作为确立购销双方权利义务合同；</div>
-                    <div>2. 收货员当面校对产品材质、数量、规格、单价，如对本公司销售产品质量及数量有异议，请在十天内提出，逾期本公司概不负责；</div>
-                    <div>3. 本合同如发生纠纷，双方协商不能解决，如协商未果则在供方当地人民法院解决，届时产生的诉讼费、律师费、差旅费等均由违约方承担。本单最终解释权归我公司所有。</div>
-                </div>
-            </div>
-        `;
-    } else {
-        // 原始打印内容
-        return `
-            <div class="print-container">
-                <div class="print-title-container" style="text-align: center; margin-bottom: 20px;">
-                    <div style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">成都龙辉机械设备制造有限公司出库单</div>
-                </div>
-                
-                <div class="print-info-row" style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                    <div style="flex: 1; padding-right: 10px;"><strong>往来单位：</strong>${$('#return-customer1').val() || ''}</div>
-                    <div style="flex: 1; padding-right: 10px;"><strong>出库单号：</strong>${$('#return-no1').val() || ''}</div>
-                    <div style="flex: 1;"><strong>送货日期：</strong>${$('#return-date1').val() || ''}</div>
-                </div>
-                
-                <table class="print-table" style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
-                    <thead>
-                        <tr>
-                            ${tableHeaders}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${tableRows}
-                    </tbody>
-                </table>
-                
-                <div style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #000;">
-                    <div><strong>合计金额(大写)：</strong>${numberToChinese(totalAmount)}</div>
-                    <div><strong>合计金额：</strong>${totalAmount.toFixed(2)} 元</div>
-                </div>
-                
-                <div class="footer-row" style="display: flex; justify-content: space-between; margin-top: 30px;">
-                    <div style="flex: 1; padding-right: 10px;">
-                        <div><strong>制单人：</strong>${$('#company-address1').val() || ''}</div>
-                        <div><strong>送货人：</strong>${$('#songhuoren').val() || ''}</div>
-                    </div>
-                    <div style="flex: 1; padding-right: 10px;">
-                        <div><strong>审核人：</strong>${$('#company-phone1').val() || ''}</div>
-                        <div><strong>收货人：</strong>${$('#shouhuoren').val() || ''}</div>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #000;">
-                    <div><strong>地址：</strong>四川省成都市新都区石板滩街道石木路588号</div>
-                    <div><strong>联系电话：</strong>13730601502</div>
-                </div>
-                
-                <div style="margin-top: 15px; font-size: 12px; line-height: 1.5;">
-                    <div><strong>声明：</strong></div>
-                    <div>1. 本销售单作为确立购销双方权利义务合同；</div>
-                    <div>2. 收货员当面校对产品材质、数量、规格、单价，如对本公司销售产品质量及数量有异议，请在十天内提出，逾期本公司概不负责；</div>
-                    <div>3. 本合同如发生纠纷，双方协商不能解决，如协商未果则在供方当地人民法院解决，届时产生的诉讼费、律师费、差旅费等均由违约方承担。本单最终解释权归我公司所有。</div>
-                </div>
-            </div>
-        `;
-    }
+    }, 100);
 }
-
 
 // 列选择配置对象
 var printColumnConfig = {
@@ -1880,16 +1896,273 @@ function showPrintPreview() {
         return;
     }
 
-    // 构建预览内容
-    var previewContent = buildOutboundOrderPrintContent(true);
+    // 创建一个预览窗口
+    var previewWindow = window.open('', '_blank', 'width=1000,height=800');
+    previewWindow.document.open();
 
-    // 清空并填充预览内容
-    $('#print-preview-content').empty().html(previewContent);
+    // 构建预览内容（与打印内容相同）
+    var previewContent = `
+        <html>
+        <head>
+            <title>打印预览</title>
+            <style>
+                body {
+                    margin: 20px;
+                    font-family: Arial, sans-serif;
+                    font-size: 14px;
+                    color: black;
+                }
+                .preview-title {
+                    text-align: center;
+                    font-size: 20px;
+                    font-weight: bold;
+                    margin-bottom: 20px;
+                }
+                .preview-info {
+                    margin-bottom: 20px;
+                }
+                .preview-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                .preview-table th,
+                .preview-table td {
+                    border: 1px solid black;
+                    padding: 5px;
+                    text-align: left;
+                }
+                .preview-table th {
+                    background-color: #f2f2f2;
+                }
+                .total-row {
+                    margin-top: 20px;
+                    padding-top: 10px;
+                    padding-bottom: 10px;
+                    border-left: 1px solid black;
+                    border-right: 1px solid black;
+                }
+                .footer {
+                    margin-top: 30px;
+                }
+                .print-controls {
+                    margin-top: 20px;
+                    text-align: center;
+                    padding: 10px;
+                    background-color: #f5f5f5;
+                    border: 1px solid #ddd;
+                }
+                .print-btn {
+                    padding: 10px 20px;
+                    margin: 0 10px;
+                    background-color: #4CAF50;
+                    color: white;
+                    border: none;
+                    cursor: pointer;
+                }
+                .cancel-btn {
+                    padding: 10px 20px;
+                    margin: 0 10px;
+                    background-color: #f44336;
+                    color: white;
+                    border: none;
+                    cursor: pointer;
+                }
+            </style>
+        </head>
+        <body>
+    `;
 
-    // 显示模态框
-    $('#printPreviewModal').modal('show');
+    // 获取选中的列
+    var selectedColumns = [];
+    var columnMap = {
+        '序号': { field: 'index', type: 'index' },
+        '合同号': { field: 'contractNo', input: 'contractNo' },
+        '任务号': { field: 'taskNo', input: 'taskNo' },
+        '加工工序': { field: 'gongxu', input: 'gongxu' },
+        '产品名称': { field: 'productName', input: 'productName' },
+        '图号': { field: 'drawingNo', input: 'drawingNo' },
+        '单位': { field: 'unit', input: 'unit' },
+        '数量': { field: 'quantity', input: 'quantity' },
+        '单价': { field: 'unitPrice', input: 'unitPrice' },
+        '金额': { field: 'amount', input: 'amount' },
+        '材质': { field: 'material', input: 'material' },
+        '重量': { field: 'weight', input: 'weight' },
+        '备注': { field: 'remark', input: 'remark' }
+    };
 
-    console.log('打印预览已生成');
+    // 筛选选中的列
+    $.each(printColumnConfig, function(columnName, config) {
+        if (config.selected) {
+            selectedColumns.push({
+                name: columnName,
+                ...columnMap[columnName]
+            });
+        }
+    });
+
+    // 构建表格行
+    var tableRows = '';
+    var rowNumber = 1;
+    var totalAmount = 0;
+
+    $('#return-detail-table1 tbody tr').each(function() {
+        var $row = $(this);
+        var contractNo = $row.find('input[name="contractNo"]').val();
+        var amount = parseFloat($row.find('input[name="amount"]').val()) || 0;
+        totalAmount += amount;
+
+        if (contractNo && contractNo.trim() !== '') {
+            tableRows += '<tr>';
+
+            selectedColumns.forEach(function(column) {
+                var cellContent = '';
+
+                if (column.type === 'index') {
+                    cellContent = rowNumber;
+                } else {
+                    cellContent = $row.find('input[name="' + column.input + '"]').val() || '';
+                }
+
+                tableRows += '<td>' + cellContent + '</td>';
+            });
+
+            tableRows += '</tr>';
+            rowNumber++;
+        }
+    });
+
+    // 构建表头
+    var tableHeaders = '';
+    selectedColumns.forEach(function(column) {
+        tableHeaders += '<th>' + column.name + '</th>';
+    });
+
+    // 数字转中文大写金额函数
+    function numberToChinese(num) {
+        if (isNaN(num) || num === 0) return "零元整";
+
+        var chineseNums = ["零", "壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖"];
+        var chineseUnits = ["", "拾", "佰", "仟"];
+        var bigUnits = ["", "万", "亿"];
+
+        var numStr = Math.round(num * 100).toString();
+        var integerPart = numStr.slice(0, -2) || "0";
+        var decimalPart = numStr.slice(-2);
+
+        var result = "";
+
+        // 处理整数部分
+        if (integerPart !== "0") {
+            var integerGroups = [];
+            for (var i = integerPart.length; i > 0; i -= 4) {
+                integerGroups.unshift(integerPart.slice(Math.max(0, i - 4), i));
+            }
+
+            integerGroups.forEach(function(group, index) {
+                var groupResult = "";
+                var zeroFlag = false;
+
+                for (var j = 0; j < group.length; j++) {
+                    var digit = parseInt(group[j]);
+                    var unit = chineseUnits[group.length - 1 - j];
+
+                    if (digit === 0) {
+                        zeroFlag = true;
+                    } else {
+                        if (zeroFlag) {
+                            groupResult += "零";
+                            zeroFlag = false;
+                        }
+                        groupResult += chineseNums[digit] + unit;
+                    }
+                }
+
+                if (groupResult !== "") {
+                    result += groupResult + bigUnits[integerGroups.length - 1 - index];
+                }
+            });
+        } else {
+            result = "零";
+        }
+
+        result += "元";
+
+        // 处理小数部分
+        if (decimalPart !== "00") {
+            var jiao = parseInt(decimalPart[0]);
+            var fen = parseInt(decimalPart[1]);
+
+            if (jiao > 0) {
+                result += chineseNums[jiao] + "角";
+            }
+            if (fen > 0) {
+                result += chineseNums[fen] + "分";
+            }
+        } else {
+            result += "整";
+        }
+
+        return result;
+    }
+
+    // 完成预览内容
+    previewContent += `
+        <div class="preview-title">打印预览 - 出库单</div>
+        
+        <div class="preview-info">
+            <div><strong>往来单位：</strong>${$('#return-customer1').val() || ''}</div>
+            <div><strong>出库单号：</strong>${$('#return-no1').val() || ''}</div>
+            <div><strong>送货日期：</strong>${$('#return-date1').val() || ''}</div>
+        </div>
+        
+        <table class="preview-table">
+            <thead>
+                <tr>${tableHeaders}</tr>
+            </thead>
+            <tbody>${tableRows}</tbody>
+        </table>
+        
+        <div class="total-row">
+            <div><strong>合计金额(大写)：</strong>${numberToChinese(totalAmount)}</div>
+            <div><strong>合计金额：</strong>${totalAmount.toFixed(2)} 元</div>
+        </div>
+        
+        <div class="footer">
+            <div style="display: flex;justify-content: space-around;border: 1px solid black;">
+                <div><strong>制单人：</strong>${$('#company-address1').val() || ''}</div>
+                <div><strong>审核人：</strong>${$('#company-phone1').val() || ''}</div>
+                <div><strong>送货人：</strong>${$('#songhuoren').val() || ''}</div>
+                <div><strong>收货人：</strong>${$('#shouhuoren').val() || ''}</div>
+            </div>
+            </div style="display: flex;justify-content: space-around;border-left: 1px solid black;border-right: 1px solid black;">
+                <div><strong>地址：</strong>四川省成都市新都区石板滩街道石木路588号</div>
+                <div><strong>联系电话：</strong>13730601502</div>
+            </div>
+        </div>
+        
+        
+        
+        <div style="border: 1px solid black;padding: 3px;">
+            <div><strong>声明：</strong></div>
+            <div>1. 本销售单作为确立购销双方权利义务合同；</div>
+            <div>2. 收货员当面校对产品材质、数量、规格、单价，如对本公司销售产品质量及数量有异议，请在十天内提出，逾期本公司概不负责；</div>
+            <div>3. 本合同如发生纠纷，双方协商不能解决，如协商未果则在供方当地人民法院解决，届时产生的诉讼费、律师费、差旅费等均由违约方承担。本单最终解释权归我公司所有。</div>
+        </div>
+        
+        <div class="print-controls">
+            <button class="print-btn" onclick="window.print()">立即打印</button>
+            <button class="cancel-btn" onclick="window.close()">关闭预览</button>
+        </div>
+    `;
+
+    previewContent += `
+        </body>
+        </html>
+    `;
+
+    // 写入预览窗口
+    previewWindow.document.write(previewContent);
+    previewWindow.document.close();
 }
 
 // 绑定预览模态框中的打印按钮
@@ -1897,7 +2170,41 @@ $(document).ready(function() {
     $('#print-from-preview').on('click', function() {
         $('#printPreviewModal').modal('hide');
         setTimeout(function() {
+            saveReturnOrder();
             printOutboundOrder();
         }, 300);
     });
 });
+
+// 添加合计数量显示
+function addTotalRow() {
+    var table = $('#return-detail-table1');
+    var tfoot = table.find('tfoot');
+
+    if (tfoot.length === 0) {
+        table.append('<tfoot></tfoot>');
+        tfoot = table.find('tfoot');
+    }
+
+    var totalRow = `
+        <tr class="total-row">
+            <td colspan="8" class="text-right"><strong>合计：</strong></td>
+            <td><input type="number" class="form-control form-control-sm" id="total-quantity" value="0" readonly style="font-weight: bold;"></td>
+            <td></td>
+            <td><input type="number" class="form-control form-control-sm" id="total-amount-display" value="0" readonly style="font-weight: bold;"></td>
+            <td colspan="3"></td>
+        </tr>
+    `;
+    tfoot.html(totalRow);
+}
+
+function calculateTotalQuantity1() {
+    var total = 0;
+    $('#return-detail-table1 tbody tr').each(function() {
+        var quantity = parseFloat($(this).find('input[name="quantity"]').val()) || 0;
+        total += quantity;
+    });
+
+    $('#total-quantity').val(total);
+    return total;
+}

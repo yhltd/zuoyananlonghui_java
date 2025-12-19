@@ -135,56 +135,11 @@
         .col-7 { width: 10%; }
         .col-8 { width: 10%; }
 
-        /*!* 查询弹窗样式 *!*/
-        /*.modal {*/
-        /*    display: none;*/
-        /*    position: fixed;*/
-        /*    top: 0;*/
-        /*    left: 0;*/
-        /*    width: 100%;*/
-        /*    height: 100%;*/
-        /*    background: rgba(0, 0, 0, 0.5);*/
-        /*    z-index: 1000;*/
-        /*    align-items: center;*/
-        /*    justify-content: center;*/
-        /*}*/
-
-        /*.modal-content {*/
-        /*    background: white;*/
-        /*    border-radius: 8px;*/
-        /*    width: 90%;*/
-        /*    max-width: 900px;*/
-        /*    max-height: 80vh;*/
-        /*    overflow: hidden;*/
-        /*    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);*/
-        /*    margin: auto;*/
-        /*}*/
-
-        /*.modal-header {*/
-        /*    padding: 15px 20px;*/
-        /*    background: #2c5e9c;*/
-        /*    color: white;*/
-        /*    display: flex;*/
-        /*    justify-content: space-between;*/
-        /*    align-items: center;*/
-        /*}*/
-
-        /*.modal-title {*/
-        /*    font-size: 18px;*/
-        /*    font-weight: 500;*/
-        /*}*/
-
         .close {
             font-size: 24px;
             cursor: pointer;
             line-height: 1;
         }
-
-        /*.modal-body {*/
-        /*    padding: 20px;*/
-        /*    max-height: calc(80vh - 120px);*/
-        /*    overflow-y: auto;*/
-        /*}*/
 
         .search-box {
             margin-bottom: 15px;
@@ -389,23 +344,23 @@
         <thead>
         <tr>
             <th>业务单位</th>
-            <th id="business-unit"></th>
+            <th id="business-unit" contenteditable="true"></th>
             <th id="">数量</th>
-            <th id="quantity" colspan="3"></th>
+            <th id="quantity" colspan="3" contenteditable="true"></th>
             <th>材质</th>
-            <th id="material" colspan="3"></th>
-
+            <th id="material" colspan="3" contenteditable="true"></th>
         </tr>
+
+        <!-- 修改第二行表格 -->
         <tr>
             <th>零件名称</th>
-            <th id="product-name"></th>
+            <th id="product-name" contenteditable="true"></th>
             <th>任务号</th>
-            <th id="task-no" colspan="3"></th>
+            <th id="task-no" colspan="3" contenteditable="true"></th>
             <th>图号</th>
-            <th id="drawing-no" colspan="3"></th>
-
-
+            <th id="drawing-no" colspan="3" contenteditable="true"></th>
         </tr>
+
         <tr>
             <th class="col-1">序号</th>
             <th class="col-2">工序名称</th>
@@ -420,7 +375,11 @@
         <tbody>
         <tr>
             <td class="col-1">1</td>
-            <td class="col-2" contenteditable="true"></td>
+            <!-- 修复：只有一个工序名称单元格 -->
+            <td class="col-2" contenteditable="true"
+                list="process-name-history"
+                onfocus="showProcessNameSuggestions(this)"
+                oninput="saveProcessNameInput(this)"></td>
             <td class="col-3" contenteditable="true" colspan="3"></td>
             <td class="col-4" contenteditable="true"></td>
             <td class="col-5" contenteditable="true"></td>
@@ -532,6 +491,11 @@
 <div id="qrcodePrintContainer" class="print-qrcode-container">
     <!-- 二维码将在这里动态生成 -->
 </div>
+
+<datalist id="process-name-history">
+    <!-- 选项将通过JavaScript动态添加 -->
+</datalist>
+
 <script>
     $(document).ready(function() {
         // 点击页面指示器显示使用说明弹窗

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>已完成合同</title>
+    <title>新开票合同</title>
     <link rel="shortcut icon" href="#"/>
 
     <script type="text/javascript" src="../js/Jquery.js"></script>
@@ -18,7 +18,7 @@
     <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table-zh-CN.min.js"></script>
     <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/colResizable-1.6.js"></script>
     <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table-resizable.js"></script>
-    <script type="text/javascript" src="../js/xlsx.full.min.js"></script>
+
 
     <!-- 引入CSS -->
     <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.22.1/dist/extensions/fixed-header/bootstrap-table-fixed-header.min.css">
@@ -29,13 +29,16 @@
     <script src="https://unpkg.com/bootstrap-table@1.22.1/dist/extensions/fixed-columns/bootstrap-table-fixed-columns.min.js"></script>
 
 
+
+    <script type="text/javascript" src="../js/xlsx.full.min.js"></script>
+
     <link rel="stylesheet" href="../css/sweetalert.css">
     <script type="text/javascript" src="../js/sweetalert-dev.js"></script>
 
     <link rel="stylesheet" href="../css/main.css">
     <link rel="stylesheet" href="../css/new.css">
     <script type="text/javascript" src="../js/main.js"></script>
-    <script type="text/javascript" src="../js/ywc.js"></script>
+    <script type="text/javascript" src="../js/xkpht.js"></script>
 
 
     <style>
@@ -123,6 +126,8 @@
             font-size: 14px;
         }
     </style>
+
+
 </head>
 
 <body class="pt-2">
@@ -164,6 +169,7 @@
                 <label for="name" class="form-label-custom">业务单位</label>
                 <input id="name" type="text" class="form-control form-control-custom" placeholder="请输入业务单位名称" autocomplete="off">
             </div>
+
             <div class="search-field">
                 <label for="hetongZhuangtai" class="form-label-custom">对账状态</label>
                 <input id="hetongZhuangtai" type="text" class="form-control form-control-custom" placeholder="请输入对账状态" autocomplete="off">
@@ -180,14 +186,11 @@
 
             <!-- 工具栏按钮 -->
             <div class="toolbar-buttons">
-                <button id="refresh-btn" class="btn btn-custom btn-primary-custom">
+                <button id="refresh-btn" class="btn btn-custom btn-primary-custom ">
                     <i class="bi bi-arrow-clockwise"></i>
                     刷新
                 </button>
 
-                <button id="calculate-btn" class="btn btn-info">
-                    <i class="bi bi-calculator-fill"></i> 计算
-                </button>
 
                 <button id="gongxu-config-btn" class="btn btn-custom btn-primary-custom">
                     <i class="bi bi-gear"></i>
@@ -206,7 +209,7 @@
                 <!-- 当前页面指示器 -->
                 <div class="page-indicator" id="pageIndicator">
                     <i class="bi bi-file-earmark-check me-2"></i>
-                    当前页：已完成合同
+                    当前页：新开票合同
                 </div>
             </div>
         </div>
@@ -216,10 +219,10 @@
     <div class="table-container">
         <div class="table-header">
             <i class="bi bi-table me-2"></i>
-            已完成合同数据列表
+            新开票合同列表
         </div>
-        <div class="table-responsive" id="userTable1">
-            <table id="userTable" class="table table-hover table-custom gradient-table">
+        <div class="table-responsive" id="userTable11">
+            <table id="userTable" class="gradient-table">
                 <!-- 表格内容将通过JavaScript动态生成 -->
             </table>
         </div>
@@ -304,43 +307,6 @@
     </div>
 </div>
 
-
-<!-- 导出模态框 -->
-<div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">导出设置</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="export-form">
-                    <div class="form-group">
-                        <label for="export-filename">文件名</label>
-                        <input type="text" class="form-control" id="export-filename" value="合同记录" placeholder="请输入文件名">
-                        <small class="form-text text-muted">文件将保存到桌面，扩展名自动添加 .xlsx</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="export-date-format">日期格式</label>
-                        <select class="form-control" id="export-date-format">
-                            <option value="YYYYMMDD">年月日 (20231201)</option>
-                            <option value="YYYY-MM-DD">年-月-日 (2023-12-01)</option>
-                            <option value="YYYY年MM月DD日">年月日中文 (2023年12月01日)</option>
-                            <option value="none">不添加日期</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" id="confirm-export-btn">开始导出</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- 工序配置模态框 -->
 <div id="gongxu-modal" class="modal fade" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -378,6 +344,42 @@
     </div>
 </div>
 
+<!-- 导出模态框 -->
+<div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">导出设置</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="export-form">
+                    <div class="form-group">
+                        <label for="export-filename">文件名</label>
+                        <input type="text" class="form-control" id="export-filename" value="合同记录" placeholder="请输入文件名">
+                        <small class="form-text text-muted">文件将保存到桌面，扩展名自动添加 .xlsx</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="export-date-format">日期格式</label>
+                        <select class="form-control" id="export-date-format">
+                            <option value="YYYYMMDD">年月日 (20231201)</option>
+                            <option value="YYYY-MM-DD">年-月-日 (2023-12-01)</option>
+                            <option value="YYYY年MM月DD日">年月日中文 (2023年12月01日)</option>
+                            <option value="none">不添加日期</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirm-export-btn">开始导出</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="delete-modal" class="modal fade" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -408,30 +410,27 @@
             <div class="modal-header">
                 <h5 class="modal-title">
                     <i class="bi bi-info-circle me-2"></i>
-                    已完成合同使用说明
+                    新开票合同使用说明
                 </h5>
             </div>
             <div class="modal-body">
                 <h6><i class="bi bi-1-circle me-2"></i>基本操作</h6>
                 <ul>
-                    <li>页面加载自动更新已完成的合同内容</li>
-                    <li>可根据业务单位名称进行条件查询</li>
-                    <li>点击刷新可以重新查询所有已完成合同。</li>
-                    <li>点击工序配置可以在弹窗内调整工序单价配置，调整完需要点击对应行的保存按钮。</li>
-                    <li>在表格内单击可以选中该行，之后点击删除可以删除选择的合同记录。</li>
-                    <li>表格内单元格可以单击选择，进行修改，修改后自动保存。</li>
+                    <li>单击列表行对应单元格内容可以直接修改信息，修改后信息自动保存</li>
+                    <li>选中行为浅蓝色背景，有选中行的情况下可以点击删除按钮删除对应内容</li>
+                    <li>可以点击工序配置按钮在弹窗中配置对应工序的金额</li>
                 </ul>
 
                 <h6><i class="bi bi-2-circle me-2"></i>注意事项</h6>
                 <ul>
-                    <li>删除后数据无法恢复</li>
+                    <li>工序配置的金额是通用金额，在合同管理模块下均采取同样值计算</li>
+                    <li>修改工序配置金额，需要重新触发修改方法及时更新金额值</li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
 </body>
-
 <script>
     // 更新时间显示
     function updateTime() {
