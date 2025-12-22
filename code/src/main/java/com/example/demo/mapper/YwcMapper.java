@@ -22,7 +22,7 @@ public interface YwcMapper extends BaseMapper<Ywc> {
             "   SELECT ROW_NUMBER() OVER (ORDER BY id DESC) as row_num, " +
             "          t.id, t.C, t.D, t.E, t.F, t.G, t.H, t.I, t.J, t.K, t.L, t.M, t.N, t.O, t.P, t.Q, t.R, t.S, t.T, t.U, t.V, t.W, t.X, t.Y, t.Z, " +
             "          t.AA, t.AB, t.AC, t.AD, t.AE, t.AF, t.AG, t.AH, t.AI, t.AJ, t.AK, t.AL, t.AM, t.AN, t.AO, t.AP, t.AQ, t.AR, " +
-            "          t.[AS] as aas, t.AT, " +
+            "          t.[AS] as aas, t.AT, t.biaozhu," +
             "          t.hetong_zhuangtai, t.AU, t.AV, t.AW, t.AX, t.AY, t.riqi, " +
             "          t.lingjianhao, t.xianshiji, t.cheshiji, t.qianshiji, t.tangshiji, t.geshiji, t.moshiji, " +
             "          t.skxshiji, t.licheshiji, t.dianhuohuashiji, t.zhongzuosishiji, " +
@@ -72,7 +72,7 @@ public interface YwcMapper extends BaseMapper<Ywc> {
     @Select("SELECT " +
             "id, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, " +
             "AA, AB, AC, AD, AE, AF, AG, AH, AI, AJ, AK, AL, AM, AN, AO, AP, AQ, AR, " +
-            "[AS] as aas, AT, " +
+            "[AS] as aas, AT,biaozhu " +
             "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi, " +
             "lingjianhao, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
             "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
@@ -92,6 +92,7 @@ public interface YwcMapper extends BaseMapper<Ywc> {
             "[av] = #{av}, [aw] = #{aw}, [ax] = #{ax}, " +
             "lingjianhao = #{lingjianhao}, " +
             "xianshiji = #{xianshiji}, " +
+            "biaozhu = #{biaozhu}, " +
             "cheshiji = #{cheshiji}, " +
             "qianshiji = #{qianshiji}, " +
             "tangshiji = #{tangshiji}, " +
@@ -112,6 +113,7 @@ public interface YwcMapper extends BaseMapper<Ywc> {
     @Update("<script>" +
             "UPDATE hetong_jilu " +
             "<set>" +
+            "<if test='params.biaozhu != null'>biaozhu = #{params.biaozhu},</if>" +
             "<if test='params.c != null'>c = #{params.c},</if>" +
             "<if test='params.d != null'>d = #{params.d},</if>" +
             "<if test='params.e != null'>e = #{params.e},</if>" +
@@ -195,7 +197,7 @@ public interface YwcMapper extends BaseMapper<Ywc> {
             "AA, AB, AC, AD, AE, AF, AG, AH, AI, AJ, AK, AL, AM, AN, AO, AP, AQ, AR, " +
             "[AS] as aas, AT, " +
             "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi, " +
-            "lingjianhao, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
+            "lingjianhao, biaozhu, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
             "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
             "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
             "FROM hetong_jilu " +
@@ -209,5 +211,74 @@ public interface YwcMapper extends BaseMapper<Ywc> {
 
     @Select("SELECT num FROM gongxu WHERE name = #{name}")
     String getGongxuNumByName(String name);
+
+    @Select("<script>" +
+            "SELECT DISTINCT " +
+            "    ISNULL(d, '') as d " +
+            "FROM hetong_jilu hj " +
+            "WHERE hetong_zhuangtai IN ('已对账', '未对账') " +
+            "  AND ISNULL(hj.muban, '') != '新' " +
+            "  AND ISNULL(d, '') != '' " +
+            "ORDER BY d " +
+            "</script>")
+    List<Htjl> getywchth();
+
+    @Select("<script>" +
+            "SELECT DISTINCT " +
+            "    ISNULL(d, '') as d " +
+            "FROM hetong_jilu hj " +
+            "WHERE hetong_zhuangtai IN ('已对账', '未对账') " +
+            "  AND ISNULL(hj.muban, '') = '新' " +
+            "  AND ISNULL(d, '') != '' " +
+            "ORDER BY d " +
+            "</script>")
+    List<Htjl> getxywchth();
+
+    @Select("<script>" +
+            "SELECT DISTINCT " +
+            "    ISNULL(c, '') as c " +
+            "FROM hetong_jilu hj " +
+            "WHERE hetong_zhuangtai IN ('已对账', '未对账') " +
+            "  AND ISNULL(hj.muban, '') != '新' " +
+            "  AND ISNULL(c, '') != '' " +
+            "ORDER BY c " +
+            "</script>")
+    List<Htjl> getywcywdw();
+
+    @Select("<script>" +
+            "SELECT DISTINCT " +
+            "    ISNULL(c, '') as c " +
+            "FROM hetong_jilu hj " +
+            "WHERE hetong_zhuangtai IN ('已对账', '未对账') " +
+            "  AND ISNULL(hj.muban, '') = '新' " +
+            "  AND ISNULL(c, '') != '' " +
+            "ORDER BY c " +
+            "</script>")
+    List<Htjl> getxywcywdw();
+
+    @Select("<script>" +
+            "SELECT DISTINCT " +
+            "    ISNULL(i, '') as i " +
+            "FROM hetong_jilu hj " +
+            "WHERE hetong_zhuangtai IN ('已对账', '未对账') " +
+            "  AND ISNULL(hj.muban, '') != '新' " +
+            "  AND ISNULL(i, '') != '' " +
+            "ORDER BY i " +
+            "</script>")
+    List<Htjl> getywcth();
+
+
+
+    @Select("<script>" +
+            "SELECT DISTINCT " +
+            "    ISNULL(e, '') as e " +
+            "FROM hetong_jilu hj " +
+            "WHERE hetong_zhuangtai IN ('已对账', '未对账') " +
+            "  AND ISNULL(hj.muban, '') != '新' " +
+            "  AND ISNULL(e, '') != '' " +
+            "ORDER BY e " +
+            "</script>")
+    List<Htjl> getywcrwh();
+
 
 }

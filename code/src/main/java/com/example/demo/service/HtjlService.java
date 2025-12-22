@@ -84,5 +84,11 @@ public interface HtjlService extends IService<Htjl> {
     Map<String, Object> importExcelData(List<Map<String, Object>> records);
 
     List<Htjl> getCustomerList();
-
+    List<Htjl> getxCustomerList();
+    List<Htjl> getdjy();
+    List<Htjl> getywdw();
+    List<Htjl> getrwh();
+    List<Htjl> getth();
+    List<Htjl> gethth();
+    List<Htjl> getxhth();
 }

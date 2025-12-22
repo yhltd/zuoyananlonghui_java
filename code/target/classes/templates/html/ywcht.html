@@ -122,6 +122,27 @@
             border-radius: 3px;
             font-size: 14px;
         }
+
+        /* 提高优先级 */
+        #userTable.bootstrap-table td,
+        #userTable.bootstrap-table th,
+        #userTable table td,
+        #userTable table th {
+            white-space: normal !important;
+            word-break: break-all !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+
+        /* 标注字段有值的高亮行样式 */
+        .highlighted-row {
+            background-color: #f59821 !important; /* 浅黄色背景 */
+        }
+
+        /* 鼠标悬停时的高亮样式 */
+        .highlighted-row:hover {
+            background-color: #ffe4b5 !important; /* 稍深一点的黄色 */
+        }
     </style>
 </head>
 
@@ -161,12 +182,28 @@
         <div class="search-toolbar">
             <!-- 搜索字段 -->
             <div class="search-field">
-                <label for="name" class="form-label-custom">业务单位</label>
-                <input id="name" type="text" class="form-control form-control-custom" placeholder="请输入业务单位名称" autocomplete="off">
+                <select id="name" class="form-control form-control-custom" placeholder="请选择业务单位">
+                </select>
             </div>
             <div class="search-field">
-                <label for="hetongZhuangtai" class="form-label-custom">对账状态</label>
-                <input id="hetongZhuangtai" type="text" class="form-control form-control-custom" placeholder="请输入对账状态" autocomplete="off">
+                <select id="hetongZhuangtai" class="form-control form-control-custom" placeholder="请选择对账状态">
+                    <option value="">请选择对账状态</option>
+                    <option value="未对账">未对账</option>
+                    <option value="已对账">已对账</option>
+                </select>
+            </div>
+
+            <div class="search-field">
+                <select id="hetonghao" class="form-control form-control-custom" placeholder="请选择合同号">
+                </select>
+            </div>
+            <div class="search-field">
+                <select id="renwuhao" class="form-control form-control-custom" placeholder="请选择任务号">
+                </select>
+            </div>
+            <div class="search-field">
+                <select id="tuhao" class="form-control form-control-custom" placeholder="请选择图号">
+                </select>
             </div>
 
             <!-- 查询按钮 -->
@@ -185,7 +222,7 @@
                     刷新
                 </button>
 
-                <button id="calculate-btn" class="btn btn-info">
+                <button id="calculate-btn" class="btn btn-custom btn-primary-custom">
                     <i class="bi bi-calculator-fill"></i> 计算
                 </button>
 
@@ -222,84 +259,6 @@
             <table id="userTable" class="table table-hover table-custom gradient-table">
                 <!-- 表格内容将通过JavaScript动态生成 -->
             </table>
-        </div>
-    </div>
-</div>
-
-<div id="add-modal" class="modal fade" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">录入</div>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-
-            <div class="modal-body">
-                <form id="add-form" class="needs-validation">
-                    <div class="row justify-content-evenly">
-                        <div class="col-6">
-                            <div class="form-group">
-                                <label for="add-gsm">公司名</label>
-                                <input id="add-gsm" name="gsm" type="text" class="form-control" autocomplete="off">
-                                <div class="invalid-feedback">
-                                    请输入公司名！
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="form-group">
-                                <label for="add-tzkc">铜渣库存</label>
-                                <input id="add-tzkc" name="tzkc" type="text" class="form-control" autocomplete="off">
-                                <div class="invalid-feedback">
-                                    请输入铜渣库存！
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="form-group">
-                                <label for="add-tkkc">铜块库存</label>
-                                <input id="add-tkkc" name="tkkc" type="text" class="form-control" autocomplete="off">
-                                <div class="invalid-feedback">
-                                    请输入铜块库存！
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="form-group">
-                                <label for="add-yfje">应付金额</label>
-                                <input id="add-yfje" name="yfje" type="text" class="form-control" autocomplete="off">
-                                <div class="invalid-feedback">
-                                    请输入应付金额！
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="form-group">
-                                <label for="add-sfyj">是否月结</label>
-                                <select id="add-sfyj" name="sfyj" class="form-control" autocomplete="off">
-                                    <option value="是">是</option>
-                                    <option value="否">否</option>
-                                </select>
-                                <div class="invalid-feedback">
-                                    请选择是否月结！
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="border-top" style="padding: 15px;">
-                <button id="add-submit-btn" type="button" class="btn" style="background-color: limegreen;color: white">
-                    <i class="bi bi-arrow-bar-up icon"></i>
-                    提交
-                </button>
-                <button id="add-close-btn" type="button" class="btn left-margin" style="background-color: red;color: white">
-                    <i class="bi bi-x-circle icon"></i>
-                    关闭
-                </button>
-            </div>
         </div>
     </div>
 </div>

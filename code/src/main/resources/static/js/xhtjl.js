@@ -38,7 +38,8 @@ function getList(page, size, searchParams) {
             pageNum: currentPage,
             pageSize: pageSize,
             C: searchParams.C || '',
-            zhuangtai:searchParams.zhuangtai|| ''// 订单号（后端需要但前端没有，传空）
+            zhuangtai:searchParams.zhuangtai|| '',// 订单号（后端需要但前端没有，传空）
+            D:searchParams.D|| ''
         }),
         dataType: 'json'
     }, false, '', function (res) {
@@ -63,12 +64,71 @@ function getList(page, size, searchParams) {
 
 
 $(function () {
+    // 方法1：直接设置文档焦点
+    document.body.focus();
+    // 方法2：尝试设置表格焦点
+    setTimeout(function() {
+        var $table = $('#userTable');
+        if ($table.length) {
+            $table.focus();
+            console.log('表格已获取焦点');
+        }
+
+        // 同时通知父窗口 iframe 已准备好
+        if (window.parent !== window) {
+            window.parent.postMessage({
+                type: 'iframeReady',
+                focused: true
+            }, '*');
+        }
+    }, 100);
+
+
+// 监听鼠标进入文档，自动获取焦点
+    $(document).on('mouseenter', function() {
+        if (window.frameElement) {
+            try {
+                window.focus();
+                document.body.focus();
+            } catch (e) {
+                console.log('设置焦点时出错:', e);
+            }
+        }
+    });
+
+// 监听表格区域的点击，确保焦点
+    $('#userTable').on('click', function(e) {
+        e.stopPropagation();
+        $(this).focus();
+        return true;
+    });
     getList();
 
     loadReturnNos();
+    loadhth();
     // 新增：加载客户列表
     loadCustomerList();
+    loadxCustomerList();
+    // 新增：初始绑定所有退货原因输入框
+    updateAllReturnReasonInputBindings();
 
+    // 初始化退货原因记忆功能
+    initReturnReasonMemory();
+
+    // 在退货单模块显示时绑定历史记录功能
+    $('#return-modal').on('shown.bs.modal', function() {
+        // 确保所有退货原因输入框都绑定了datalist
+        updateAllReturnReasonInputBindings();
+
+        // 加载历史记录到datalist
+        const history = getReturnReasonHistory();
+        if (history.length > 0) {
+            console.log('已加载退货原因历史记录到退货单:', history);
+        }
+    });
+    $("#calculate-btn").click(function () {
+        calculateSelectedRows();
+    });
     // 确保导入按钮只绑定一次
     $('#import-btn').click(function() {
         // 重置状态
@@ -301,7 +361,7 @@ $(function () {
         // 清空查询条件
         $('#name').val("");
         $('#department').val("");
-
+        $('#hth').val("");
         getList();
 
         // 显示所有数据
@@ -677,6 +737,16 @@ function setTable(data) {
         height: 400,                    // 必须设置高度
         fixedHeader: true,
         locale: 'zh-CN',
+        rowStyle: function(row, index) {
+            // 检查 biaozhu 字段是否有值
+            if (row.biaozhu && row.biaozhu.trim() !== '') {
+                // 返回特定样式，例如浅黄色背景
+                return {
+                    classes: 'highlighted-row'
+                };
+            }
+            return {};
+        },
         rowAttributes: function(row, index) {
             return {
                 'data-index': index,
@@ -684,6 +754,14 @@ function setTable(data) {
             };
         },
         columns: [
+            {
+                field: 'biaozhu',
+                title: '标注',
+                align: 'center',
+                sortable: true,
+                width: 120,  // 根据内容调整宽度
+                class: 'editable'
+            },
             {
                 field: 'c',
                 title: '业务单位',
@@ -996,7 +1074,7 @@ function createInputEditor($cell, originalValue, field, rowId, tableData, rowInd
                     // 更新本地数据
                     tableData[rowIndex][field] = newValue;
                     // 注释掉这行，避免重新加载表格中断编辑状态
-                    // getList();
+                    getList();
                 } else {
                     $cell.text(originalValue);
                     swal("更新失败", res.msg, "error");
@@ -1530,10 +1608,15 @@ function bindReturnOrderEvents() {
 
         // 检测必填字段
         var returnCustomer = $('#return-customer').val();
-        var returnDate = $('#return-date').val();
+
         var returnNo = $('#return-no').val();
         var returnPhone = $('#return-phone').val();
-
+        // ============ 新增：自动填充当前日期 ============
+        var currentDate = getCurrentDate();
+        $('#return-date').val(currentDate);
+        console.log('已自动设置退货日期为:', currentDate);
+        // ==============================================
+        var returnDate = $('#return-date').val();
         // 检测逻辑
         if (!returnCustomer) {
             swal("保存失败", "请填写退货客户", "error");
@@ -1659,6 +1742,18 @@ function bindReturnOrderEvents() {
     $(document).on('change', '.row-select', function() {
         updateSelectAllState();
     });
+
+    // 确保退货单显示时更新所有输入框绑定
+    $('#return-modal').on('shown.bs.modal', function() {
+        // 确保所有退货原因输入框都绑定了datalist
+        updateAllReturnReasonInputBindings();
+
+        // 加载历史记录到datalist
+        const history = getReturnReasonHistory();
+        if (history.length > 0) {
+            console.log('已加载退货原因历史记录到退货单:', history);
+        }
+    });
 }
 
 
@@ -1683,11 +1778,18 @@ function addReturnRow() {
             <td><input type="text" class="form-control form-control-sm" name="material"></td>
             <td><input type="text" class="form-control form-control-sm" name="weight"></td>
             <td><input type="date" class="form-control form-control-sm" name="returnDate"></td>
-            <td><input type="text" class="form-control form-control-sm" name="returnReason"></td>
+            <td><input type="text" class="form-control form-control-sm" name="returnReason" list="return-reason-history"></td>
             <td><input type="text" class="form-control form-control-sm" name="remark"></td>
         </tr>
     `;
     table.append(newRow);
+
+    // 为新添加的行绑定datalist
+    const newInput = table.find('tr:last input[name="returnReason"]');
+    if (newInput.length) {
+        newInput.attr('list', 'return-reason-history');
+    }
+
     updateRowNumbers();
 }
 
@@ -1928,13 +2030,6 @@ function generateReturnNo() {
     });  // 这里添加了缺少的右括号
 }
 
-function getCurrentDate() {
-    var now = new Date();
-    var year = now.getFullYear();
-    var month = String(now.getMonth() + 1).padStart(2, '0');
-    var day = String(now.getDate()).padStart(2, '0');
-    return year + '-' + month + '-' + day;
-}
 
 
 // 加载退货单号下拉框
@@ -2400,6 +2495,7 @@ function getSearchParams() {
     return {
         C: $('#name').val() || '',    // 订单号
         zhuangtai: $('#department').val() || '',
+        D: $('#hth').val() || '',
     };
 }
 
@@ -2470,7 +2566,7 @@ function getCurrentDate() {
     var year = now.getFullYear();
     var month = String(now.getMonth() + 1).padStart(2, '0');
     var day = String(now.getDate()).padStart(2, '0');
-    return year + month + day;
+    return year + '-' + month + '-' + day;
 }
 
 // 日期格式化函数
@@ -3993,6 +4089,481 @@ function initTableDragScroll() {
     console.log('表格拖动滚动初始化完成');
 }
 
+function loadhth() {
+    console.log('开始加载员工列表...');
+
+    $ajax({
+        type: 'post',
+        url: '/htjl/getxhth',
+        contentType: 'application/json',
+        dataType: 'json'
+    }, false, '', function(res) {
+        if (res.code === 200) {
+            console.log('获取员工列表成功:', res.data);
+
+            var $select = $('#hth');
+            $select.empty(); // 清空现有选项
+            $select.append('<option value="">请选择合同号</option>');
+
+            if (res.data && Array.isArray(res.data)) {
+                // 遍历数据，从m字段获取员工姓名
+                res.data.forEach(function(item) {
+                    // 安全地获取m字段的值
+                    var employeeName = item && item.d;
+
+                    // 检查是否为有效的字符串
+                    if (employeeName != null && employeeName !== '') {
+                        // 转换为字符串并去除首尾空格
+                        var nameStr = String(employeeName).trim();
+                        if (nameStr !== '') {
+                            $select.append(
+                                '<option value="' + nameStr + '">' +
+                                nameStr +
+                                '</option>'
+                            );
+                        }
+                    }
+                });
+
+                console.log('已加载 ' + res.data.length + ' 个员工选项');
+            } else {
+                console.warn('员工数据格式异常:', res.data);
+                $select.append('<option value="">暂无合同号数据</option>');
+            }
+        } else {
+            console.error('获取员工列表失败:', res.msg);
+            $('#hth').html('<option value="">加载失败</option>');
+        }
+    });
+}
+
+function loadxCustomerList() {
+    console.log('开始加载客户列表...');
+
+    $ajax({
+        type: 'post',
+        url: '/htjl/getxCustomerList',
+        contentType: 'application/json',
+        dataType: 'json'
+    }, false, '', function(res) {
+        if (res.code === 200) {
+            console.log('获取客户列表成功:', res.data);
 
 
+            var $select1 = $('#name');
+            $select1.empty(); // 清空现有选项
+            // 添加默认选项
+            $select1.append('<option value="">请选择业务单位</option>');
+            // 检查数据结构
+            if (res.data && Array.isArray(res.data)) {
+                // 遍历客户数据 - 现在客户名称在 c 字段中
+                res.data.forEach(function(customer) {
+                    // 从c字段获取客户名称
+                    var customerName = customer.c || '';
 
+                    if (customerName && customerName.trim() !== '') {
+                        // 只使用客户名称，不存储电话和ID
+                        $select1.append(
+                            '<option value="' + customerName + '">' +
+                            customerName +
+                            '</option>'
+                        );
+                    }
+                });
+
+                console.log('已加载 ' + res.data.length + ' 个客户');
+            } else {
+                console.warn('客户数据格式异常:', res.data);
+                $select1.append('<option value="">暂无业务单位数据</option>');
+            }
+        } else {
+            console.error('获取客户列表失败:', res.msg);
+            $('#name').html('<option value="">加载失败</option>');
+        }
+    });
+}
+
+
+// 初始化退货原因记忆功能
+function initReturnReasonMemory() {
+    console.log('=== 初始化退货原因记忆功能 ===');
+
+    const history = getReturnReasonHistory();
+    console.log('加载到的退货原因历史记录:', history);
+
+    // 创建自定义下拉
+    createReturnReasonDropdown();
+
+    // 监听失去焦点事件 - 当输入框失去焦点时保存
+    $(document).on('blur', 'input[name="returnReason"]', function() {
+        const returnReason = $(this).val().trim();
+        if (returnReason) {
+            // 延迟一点时间保存，确保用户已经完成输入
+            setTimeout(() => {
+                saveReturnReasonToHistory(returnReason);
+            }, 100);
+        }
+    });
+
+    // 添加datalist绑定
+    updateReturnReasonDatalist(history);
+
+    console.log('退货原因记忆功能初始化完成');
+}
+
+// 自定义退货原因下拉实现
+function createReturnReasonDropdown() {
+    // 1. 创建自定义下拉容器
+    const dropdownContainer = document.createElement('div');
+    dropdownContainer.id = 'return-reason-dropdown';
+    dropdownContainer.style.cssText = `
+        position: absolute;
+        background: white;
+        border: 1px solid #ccc;
+        max-height: 200px;
+        overflow-y: auto;
+        display: none;
+        z-index: 1000;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    `;
+    document.body.appendChild(dropdownContainer);
+
+    // 2. 使用事件委托监听所有退货原因输入框的点击/输入
+    $(document).on('focus click', 'input[name="returnReason"]', function(e) {
+        const input = this;
+        const rect = input.getBoundingClientRect();
+        const history = getReturnReasonHistory();
+
+        if (history.length === 0) return;
+
+        // 显示下拉
+        dropdownContainer.innerHTML = '';
+        dropdownContainer.style.display = 'block';
+        dropdownContainer.style.left = rect.left + 'px';
+        dropdownContainer.style.top = (rect.bottom + 5) + 'px';
+        dropdownContainer.style.width = rect.width + 'px';
+
+        // 添加选项
+        history.forEach(item => {
+            const option = document.createElement('div');
+            option.textContent = item;
+            option.style.cssText = `
+                padding: 5px 10px;
+                cursor: pointer;
+                border-bottom: 1px solid #eee;
+            `;
+            option.onmouseover = () => option.style.background = '#f0f0f0';
+            option.onmouseout = () => option.style.background = 'white';
+            option.onclick = () => {
+                input.value = item;
+                dropdownContainer.style.display = 'none';
+                // 触发blur事件，使保存逻辑生效
+                input.focus(); // 先获取焦点
+                input.blur();  // 然后失去焦点，触发保存
+            };
+            dropdownContainer.appendChild(option);
+        });
+    });
+
+    // 3. 点击其他地方隐藏下拉
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#return-reason-dropdown') &&
+            !e.target.closest('input[name="returnReason"]')) {
+            dropdownContainer.style.display = 'none';
+        }
+    });
+}
+
+// 获取退货原因历史记录
+function getReturnReasonHistory() {
+    try {
+        const historyStr = localStorage.getItem('return_reason_history');
+
+        if (!historyStr) {
+            console.log('localStorage中没有退货原因历史记录');
+            return [];
+        }
+
+        const history = JSON.parse(historyStr);
+
+        // 验证数据格式
+        if (!Array.isArray(history)) {
+            console.warn('退货原因历史记录不是数组格式，重置为空数组');
+            return [];
+        }
+
+        // 确保所有项都是字符串
+        return history.map(item => String(item));
+
+    } catch (error) {
+        console.error('读取退货原因历史记录失败:', error);
+        return [];
+    }
+}
+
+// 保存退货原因到历史记录
+function saveReturnReasonToHistory(returnReason) {
+    if (!returnReason || returnReason.trim() === '') {
+        return;
+    }
+
+    const reason = returnReason.trim();
+    console.log('保存退货原因:', reason);
+
+    try {
+        // 1. 获取当前历史记录
+        let history = getReturnReasonHistory();
+        console.log('当前退货原因历史记录:', history);
+
+        // 2. 去重（不区分大小写）
+        history = history.filter(item =>
+            item.toString().toLowerCase() !== reason.toLowerCase()
+        );
+
+        // 3. 新记录放前面
+        history.unshift(reason);
+
+        // 4. 只保留最近的20条记录
+        if (history.length > 20) {
+            history = history.slice(0, 20);
+        }
+
+        // 5. 保存到localStorage
+        const historyStr = JSON.stringify(history);
+        localStorage.setItem('return_reason_history', historyStr);
+        console.log('保存到localStorage:', historyStr);
+
+        // 6. 立即更新datalist
+        updateReturnReasonDatalist(history);
+
+    } catch (error) {
+        console.error('保存退货原因历史记录失败:', error);
+    }
+}
+
+// 更新退货原因datalist
+function updateReturnReasonDatalist(history) {
+    console.log('更新退货原因datalist，历史记录:', history);
+
+    // 确保datalist元素存在
+    let datalist = document.getElementById('return-reason-history');
+    if (!datalist) {
+        datalist = document.createElement('datalist');
+        datalist.id = 'return-reason-history';
+        document.body.appendChild(datalist);
+        console.log('创建新的退货原因datalist元素');
+    }
+
+    // 清空现有选项
+    datalist.innerHTML = '';
+
+    // 添加新选项 - 确保每个值都是字符串
+    history.forEach(item => {
+        const option = document.createElement('option');
+        option.value = String(item); // 确保转换为字符串
+        option.textContent = String(item);
+        datalist.appendChild(option);
+    });
+
+    console.log('退货原因datalist已更新，选项数:', datalist.childElementCount);
+
+    // 更新所有退货原因输入框的list绑定
+    updateAllReturnReasonInputBindings();
+}
+
+// 更新所有退货原因输入框的list属性绑定
+function updateAllReturnReasonInputBindings() {
+    const inputs = document.querySelectorAll('input[name="returnReason"]');
+
+    inputs.forEach((input, index) => {
+        // 确保输入框有list属性
+        if (!input.hasAttribute('list')) {
+            input.setAttribute('list', 'return-reason-history');
+        }
+
+        console.log(`退货原因输入框${index}绑定:`, {
+            element: input,
+            listId: input.getAttribute('list'),
+            hasDatalist: !!document.getElementById('return-reason-history')
+        });
+    });
+}
+
+// 保存所有退货原因到历史记录（批量保存）
+function saveAllReturnReasonsToHistory() {
+    const returnReasons = new Set();
+
+    $('#return-detail-table tbody tr').each(function() {
+        const returnReason = $(this).find('input[name="returnReason"]').val().trim();
+        if (returnReason) {
+            returnReasons.add(returnReason);
+        }
+    });
+
+    // 保存每个退货原因
+    returnReasons.forEach(reason => {
+        saveReturnReasonToHistory(reason);
+    });
+
+    console.log('批量保存了', returnReasons.size, '个退货原因到历史记录');
+}
+
+// 清理退货原因历史记录（按需使用）
+function clearReturnReasonHistory() {
+    localStorage.removeItem('return_reason_history');
+    const datalist = document.getElementById('return-reason-history');
+    if (datalist) {
+        datalist.innerHTML = '';
+    }
+    console.log('退货原因历史记录已清空');
+}
+function calculateSelectedRows() {
+    // 获取选中的行
+    let rows = getTableSelection("#userTable");
+    if (rows.length == 0) {
+        swal('请选择要计算的数据！');
+        return;
+    }
+
+    let requestDataList = [];
+    $.each(rows, function (index, row) {
+        if (row.data && row.data.id) {
+            // 获取整行的所有数据
+            let rowData = row.data;
+
+            // 构建请求数据，包含id和所有字段（除了空值）
+            let requestData = {
+                id: rowData.id
+            };
+
+            // 遍历所有字段，添加到请求数据中
+            Object.keys(rowData).forEach(function(field) {
+                let value = rowData[field];
+                // 只添加非空值，减少传输数据量
+                if (value !== null && value !== undefined && value !== '') {
+                    // 特殊处理：将空对象、空数组转为空字符串
+                    if (typeof value === 'object') {
+                        if (Object.keys(value).length === 0) {
+                            value = '';
+                        } else {
+                            // 复杂对象转为JSON字符串
+                            value = JSON.stringify(value);
+                        }
+                    }
+                    requestData[field] = value;
+                }
+            });
+
+            console.log('第' + index + '行发送的数据:', requestData);
+            requestDataList.push(requestData);
+        } else {
+            console.warn('第' + index + '行没有找到ID，数据:', row);
+        }
+    });
+
+    if (requestDataList.length === 0) {
+        swal("错误", "未找到有效的行数据", "error");
+        return;
+    }
+
+    console.log('准备计算的数据（共' + requestDataList.length + '条）:', requestDataList);
+
+    // 显示计算中提示
+    swal({
+        title: "计算中...",
+        text: "正在计算选中的 " + requestDataList.length + " 条记录\n后端将处理所有传入字段",
+        icon: "info",
+        buttons: false,
+        closeOnClickOutside: false,
+        closeOnEsc: false
+    });
+
+    // 存储成功和失败的数量
+    let successCount = 0;
+    let failCount = 0;
+    let totalCount = requestDataList.length;
+
+    // 使用Promise.all来处理并发请求
+    let promises = requestDataList.map(function(data) {
+        return new Promise(function(resolve, reject) {
+            console.log('发送数据（ID ' + data.id + '）字段数:', Object.keys(data).length);
+
+            $.ajax({
+                type: 'post',
+                url: '/ywc/updateField',
+                data: JSON.stringify(data),  // 传递包含id和所有字段的对象
+                dataType: 'json',
+                contentType: 'application/json;charset=utf-8',
+                success: function(res) {
+                    console.log('ID ' + data.id + ' 计算响应:', res);
+                    if (res.code == 200) {
+                        successCount++;
+                        resolve({ id: data.id, success: true, msg: res.msg });
+                    } else {
+                        failCount++;
+                        resolve({ id: data.id, success: false, msg: res.msg });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('ID ' + data.id + ' 计算请求失败:', error);
+                    failCount++;
+                    resolve({ id: data.id, success: false, msg: "网络错误" });
+                }
+            });
+        });
+    });
+
+    // 所有请求完成后
+    Promise.all(promises).then(function(results) {
+        // 关闭计算中提示
+        swal.close();
+
+        // 重新加载数据
+        getList(currentPage);
+
+        // 显示计算结果
+        let message = "计算完成！\n\n";
+        message += "✓ 成功: " + successCount + " 条\n";
+        message += "✗ 失败: " + failCount + " 条\n";
+        message += "总计: " + totalCount + " 条\n\n";
+
+        // 显示每个成功处理的字段数
+        if (successCount > 0 && requestDataList.length > 0) {
+            let firstData = requestDataList[0];
+            let fieldCount = Object.keys(firstData).length - 1; // 减去id字段
+            message += "每条记录传递了 " + fieldCount + " 个字段\n";
+            message += "后端已按照原有逻辑处理所有字段";
+        }
+
+        if (failCount === 0) {
+            swal({
+                title: "计算成功",
+                text: message,
+                icon: "success",
+                timer: 3000,
+                buttons: false
+            });
+        } else {
+            swal({
+                title: "计算完成（有失败记录）",
+                text: message,
+                icon: "warning",
+                buttons: ["确定", "查看详情"]
+            }).then((value) => {
+                if (value) {
+                    // 显示失败详情
+                    let failDetails = results.filter(r => !r.success);
+                    let detailMsg = "失败记录详情：\n\n";
+                    failDetails.forEach(item => {
+                        detailMsg += "ID: " + item.id + " - " + item.msg + "\n";
+                    });
+                    swal("失败记录详情", detailMsg, "info");
+                }
+            });
+        }
+    }).catch(function(error) {
+        swal.close();
+        console.error('计算过程中出错:', error);
+        swal("计算异常", "计算过程中出现异常错误", "error");
+    });
+}

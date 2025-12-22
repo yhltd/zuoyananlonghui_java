@@ -40,6 +40,7 @@ public class YwcController {
             String hetongZhuangtai = (String) params.get("hetongZhuangtai");
             String hetongHao = (String) params.get("hetongHao");
             String renwuHao = (String) params.get("renwuHao");
+            String tuhao = (String) params.get("tuhao");
 
             // 创建分页请求对象
             YwcPageRequest request = new YwcPageRequest();
@@ -58,6 +59,9 @@ public class YwcController {
             }
             if (renwuHao != null && !renwuHao.trim().isEmpty()) {
                 request.setRenwuHao(renwuHao.trim());
+            }
+            if (tuhao != null && !tuhao.trim().isEmpty()) {
+                request.setTuhao(tuhao.trim());
             }
 
             // 调用服务层方法
@@ -155,5 +159,77 @@ public class YwcController {
         }
     }
 
+    @RequestMapping("/gethth")
+    public ResultInfo gethth(HttpSession session) {
+        try {
+            List<Htjl> getList = ywcService.getywchth();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
 
+    @RequestMapping("/getxhth")
+    public ResultInfo getxhth(HttpSession session) {
+        try {
+            List<Htjl> getList = ywcService.getxywchth();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
+
+    @RequestMapping("/getywdw")
+    public ResultInfo getywdw(HttpSession session) {
+        try {
+            List<Htjl> getList = ywcService.getywcywdw();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
+
+    @RequestMapping("/getxywdw")
+    public ResultInfo getxywdw(HttpSession session) {
+        try {
+            List<Htjl> getList = ywcService.getxywcywdw();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
+
+    @RequestMapping("/getth")
+    public ResultInfo getth(HttpSession session) {
+        try {
+            List<Htjl> getList = ywcService.getywcth();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
+
+
+
+    @RequestMapping("/getrwh")
+    public ResultInfo getrwh(HttpSession session) {
+        try {
+            List<Htjl> getList = ywcService.getywcrwh();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
 }

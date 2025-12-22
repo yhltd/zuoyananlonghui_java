@@ -138,4 +138,5 @@ public class Ywc {
     private String xianshiji;
     private String cheshiji;
     private String skxshiji;
+    private String biaozhu;
 }

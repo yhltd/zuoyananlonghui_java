@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,16 @@ public class YwcImpl extends ServiceImpl<YwcMapper, Ywc> implements YwcService {
             }
             if (StringUtils.isNotBlank(request.getHetongzhuangtai())) {
                 wrapper.like(Ywc::getHetongzhuangtai, request.getHetongzhuangtai());  // 合同状态
+            }
+
+            if (StringUtils.isNotBlank(request.getHetongHao())) {
+                wrapper.like(Ywc::getD, request.getHetongHao());  // 合同状态
+            }
+            if (StringUtils.isNotBlank(request.getRenwuHao())) {
+                wrapper.like(Ywc::getE, request.getRenwuHao());  // 合同状态
+            }
+            if (StringUtils.isNotBlank(request.getTuhao())) {
+                wrapper.like(Ywc::getI, request.getTuhao());  // 合同状态
             }
 
             // 注意：不在wrapper中添加排序，使用SQL中的ROW_NUMBER排序
@@ -96,58 +107,94 @@ public class YwcImpl extends ServiceImpl<YwcMapper, Ywc> implements YwcService {
     }
 
     public boolean updateField(Integer id, Map<String, Object> updateFields) {
-    try {
-        if (updateFields.isEmpty()) {
-            return false;
-        }
-
-        System.out.println("开始更新字段，ID: " + id + ", 更新字段: " + updateFields);
-
-        // 获取当前记录的完整数据
-        Ywc currentRecord = getById(id);
-        if (currentRecord == null) {
-            System.out.println("未找到ID为 " + id + " 的记录");
-            return false;
-        }
-
-        // 处理字段名映射和业务计算
-        Map<String, Object> processedFields = new HashMap<>();
-
-        for (Map.Entry<String, Object> entry : updateFields.entrySet()) {
-            String field = entry.getKey();
-            Object value = entry.getValue();
-
-            // 处理特殊的字段名映射
-            switch (field) {
-                case "aas":
-                    processedFields.put("aas", value);
-                    break;
-                case "hetongzhuangtai":
-                    // 前端发送的是 hetongzhuangtai，数据库字段是 hetong_zhuangtai
-                    processedFields.put("hetong_zhuangtai", value);
-                    break;
-                default:
-                    processedFields.put(field, value);
+        try {
+            if (updateFields.isEmpty()) {
+                return false;
             }
 
-            // 如果是工时字段，自动计算单价
-            calculatePriceIfNeeded(field, value, processedFields);
+            System.out.println("开始更新字段，ID: " + id + ", 更新字段: " + updateFields);
+
+            // 获取当前记录的完整数据
+            Ywc currentRecord = getById(id);
+            if (currentRecord == null) {
+                System.out.println("未找到ID为 " + id + " 的记录");
+                return false;
+            }
+
+            // 处理字段名映射和业务计算
+            Map<String, Object> processedFields = new HashMap<>();
+
+            // ============ 第一步：先处理特殊字段映射 ============
+            for (Map.Entry<String, Object> entry : updateFields.entrySet()) {
+                String field = entry.getKey();
+                Object value = entry.getValue();
+
+                // 处理特殊的字段名映射
+                switch (field) {
+                    case "aas":
+                        processedFields.put("aas", value);
+                        break;
+                    case "hetongzhuangtai":
+                        processedFields.put("hetong_zhuangtai", value);
+                        break;
+                    default:
+                        // 先不放入 processedFields，等计算完成后再放
+                        break;
+                }
+            }
+
+            // ============ 第二步：计算工时字段对应的单价 ============
+            // 先处理工时字段的计算，确保计算结果不被覆盖
+            for (Map.Entry<String, Object> entry : updateFields.entrySet()) {
+                String field = entry.getKey();
+                Object value = entry.getValue();
+
+                // 如果是工时字段，计算单价
+                calculatePriceIfNeeded(field, value, processedFields);
+            }
+
+            // ============ 第三步：处理其他普通字段 ============
+            // 现在处理其他字段，确保不会覆盖计算出来的单价
+            for (Map.Entry<String, Object> entry : updateFields.entrySet()) {
+                String field = entry.getKey();
+                Object value = entry.getValue();
+
+                // 跳过已处理的特殊字段
+                if ("aas".equals(field) || "hetongzhuangtai".equals(field)) {
+                    continue;
+                }
+
+                // 跳过工时字段（已经计算过了）
+                String[] workHourFields = {"o", "q", "s", "u", "w", "y", "aa", "ac", "ae", "ag", "ai", "ak"};
+                if (Arrays.asList(workHourFields).contains(field)) {
+                    continue;
+                }
+
+                // 检查是否已经存在（可能是计算出来的单价字段）
+                if (!processedFields.containsKey(field)) {
+                    processedFields.put(field, value);
+                    System.out.println("放入普通字段: " + field + " = " + value);
+                } else {
+                    System.out.println("跳过字段 " + field + "，已存在值: " + processedFields.get(field));
+                }
+            }
+
+            // ============ 第四步：计算汇总字段 ============
+            System.out.println("计算前的 processedFields: " + processedFields);
+            calculateSummaryFields(currentRecord, processedFields, updateFields);
+            System.out.println("计算后的 processedFields: " + processedFields);
+
+            // ============ 第五步：执行更新 ============
+            boolean result = ywcMapper.updateByMap(id, processedFields);
+            System.out.println("更新结果: " + result);
+            return result;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("更新过程中发生异常: " + e.getMessage());
+            return false;
         }
-
-        // 自动计算汇总字段
-        calculateSummaryFields(currentRecord, processedFields, updateFields);
-
-        // 使用自定义的Mapper方法
-        boolean result = ywcMapper.updateByMap(id, processedFields);
-        System.out.println("更新结果: " + result);
-        return result;
-
-    } catch (Exception e) {
-        e.printStackTrace();
-        System.out.println("更新过程中发生异常: " + e.getMessage());
-        return false;
     }
-}
 
 
     // 定义小数格式化器
@@ -299,5 +346,23 @@ public class YwcImpl extends ServiceImpl<YwcMapper, Ywc> implements YwcService {
         }
         return value.setScale(2, BigDecimal.ROUND_HALF_UP).toString();
     }
+
+    @Override
+    public List<Htjl> getywchth() {  // 方法名必须一致
+        return baseMapper.getywchth();
+    }
+    public List<Htjl> getxywchth() {  // 方法名必须一致
+        return baseMapper.getxywchth();
+    }
+
+    public List<Htjl> getywcywdw() {  return baseMapper.getywcywdw();}
+    public List<Htjl> getxywcywdw() {  // 方法名必须一致
+        return baseMapper.getxywcywdw();
+    }
+
+    public List<Htjl> getywcrwh() {  return baseMapper.getywcrwh();}
+
+
+    public List<Htjl> getywcth() {  return baseMapper.getywcth();}
 
 }

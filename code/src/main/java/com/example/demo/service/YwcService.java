@@ -45,5 +45,12 @@ public interface YwcService extends IService<Ywc> {
 
     boolean updateField(Integer id, Map<String, Object> updateFields);
 
+    List<Htjl> getywchth();
+    List<Htjl> getxywchth();
+    List<Htjl> getywcywdw();
+    List<Htjl> getxywcywdw();
+
+    List<Htjl> getywcrwh();
+    List<Htjl> getywcth();
 
 }

@@ -22,7 +22,7 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "AA, AB, AC, AD, AE, AF, AG, AH, AI, AJ, AK, AL, AM, AN, AO, AP, AQ, AR, " +
             "[AS] as aas, AT, " +
             "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi, " +
-            "lingjianhao, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
+            "lingjianhao, biaozhu, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
             "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
             "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
             "FROM hetong_jilu WHERE hetong_zhuangtai IN ('未开票', '已开票') " +
@@ -44,7 +44,7 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "           AT as at, " +
             "           hetong_zhuangtai as hetongzhuangtai, " +
             "           AU as au, AV as av, AW as aw, AX as ax, AY as ay, " +
-            "           riqi as riqi, " +
+            "           riqi as riqi,biaozhu as biaozhu, " +
             "           lingjianhao as lingjianhao, " +
             "           xianshiji as xianshiji, " +
             "           cheshiji as cheshiji, " +
@@ -104,6 +104,7 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "[av] = #{av}, [aw] = #{aw}, [ax] = #{ax}, " +
             "lingjianhao = #{lingjianhao}, " +
             "xianshiji = #{xianshiji}, " +
+            "biaozhu = #{biaozhu}, " +
             "cheshiji = #{cheshiji}, " +
             "qianshiji = #{qianshiji}, " +
             "tangshiji = #{tangshiji}, " +
@@ -160,6 +161,7 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "<if test='params.aj != null'>[aj] = #{params.aj},</if>" +
             "<if test='params.ak != null'>[ak] = #{params.ak},</if>" +
             "<if test='params.al != null'>[al] = #{params.al},</if>" +
+            "<if test='params.biaozhu != null'>biaozhu = #{params.biaozhu},</if>" +
             "<if test='params.am != null'>[am] = #{params.am},</if>" +
             "<if test='params.an != null'>[an] = #{params.an},</if>" +
             "<if test='params.ao != null'>[ao] = #{params.ao},</if>" +
@@ -206,7 +208,7 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "id, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, " +
             "AA, AB, AC, AD, AE, AF, AG, AH, AI, AJ, AK, AL, AM, AN, AO, AP, AQ, AR, " +
             "[AS] as aas, AT, " +
-            "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi, " +
+            "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi,biaozhu " +
             "lingjianhao, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
             "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
             "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +

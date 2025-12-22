@@ -35,6 +35,7 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "    ISNULL(hj.E, '') as e, ",
             "    ISNULL(hj.zhuangtai, '') as zhuangtai, ",
             "    ISNULL(hj.G, '') as g, ",
+            "    ISNULL(hj.biaozhu, '') as biaozhu, ",
             "    ISNULL(hj.H, '') as h, ",
             "    ISNULL(hj.I, '') as i, ",
             "    ISNULL(hj.J, '') as j, ",
@@ -106,6 +107,8 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
 
 
     @Select("<script>" +
+            "<bind name=\"safeSqlSegment\" value=\"_parameter.ew != null ? " +
+            "_parameter.ew.sqlSegment.replaceAll('(?i)\\\\b(as)\\\\b(?=\\\\s+LIKE)', '[as]') : ''\"/>" +
             "WITH filtered_hetong AS (" +
             "    SELECT * FROM hetong_jilu hj " +
             "    WHERE ISNULL(hj.hetong_zhuangtai, '') = '' " +
@@ -114,10 +117,8 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "          SELECT 1 FROM tuihuo tb WITH(NOLOCK) " +
             "          WHERE tb.v = hj.id " +
             "      )" +
-            "    <if test='ew != null'>" +
-            "        <trim prefix=' AND ' prefixOverrides='AND |OR '>" +
-            "            ${ew.sqlSegment}" +
-            "        </trim>" +
+            "    <if test='safeSqlSegment != null and safeSqlSegment != \"\"'>" +
+            "        AND (${safeSqlSegment})" +
             "    </if>" +
             ") " +
             "SELECT * FROM (" +
@@ -127,6 +128,7 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "           ISNULL(hj.D, '') as d, " +
             "           ISNULL(hj.E, '') as e, " +
             "           ISNULL(hj.zhuangtai, '') as zhuangtai, " +
+            "           ISNULL(hj.biaozhu, '') as biaozhu, " +
             "           ISNULL(hj.G, '') as g, " +
             "           ISNULL(hj.H, '') as h, " +
             "           ISNULL(hj.I, '') as i, " +
@@ -200,16 +202,15 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
                                                          @Param("ew") Wrapper<Map<String, Object>> wrapper);
 
     @Select("<script>" +
+            "<bind name=\"safeSqlSegment\" value=\"ew != null ? ew.sqlSegment.replaceAll('(?i)\\\\b(as)\\\\b(?=\\\\s+LIKE)', '[as]') : ''\"/>" +
             "SELECT COUNT(*) FROM hetong_jilu hj " +
             "WHERE ISNULL(hj.hetong_zhuangtai, '') = '' " +
             "  AND NOT EXISTS (" +
             "      SELECT 1 FROM tuihuo tb WITH(NOLOCK) " +
             "      WHERE tb.v = hj.id " +
             "  )" +
-            "  <if test='ew != null'>" +
-            "      <trim prefix=' AND ' prefixOverrides='AND |OR '>" +
-            "          ${ew.sqlSegment}" +
-            "      </trim>" +
+            "  <if test='safeSqlSegment != null and safeSqlSegment != \"\"'>" +
+            "      AND (${safeSqlSegment})" +
             "  </if>" +
             "</script>")
     Long selectDistinctCount(@Param("ew") Wrapper<Map<String, Object>> wrapper);
@@ -225,7 +226,7 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "[ah] = #{ah}, [ai] = #{ai}, [aj] = #{aj}, [ak] = #{ak}, [al] = #{al}, [am] = #{am}, [an] = #{an}, " +
             "[ao] = #{ao}, [ap] = #{ap}, [aq] = #{aq}, [ar] = #{ar}, [as] = #{aas}, [at] = #{at}, [au] = #{au}, " +
             "[av] = #{av}, [aw] = #{aw}, [ax] = #{ax}, [ay] = #{ay}, " +
-            "hetong_zhuangtai = #{hetongzhuangtai}, " +
+            "hetong_zhuangtai = #{hetongzhuangtai},biaozhu = #{biaozhu} " +
             "lingjianhao = #{lingjianhao}, qianshiji = #{qianshiji}, tangshiji = #{tangshiji}, " +
             "geshiji = #{geshiji}, moshiji = #{moshiji}, licheshiji = #{licheshiji}, " +
             "dianhuohuashiji = #{dianhuohuashiji}, zhongzuosishiji = #{zhongzuosishiji}, " +
@@ -307,6 +308,7 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "    ISNULL(hj.tangshiji, '') as tangshiji, ",
             "    ISNULL(hj.geshiji, '') as geshiji, ",
             "    ISNULL(hj.moshiji, '') as moshiji, ",
+            "    ISNULL(hj.biaozhu, '') as biaozhu, ",
             "    ISNULL(hj.licheshiji, '') as licheshiji, ",
             "    ISNULL(hj.dianhuohuashiji, '') as dianhuohuashiji, ",
             "    ISNULL(hj.zhongzuosishiji, '') as zhongzuosishiji, ",
@@ -379,7 +381,7 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "    id, c, d, e, zhuangtai, g, h, i, j, k, l, au, av, aw, ax, m, n, o, p, q, r, " +
             "    s, t, u, v, w, x, y, z, [aa], [ab], [ac], [ad], [ae], [af], [ag], [ah], [ai], " +
             "    [aj], [ak], [al], [am], [an], [ao], [ap], [ay], [aq], [ar], [as], [at], " +
-            "    hetong_zhuangtai, lingjianhao, qianshiji, tangshiji, geshiji, moshiji, " +
+            "    hetong_zhuangtai, lingjianhao, biaozhu, qianshiji, tangshiji, geshiji, moshiji, " +
             "    licheshiji, dianhuohuashiji, zhongzuosishiji, jingmixianqiege, hanjiegongshi, " +
             "    dengjiriqi, shijijiaohuoriqi, xianshiji, cheshiji, skxshiji, riqi, muban " +  // 新增三个字段和muban
             "FROM hetong_jilu WHERE id = #{id}")
@@ -393,7 +395,7 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "    id, c, d, e, zhuangtai, g, h, i, j, k, l, au, av, aw, ax, m, n, o, p, q, r, ",
             "    s, t, u, v, w, x, y, z, [aa], [ab], [ac], [ad], [ae], [af], [ag], [ah], [ai], ",
             "    [aj], [ak], [al], [am], [an], [ao], [ap], [ay], [aq], [ar], [as], [at], ",
-            "    hetong_zhuangtai, lingjianhao, qianshiji, tangshiji, geshiji, moshiji, ",
+            "    hetong_zhuangtai, lingjianhao, biaozhu, qianshiji, tangshiji, geshiji, moshiji, ",
             "    licheshiji, dianhuohuashiji, zhongzuosishiji, jingmixianqiege, hanjiegongshi, ",
             "    dengjiriqi, shijijiaohuoriqi, xianshiji, cheshiji, skxshiji, riqi, muban ",  // 新增三个字段和muban
             "FROM hetong_jilu WHERE id IN",
@@ -436,6 +438,7 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "<if test='params.ac != null'>[ac] = #{params.ac},</if>" +
             "<if test='params.ad != null'>[ad] = #{params.ad},</if>" +
             "<if test='params.ae != null'>[ae] = #{params.ae},</if>" +
+            "<if test='params.biaozhu != null'>biaozhu = #{params.biaozhu},</if>" +
             "<if test='params.af != null'>[af] = #{params.af},</if>" +
             "<if test='params.ag != null'>[ag] = #{params.ag},</if>" +
             "<if test='params.ah != null'>[ah] = #{params.ah},</if>" +
@@ -519,9 +522,87 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "    ISNULL(c, '') as c " +
             "FROM hetong_jilu hj " +
             "WHERE ISNULL(hj.hetong_zhuangtai, '') = '' " +
-            "  AND ISNULL(hj.muban, '') != '新' " +
             "  AND ISNULL(c, '') != '' " +
             "ORDER BY c " +
             "</script>")
     List<Htjl> getCustomerList();
+
+    @Select("<script>" +
+            "SELECT DISTINCT " +
+            "    ISNULL([as], '') as aas " +
+            "FROM hetong_jilu hj " +
+            "WHERE ISNULL(hj.hetong_zhuangtai, '') = '' " +
+            "  AND ISNULL(hj.muban, '') != '新' " +
+            "  AND ISNULL([as], '') != '' " +
+            "ORDER BY aas " +
+            "</script>")
+    List<Htjl> getdjy();
+
+    @Select("<script>" +
+            "SELECT DISTINCT " +
+            "    ISNULL(c, '') as c " +
+            "FROM hetong_jilu hj " +
+            "WHERE ISNULL(hj.hetong_zhuangtai, '') = '' " +
+            "  AND ISNULL(hj.muban, '') != '新' " +
+            "  AND ISNULL(c, '') != '' " +
+            "ORDER BY c " +
+            "</script>")
+    List<Htjl> getywdw();
+
+    @Select("<script>" +
+            "SELECT DISTINCT " +
+            "    ISNULL(e, '') as e " +
+            "FROM hetong_jilu hj " +
+            "WHERE ISNULL(hj.hetong_zhuangtai, '') = '' " +
+            "  AND ISNULL(hj.muban, '') != '新' " +
+            "  AND ISNULL(e, '') != '' " +
+            "ORDER BY e " +
+            "</script>")
+    List<Htjl> getrwh();
+
+    @Select("<script>" +
+            "SELECT DISTINCT " +
+            "    ISNULL(i, '') as i " +
+            "FROM hetong_jilu hj " +
+            "WHERE ISNULL(hj.hetong_zhuangtai, '') = '' " +
+            "  AND ISNULL(hj.muban, '') != '新' " +
+            "  AND ISNULL(i, '') != '' " +
+            "ORDER BY i " +
+            "</script>")
+    List<Htjl> getth();
+
+    @Select("<script>" +
+            "SELECT DISTINCT " +
+            "    ISNULL(d, '') as d " +
+            "FROM hetong_jilu hj " +
+            "WHERE ISNULL(hj.hetong_zhuangtai, '') = '' " +
+            "  AND ISNULL(hj.muban, '') != '新' " +
+            "  AND ISNULL(d, '') != '' " +
+            "ORDER BY d " +
+            "</script>")
+    List<Htjl> gethth();
+
+
+    @Select("<script>" +
+            "SELECT DISTINCT " +
+            "    ISNULL(d, '') as d " +
+            "FROM hetong_jilu hj " +
+            "WHERE ISNULL(hj.hetong_zhuangtai, '') = '' " +
+            "  AND ISNULL(hj.muban, '') = '新' " +
+            "  AND ISNULL(d, '') != '' " +
+            "ORDER BY d " +
+            "</script>")
+    List<Htjl> getxhth();
+
+    @Select("<script>" +
+            "SELECT DISTINCT " +
+            "    ISNULL(c, '') as c " +
+            "FROM hetong_jilu hj " +
+            "WHERE ISNULL(hj.hetong_zhuangtai, '') = '' " +
+            "  AND ISNULL(hj.muban, '') = '新' " +
+            "  AND ISNULL(c, '') != '' " +
+            "ORDER BY c " +
+            "</script>")
+    List<Htjl> getxCustomerList();
+
 }

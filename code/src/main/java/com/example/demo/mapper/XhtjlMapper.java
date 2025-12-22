@@ -82,6 +82,7 @@ public interface XhtjlMapper extends BaseMapper<Xhtjl> {
             "    ISNULL(hj.hetong_zhuangtai, '') as hetongzhuangtai, ",
             "    ISNULL(hj.lingjianhao, '') as lingjianhao, ",
             "    ISNULL(hj.qianshiji, '') as qianshiji, ",
+            "    ISNULL(hj.biaozhu, '') as biaozhu, ",
             "    ISNULL(hj.tangshiji, '') as tangshiji, ",
             "    ISNULL(hj.geshiji, '') as geshiji, ",
             "    ISNULL(hj.moshiji, '') as moshiji, ",
@@ -129,6 +130,7 @@ public interface XhtjlMapper extends BaseMapper<Xhtjl> {
             "           ISNULL(hj.J, '') as j, " +
             "           ISNULL(hj.K, '') as k, " +
             "           ISNULL(hj.L, '') as l, " +
+            "           ISNULL(hj.biaozhu, '') as biaozhu, " +
             "           ISNULL(hj.AU, '') as au, " +
             "           ISNULL(hj.AV, '') as av, " +
             "           ISNULL(hj.AW, '') as aw, " +
@@ -219,6 +221,7 @@ public interface XhtjlMapper extends BaseMapper<Xhtjl> {
             "[ao] = #{ao}, [ap] = #{ap}, [aq] = #{aq}, [ar] = #{ar}, [as] = #{as}, [at] = #{at}, [au] = #{au}, " +
             "[av] = #{av}, [aw] = #{aw}, [ax] = #{ax}, [ay] = #{ay}, " +
             "hetong_zhuangtai = #{hetongzhuangtai}, " +
+            "biaozhu = #{biaozhu}, " +
             "lingjianhao = #{lingjianhao}, qianshiji = #{qianshiji}, tangshiji = #{tangshiji}, " +
             "geshiji = #{geshiji}, moshiji = #{moshiji}, licheshiji = #{licheshiji}, " +
             "dianhuohuashiji = #{dianhuohuashiji}, zhongzuosishiji = #{zhongzuosishiji}, " +
@@ -295,6 +298,7 @@ public interface XhtjlMapper extends BaseMapper<Xhtjl> {
             "    ISNULL(hj.hetong_zhuangtai, '') as hetongzhuangtai, ",
             "    ISNULL(hj.lingjianhao, '') as lingjianhao, ",
             "    ISNULL(hj.qianshiji, '') as qianshiji, ",
+            "    ISNULL(hj.biaozhu, '') as biaozhu, ",
             "    ISNULL(hj.tangshiji, '') as tangshiji, ",
             "    ISNULL(hj.geshiji, '') as geshiji, ",
             "    ISNULL(hj.moshiji, '') as moshiji, ",
@@ -366,7 +370,7 @@ public interface XhtjlMapper extends BaseMapper<Xhtjl> {
             "    id, c, d, e, zhuangtai, g, h, i, j, k, l, au, av, aw, ax, m, n, o, p, q, r, " +
             "    s, t, u, v, w, x, y, z, [aa], [ab], [ac], [ad], [ae], [af], [ag], [ah], [ai], " +
             "    [aj], [ak], [al], [am], [an], [ao], [ap], [ay], [aq], [ar], [as], [at], " +
-            "    hetong_zhuangtai, lingjianhao, qianshiji, tangshiji, geshiji, moshiji, " +
+            "    hetong_zhuangtai, lingjianhao,biaozhu, qianshiji, tangshiji, geshiji, moshiji, " +
             "    licheshiji, dianhuohuashiji, zhongzuosishiji, jingmixianqiege, hanjiegongshi, " +
             "    dengjiriqi, shijijiaohuoriqi, riqi " +
             "FROM hetong_jilu WHERE id = #{id}")
@@ -380,7 +384,7 @@ public interface XhtjlMapper extends BaseMapper<Xhtjl> {
             "    id, c, d, e, zhuangtai, g, h, i, j, k, l, au, av, aw, ax, m, n, o, p, q, r, ",
             "    s, t, u, v, w, x, y, z, [aa], [ab], [ac], [ad], [ae], [af], [ag], [ah], [ai], ",
             "    [aj], [ak], [al], [am], [an], [ao], [ap], [ay], [aq], [ar], [as], [at], ",
-            "    hetong_zhuangtai, lingjianhao, qianshiji, tangshiji, geshiji, moshiji, ",
+            "    hetong_zhuangtai, lingjianhao,biaozhu, qianshiji, tangshiji, geshiji, moshiji, ",
             "    licheshiji, dianhuohuashiji, zhongzuosishiji, jingmixianqiege, hanjiegongshi, ",
             "    dengjiriqi, shijijiaohuoriqi, riqi ",
             "FROM hetong_jilu WHERE id IN",
@@ -395,6 +399,7 @@ public interface XhtjlMapper extends BaseMapper<Xhtjl> {
             "UPDATE hetong_jilu " +
             "<set>" +
             "<if test='params.c != null'>c = #{params.c},</if>" +
+            "<if test='params.biaozhu != null'>biaozhu = #{params.biaozhu},</if>" +
             "<if test='params.d != null'>d = #{params.d},</if>" +
             "<if test='params.e != null'>e = #{params.e},</if>" +
             "<if test='params.f != null'>f = #{params.f},</if>" +

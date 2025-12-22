@@ -208,7 +208,9 @@ function loadDataFromURLParams() {
 // ==================== 出库单事件绑定函数 ====================
 function bindReturnOrderEvents1() {
     console.log('绑定出库单事件...');
+    // ============ 新增：自动填充当前日期 ============
 
+    // ==============================================
     // 全选/取消全选
     $('#select-all1').off('click').on('click', function() {
         $('.row-select1').prop('checked', this.checked);
@@ -231,6 +233,9 @@ function bindReturnOrderEvents1() {
 
     // 打印
     $('#print-outbound-btn').off('click').on('click', function() {
+        var currentDate = getCurrentDate1();
+        $('#return-date1').val(currentDate);
+        console.log('已自动设置退货日期为:', currentDate);
         saveReturnOrder();
         printOutboundOrder();
     });
@@ -619,6 +624,14 @@ function saveReturnOrder() {
     };
 
     console.log('表单头部数据:', formData);
+    // ============ 新增：保存制单人到历史记录 ============
+    var preparerName = formData.r || '';
+    if (preparerName && preparerName.trim() !== '') {
+        savePreparerToHistory(preparerName);
+        // 更新下拉框的历史记录
+        loadPreparerHistoryToSelect();
+    }
+    // ==================================================
 
     // 验证必填字段
     if (!formData.f || formData.f.trim() === '') {
@@ -802,6 +815,9 @@ $(document).ready(function() {
     // 初始化出库单
     initReturnOrder1();
     loadContactUnitList();
+    // ============ 新增：加载制单人历史记录 ============
+    loadPreparerHistoryToSelect();
+    // =================================================
 
     loadColumnConfig();
 
@@ -837,6 +853,15 @@ $(document).ready(function() {
     $('#remove-row-btn1').off('click').on('click', function() {
         removeSelectedRows();
     });
+    // ============ 新增：制单人输入框失去焦点时保存历史记录 ============
+    $('#company-address1').on('blur', function() {
+        var preparerName = $(this).val();
+        if (preparerName && preparerName.trim() !== '') {
+            savePreparerToHistory(preparerName);
+            loadPreparerHistoryToSelect();
+        }
+    });
+    // =================================================
 });
 
 // 修改 addNewRow 函数
@@ -1477,6 +1502,7 @@ function loadContactUnitList() {
 // ==================== 简单打印函数（纯表单样式） ====================
 function printOutboundOrder() {
     console.log('开始打印出库单...');
+
 
     // 验证必填字段
     if (!$('#return-customer1').val() || $('#return-customer1').val().trim() === '') {
@@ -2207,4 +2233,78 @@ function calculateTotalQuantity1() {
 
     $('#total-quantity').val(total);
     return total;
+}
+
+// ==================== 历史记录相关函数 ====================
+// 保存制单人到历史记录
+function savePreparerToHistory(preparerName) {
+    if (!preparerName || preparerName.trim() === '') {
+        return;
+    }
+
+    var key = 'outbound_preparer_history';
+    var history = getPreparerHistory();
+
+    // 移除已存在的相同记录（避免重复）
+    var index = history.indexOf(preparerName);
+    if (index !== -1) {
+        history.splice(index, 1);
+    }
+
+    // 添加到数组开头（最新记录在最前面）
+    history.unshift(preparerName);
+
+    // 限制历史记录数量（最多10条）
+    if (history.length > 10) {
+        history = history.slice(0, 10);
+    }
+
+    // 保存到localStorage
+    localStorage.setItem(key, JSON.stringify(history));
+    console.log('制单人历史记录已保存:', preparerName);
+}
+
+// 获取制单人历史记录
+function getPreparerHistory() {
+    var key = 'outbound_preparer_history';
+    var historyStr = localStorage.getItem(key);
+
+    if (historyStr) {
+        try {
+            return JSON.parse(historyStr);
+        } catch (e) {
+            console.error('解析历史记录失败:', e);
+            return [];
+        }
+    }
+    return [];
+}
+
+// 加载制单人历史记录到下拉框
+function loadPreparerHistoryToSelect() {
+    var history = getPreparerHistory();
+    var $input = $('#company-address1');
+
+    // 如果输入框是input类型，添加datalist
+    if ($input.prop('tagName').toLowerCase() === 'input') {
+        // 创建或获取datalist
+        var $datalist = $('#preparer-history-datalist');
+        if ($datalist.length === 0) {
+            $datalist = $('<datalist id="preparer-history-datalist"></datalist>');
+            $('body').append($datalist);
+            $input.attr('list', 'preparer-history-datalist');
+        }
+
+        // 清空现有选项
+        $datalist.empty();
+
+        // 添加历史记录选项
+        history.forEach(function(preparer) {
+            if (preparer && preparer.trim() !== '') {
+                $datalist.append('<option value="' + preparer + '">' + preparer + '</option>');
+            }
+        });
+
+        console.log('已加载制单人历史记录:', history.length, '条');
+    }
 }

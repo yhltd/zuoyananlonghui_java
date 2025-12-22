@@ -44,11 +44,52 @@ function getList(page, size, searchParams) {
 }
 
 $(function () {
+    // 方法1：直接设置文档焦点
+    document.body.focus();
+    // 方法2：尝试设置表格焦点
+    setTimeout(function() {
+        var $table = $('#userTable');
+        if ($table.length) {
+            $table.focus();
+            console.log('表格已获取焦点');
+        }
+
+        // 同时通知父窗口 iframe 已准备好
+        if (window.parent !== window) {
+            window.parent.postMessage({
+                type: 'iframeReady',
+                focused: true
+            }, '*');
+        }
+    }, 100);
+
+
+// 监听鼠标进入文档，自动获取焦点
+    $(document).on('mouseenter', function() {
+        if (window.frameElement) {
+            try {
+                window.focus();
+                document.body.focus();
+            } catch (e) {
+                console.log('设置焦点时出错:', e);
+            }
+        }
+    });
+
+// 监听表格区域的点击，确保焦点
+    $('#userTable').on('click', function(e) {
+        e.stopPropagation();
+        $(this).focus();
+        return true;
+    });
     getList(currentPage, pageSize, {});
 
     // 绑定搜索事件
     $('#select-btn').off('click').on('click', function() {
         searchDdmx();
+    });
+    $("#calculate-btn").click(function () {
+        calculateSelectedRows();
     });
 
     //刷新
@@ -383,6 +424,16 @@ function setTable(data) {
         height: 400,                    // 必须设置高度
         fixedHeader: true,
         locale: 'zh-CN',
+        rowStyle: function(row, index) {
+            // 检查 biaozhu 字段是否有值
+            if (row.biaozhu && row.biaozhu.trim() !== '') {
+                // 返回特定样式，例如浅黄色背景
+                return {
+                    classes: 'highlighted-row'
+                };
+            }
+            return {};
+        },
         rowAttributes: function(row, index) {
             return {
                 'data-index': index,
@@ -390,6 +441,14 @@ function setTable(data) {
             };
         },
         columns: [
+            {
+                field: 'biaozhu',
+                title: '标注',
+                align: 'center',
+                sortable: true,
+                width: 120,  // 根据内容调整宽度
+                class: 'editable'
+            },
             {
                 field: 'c',
                 title: '业务单位',
@@ -405,6 +464,14 @@ function setTable(data) {
                 width: 120,
                 class: 'editable'
             },
+          {
+                field: 'e',
+                title: '任务号',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },
             {
                 field: 'lingjianhao',
                 title: '零件号',
@@ -413,13 +480,6 @@ function setTable(data) {
                 width: 120,
                 class: 'editable'
             },{
-                field: 'e',
-                title: '任务号',
-                align: 'center',
-                sortable: true,
-                width: 120,
-                class: 'editable'
-            }, {
                 field: 'hetongzhuangtai',
                 title: '对账状态',
                 align: 'center',
@@ -1465,4 +1525,154 @@ function initTableDragScroll() {
     });
 
     console.log('表格拖动滚动初始化完成');
+}
+function calculateSelectedRows() {
+    // 获取选中的行
+    let rows = getTableSelection("#userTable");
+    if (rows.length == 0) {
+        swal('请选择要计算的数据！');
+        return;
+    }
+
+    let requestDataList = [];
+    $.each(rows, function (index, row) {
+        if (row.data && row.data.id) {
+            // 获取整行的所有数据
+            let rowData = row.data;
+
+            // 构建请求数据，包含id和所有字段（除了空值）
+            let requestData = {
+                id: rowData.id
+            };
+
+            // 遍历所有字段，添加到请求数据中
+            Object.keys(rowData).forEach(function(field) {
+                let value = rowData[field];
+                // 只添加非空值，减少传输数据量
+                if (value !== null && value !== undefined && value !== '') {
+                    // 特殊处理：将空对象、空数组转为空字符串
+                    if (typeof value === 'object') {
+                        if (Object.keys(value).length === 0) {
+                            value = '';
+                        } else {
+                            // 复杂对象转为JSON字符串
+                            value = JSON.stringify(value);
+                        }
+                    }
+                    requestData[field] = value;
+                }
+            });
+
+            console.log('第' + index + '行发送的数据:', requestData);
+            requestDataList.push(requestData);
+        } else {
+            console.warn('第' + index + '行没有找到ID，数据:', row);
+        }
+    });
+
+    if (requestDataList.length === 0) {
+        swal("错误", "未找到有效的行数据", "error");
+        return;
+    }
+
+    console.log('准备计算的数据（共' + requestDataList.length + '条）:', requestDataList);
+
+    // 显示计算中提示
+    swal({
+        title: "计算中...",
+        text: "正在计算选中的 " + requestDataList.length + " 条记录\n后端将处理所有传入字段",
+        icon: "info",
+        buttons: false,
+        closeOnClickOutside: false,
+        closeOnEsc: false
+    });
+
+    // 存储成功和失败的数量
+    let successCount = 0;
+    let failCount = 0;
+    let totalCount = requestDataList.length;
+
+    // 使用Promise.all来处理并发请求
+    let promises = requestDataList.map(function(data) {
+        return new Promise(function(resolve, reject) {
+            console.log('发送数据（ID ' + data.id + '）字段数:', Object.keys(data).length);
+
+            $.ajax({
+                type: 'post',
+                url: '/ywc/updateField',
+                data: JSON.stringify(data),  // 传递包含id和所有字段的对象
+                dataType: 'json',
+                contentType: 'application/json;charset=utf-8',
+                success: function(res) {
+                    console.log('ID ' + data.id + ' 计算响应:', res);
+                    if (res.code == 200) {
+                        successCount++;
+                        resolve({ id: data.id, success: true, msg: res.msg });
+                    } else {
+                        failCount++;
+                        resolve({ id: data.id, success: false, msg: res.msg });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('ID ' + data.id + ' 计算请求失败:', error);
+                    failCount++;
+                    resolve({ id: data.id, success: false, msg: "网络错误" });
+                }
+            });
+        });
+    });
+
+    // 所有请求完成后
+    Promise.all(promises).then(function(results) {
+        // 关闭计算中提示
+        swal.close();
+
+        // 重新加载数据
+        getList(currentPage);
+
+        // 显示计算结果
+        let message = "计算完成！\n\n";
+        message += "✓ 成功: " + successCount + " 条\n";
+        message += "✗ 失败: " + failCount + " 条\n";
+        message += "总计: " + totalCount + " 条\n\n";
+
+        // 显示每个成功处理的字段数
+        if (successCount > 0 && requestDataList.length > 0) {
+            let firstData = requestDataList[0];
+            let fieldCount = Object.keys(firstData).length - 1; // 减去id字段
+            message += "每条记录传递了 " + fieldCount + " 个字段\n";
+            message += "后端已按照原有逻辑处理所有字段";
+        }
+
+        if (failCount === 0) {
+            swal({
+                title: "计算成功",
+                text: message,
+                icon: "success",
+                timer: 3000,
+                buttons: false
+            });
+        } else {
+            swal({
+                title: "计算完成（有失败记录）",
+                text: message,
+                icon: "warning",
+                buttons: ["确定", "查看详情"]
+            }).then((value) => {
+                if (value) {
+                    // 显示失败详情
+                    let failDetails = results.filter(r => !r.success);
+                    let detailMsg = "失败记录详情：\n\n";
+                    failDetails.forEach(item => {
+                        detailMsg += "ID: " + item.id + " - " + item.msg + "\n";
+                    });
+                    swal("失败记录详情", detailMsg, "info");
+                }
+            });
+        }
+    }).catch(function(error) {
+        swal.close();
+        console.error('计算过程中出错:', error);
+        swal("计算异常", "计算过程中出现异常错误", "error");
+    });
 }

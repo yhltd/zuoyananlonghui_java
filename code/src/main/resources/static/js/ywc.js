@@ -16,8 +16,9 @@ function getList(page, options = {}) {
     console.log('查询条件:', {
         name: $('#name').val(),
         hetongZhuangtai: $('#hetongZhuangtai').val(),
-        hetongHao: $('#hetongHao').val(),
-        renwuHao: $('#renwuHao').val()
+        hetongHao: $('#hetonghao').val(),
+        renwuHao: $('#renwuHao').val(),
+        tuhao: $('#tuhao').val()
     });
 
 
@@ -25,8 +26,9 @@ function getList(page, options = {}) {
     // 获取查询条件
     var name = $('#name').val() || '';
     var hetongZhuangtai = $('#hetongZhuangtai').val() || '';
-    var hetongHao = $('#hetongHao').val() || '';
-    var renwuHao = $('#renwuHao').val() || '';
+    var hetongHao = $('#hetonghao').val() || '';
+    var renwuHao = $('#renwuhao').val() || '';
+    var tuhao = $('#tuhao').val() || '';
 
     // 构建查询参数
     var params = {
@@ -39,6 +41,7 @@ function getList(page, options = {}) {
     if (hetongZhuangtai) params.hetongZhuangtai = hetongZhuangtai;
     if (hetongHao) params.hetongHao = hetongHao;
     if (renwuHao) params.renwuHao = renwuHao;
+    if (tuhao) params.tuhao = tuhao;
 
     $.ajax({
         type: 'post',
@@ -97,9 +100,50 @@ function getSelectedRows() {
 }
 
 $(function () {
+    // 方法1：直接设置文档焦点
+    document.body.focus();
+    // 方法2：尝试设置表格焦点
+    setTimeout(function() {
+        var $table = $('#userTable');
+        if ($table.length) {
+            $table.focus();
+            console.log('表格已获取焦点');
+        }
+
+        // 同时通知父窗口 iframe 已准备好
+        if (window.parent !== window) {
+            window.parent.postMessage({
+                type: 'iframeReady',
+                focused: true
+            }, '*');
+        }
+    }, 100);
+
+
+// 监听鼠标进入文档，自动获取焦点
+$(document).on('mouseenter', function() {
+    if (window.frameElement) {
+        try {
+            window.focus();
+            document.body.focus();
+        } catch (e) {
+            console.log('设置焦点时出错:', e);
+        }
+    }
+});
+
+// 监听表格区域的点击，确保焦点
+$('#userTable').on('click', function(e) {
+    e.stopPropagation();
+    $(this).focus();
+    return true;
+});
     // 初始化页面加载
     getList();
-
+    loadhth();
+    loadywdw();
+    loadrwh();
+    loadth();
     // 重置所有状态
     currentPage = 1;
     pageSize = 20;
@@ -141,8 +185,9 @@ $(function () {
     $('#clear-btn').click(function () {
         $('#name').val('');
         $('#hetongZhuangtai').val('');
-        $('#hetongHao').val('');
-        $('#renwuHao').val('');
+        $('#hetonghao').val('');
+        $('#renwuhao').val('');
+        $('#tuhao').val('');
         currentPage = 1;
         getList();
     });
@@ -152,8 +197,9 @@ $(function () {
         currentPage = 1;
         $('#name').val('');
         $('#hetongZhuangtai').val('');
-        $('#hetongHao').val('');
-        $('#renwuHao').val('');
+        $('#hetonghao').val('');
+        $('#renwuhao').val('');
+        $('#tuhao').val('');
         getList();
         swal("刷新成功", "已显示所有数据", "success");
     });
@@ -200,17 +246,20 @@ $(function () {
 
         var msg = confirm("确认要删除选中的数据吗？");
         if (msg) {
-            let selectedRows = getSelectedRows();
-            console.log('选中的行:', selectedRows);
-
-            if (selectedRows.length == 0) {
+            let rows = getTableSelection("#userTable");
+            if (rows.length == 0) {
                 swal('请选择要删除的数据！');
                 return;
             }
 
             let idList = [];
-            $.each(selectedRows, function (index, row) {
-                idList.push(row.id);
+            $.each(rows, function (index, row) {
+                // 正确访问ID：row.data.id
+                if (row.data && row.data.id) {
+                    idList.push(row.data.id);
+                } else {
+                    console.warn('第' + index + '行没有找到ID，数据:', row);
+                }
             });
 
             console.log('要删除的ID列表:', idList);
@@ -274,37 +323,7 @@ $(function () {
     }, 1000);
 });
 
-function setTableWithBootstrapTable(data) {
-    console.log('setTableWithBootstrapTable 被调用，数据长度:', data ? data.length : 0);
 
-    var $table = $('#userTable');
-    if (!$table.length) {
-        console.error('表格元素 #userTable 不存在');
-        return;
-    }
-
-    // 如果表格已经初始化，则更新数据
-    if ($table.hasClass('bootstrap-table')) {
-        console.log('表格已初始化，使用 load 方法更新数据');
-
-        // 确保表格存在且已初始化
-        try {
-            $table.bootstrapTable('load', data);
-            $table.bootstrapTable('resetView');
-
-            console.log('表格数据更新完成');
-        } catch (error) {
-            console.error('更新表格失败，尝试重新初始化:', error);
-
-            // 如果更新失败，销毁并重新初始化
-            $table.bootstrapTable('destroy');
-            initializeBootstrapTable(data);
-        }
-    } else {
-        console.log('表格未初始化，创建新表格');
-        initializeBootstrapTable(data);
-    }
-}
 
 // 独立的表格初始化函数
 function initializeBootstrapTable(data) {
@@ -895,13 +914,107 @@ function enableCellEditing() {
         var originalValue = $cell.text().trim();
         console.log('原始值:', originalValue);
 
-        // 获取字段名
-        var colIndex = $cell.index();
-        // 因为第一列是复选框，所以需要调整索引
-        if (colIndex > 0) colIndex = colIndex - 1;
+        // ==== 修复：直接获取列索引，不需要减1 ====
+        var colIndex = $cell.index(); // 单元格在行中的索引，从0开始
+        console.log('列索引:', colIndex);
 
-        var $headerTh = $('#userTable thead th').eq(colIndex + 1); // +1 跳过复选框列
-        var field = $headerTh.data('field') || $headerTh.attr('data-field');
+        // 获取表头单元格
+        var $headerTh = $('#userTable thead th').eq(colIndex);
+        console.log('表头单元格:', $headerTh);
+        console.log('表头HTML:', $headerTh.html());
+
+        // 尝试多种方式获取字段名
+        var field = '';
+
+        // 方法1：从data-field属性获取
+        field = $headerTh.data('field') || $headerTh.attr('data-field');
+        console.log('从data-field获取:', field);
+
+        // 方法2：从表格配置获取
+        if (!field) {
+            var tableOptions = $('#userTable').bootstrapTable('getOptions');
+            if (tableOptions && tableOptions.columns && tableOptions.columns[colIndex]) {
+                field = tableOptions.columns[colIndex].field;
+                console.log('从表格配置获取:', field);
+            }
+        }
+
+        // 方法3：通过表头文本映射（备用方案）
+        if (!field || field === 'undefined') {
+            var headerText = $headerTh.text().trim();
+            console.log('表头文本:', headerText);
+
+            // 根据表头文本映射字段名
+            var headerToFieldMap = {
+                '业务单位': 'c',
+                '合同号': 'd',
+                '任务号': 'e',
+                '零件号': 'lingjianhao',
+                '对账状态': 'hetongzhuangtai',
+                '工序': 'g',
+                '名称': 'h',
+                '图号': 'i',
+                '单位': 'j',
+                '数量': 'k',
+                '材质': 'l',
+                '出库单号': 'au',
+                '序合计': 'av',
+                '重量': 'aw',
+                '工件尺寸': 'ax',
+                '单价元': 'm',
+                '合计金额': 'n',
+                '铣工时': 'o',
+                '铣单价': 'p',
+                '铣实际工时': 'xianshiji',
+                '车工时': 'q',
+                '车单价': 'r',
+                '车实际工时': 'cheshiji',
+                '钳工时': 's',
+                '钳单价': 't',
+                '钳实际工时': 'qianshiji',
+                '整件外委工时': 'u',
+                '整件外委单位': 'v',
+                '外委工时': 'w',
+                '外委单价': 'x',
+                '镗工时': 'y',
+                '镗单价': 'z',
+                '镗实际工时': 'tangshiji',
+                '割工时': 'aa',
+                '割单价': 'ab',
+                '割实际工时': 'geshiji',
+                '磨工时': 'ac',
+                '磨单价': 'ad',
+                '磨实际工时': 'moshiji',
+                '数控铣工时': 'ae',
+                '数控铣单价': 'af',
+                '数控铣实际工时': 'skxshiji',
+                '立车': 'ag',
+                '立车单价': 'ah',
+                '立车实际工时': 'licheshiji',
+                '电火花': 'ai',
+                '电火花单价': 'aj',
+                '电火花实际工时': 'dianhuohuashiji',
+                '中走丝': 'ak',
+                '中走丝单价': 'al',
+                '中走丝实际工时': 'zhongzuosishiji',
+                '精密线切割': 'jingmixianqiege',
+                '焊接工时': 'hanjiegongshi',
+                '深孔钻': 'an',
+                '回厂日期': 'ao',
+                '登记日期': 'dengjiriqi',
+                '出厂日期': 'ap',
+                '订单要求交货时间': 'ay',
+                '铣': 'aq',
+                '车': 'ar',
+                '登记员': 'aas',
+                '备注': 'at'
+            };
+
+            if (headerToFieldMap[headerText]) {
+                field = headerToFieldMap[headerText];
+                console.log('从表头文本映射获取:', field);
+            }
+        }
 
         // 获取行ID
         var rowIndex = $row.data('index');
@@ -910,6 +1023,7 @@ function enableCellEditing() {
         var rowId = rowData ? rowData.id : null;
 
         console.log('编辑信息:', {
+            colIndex: colIndex,
             field: field,
             rowId: rowId,
             originalValue: originalValue,
@@ -917,9 +1031,9 @@ function enableCellEditing() {
         });
 
         // 验证数据
-        if (!field) {
+        if (!field || field === 'undefined') {
             console.error('无法获取字段名');
-            swal("编辑失败", "无法获取字段名", "error");
+            swal("编辑失败", "无法获取字段名: " + field, "error");
             return;
         }
         if (!rowId) {
@@ -928,14 +1042,6 @@ function enableCellEditing() {
             return;
         }
 
-        // // 特殊处理对账状态字段
-        // if (field === 'hetongzhuangtai') {
-        //     console.log('创建下拉框编辑器');
-        //     createSelectEditor($cell, originalValue, field, rowId, tableData, rowIndex);
-        // } else {
-        //     console.log('创建输入框编辑器');
-        //     createInputEditor($cell, originalValue, field, rowId, tableData, rowIndex);
-        // }
         createInputEditor($cell, originalValue, field, rowId, tableData, rowIndex);
     });
 }
@@ -1450,8 +1556,9 @@ function exportToExcel(filename) {
     // 构建查询参数（获取所有数据）
     var name = $('#name').val() || '';
     var hetongZhuangtai = $('#hetongZhuangtai').val() || '';
-    var hetongHao = $('#hetongHao').val() || '';
-    var renwuHao = $('#renwuHao').val() || '';
+    var hetongHao = $('#hetonghao').val() || '';
+    var renwuHao = $('#renwuhao').val() || '';
+    var tuhao = $('#tuhao').val() || '';
 
     var params = {
         pageNum: 1,
@@ -1463,6 +1570,7 @@ function exportToExcel(filename) {
     if (hetongZhuangtai) params.hetongZhuangtai = hetongZhuangtai;
     if (hetongHao) params.hetongHao = hetongHao;
     if (renwuHao) params.renwuHao = renwuHao;
+    if (tuhao) params.renwuHao = tuhao;
 
     $.ajax({
         type: 'post',
@@ -1750,6 +1858,16 @@ function setTable(data) {
         height: 400,                    // 必须设置高度
         fixedHeader: true,
         locale: 'zh-CN',
+        rowStyle: function(row, index) {
+            // 检查 biaozhu 字段是否有值
+            if (row.biaozhu && row.biaozhu.trim() !== '') {
+                // 返回特定样式，例如浅黄色背景
+                return {
+                    classes: 'highlighted-row'
+                };
+            }
+            return {};
+        },
         rowAttributes: function(row, index) {
             return {
                 'data-index': index,
@@ -1757,6 +1875,14 @@ function setTable(data) {
             };
         },
         columns: [
+            {
+                field: 'biaozhu',
+                title: '标注',
+                align: 'center',
+                sortable: true,
+                width: 120,  // 根据内容调整宽度
+                class: 'editable'
+            },
             {
                 field: 'c',
                 title: '业务单位',
@@ -2233,55 +2359,347 @@ function setTable(data) {
 
 
 function calculateSelectedRows() {
-
     // 获取选中的行
-    var selectedRows = getSelectedRows();
-    console.log('选中的行:', selectedRows);
-
-    if (selectedRows.length != 1) {
-        swal("请选择", "请至少选择行数据进行计算", "warning");
+    let rows = getTableSelection("#userTable");
+    if (rows.length == 0) {
+        swal('请选择要计算的数据！');
         return;
     }
 
-    // 收集选中行的ID
-    var idList = [];
-    selectedRows.forEach(function(row) {
-        if (row.id) {
-            idList.push(row.id);
+    let requestDataList = [];
+    $.each(rows, function (index, row) {
+        if (row.data && row.data.id) {
+            // 获取整行的所有数据
+            let rowData = row.data;
+
+            // 构建请求数据，包含id和所有字段（除了空值）
+            let requestData = {
+                id: rowData.id
+            };
+
+            // 遍历所有字段，添加到请求数据中
+            Object.keys(rowData).forEach(function(field) {
+                let value = rowData[field];
+                // 只添加非空值，减少传输数据量
+                if (value !== null && value !== undefined && value !== '') {
+                    // 特殊处理：将空对象、空数组转为空字符串
+                    if (typeof value === 'object') {
+                        if (Object.keys(value).length === 0) {
+                            value = '';
+                        } else {
+                            // 复杂对象转为JSON字符串
+                            value = JSON.stringify(value);
+                        }
+                    }
+                    requestData[field] = value;
+                }
+            });
+
+            console.log('第' + index + '行发送的数据:', requestData);
+            requestDataList.push(requestData);
+        } else {
+            console.warn('第' + index + '行没有找到ID，数据:', row);
         }
     });
 
-    if (idList.length === 0) {
-        swal("错误", "未找到有效的行ID", "error");
+    if (requestDataList.length === 0) {
+        swal("错误", "未找到有效的行数据", "error");
         return;
     }
 
-    console.log('准备计算的行ID:', idList);
+    console.log('准备计算的数据（共' + requestDataList.length + '条）:', requestDataList);
 
-    $.ajax({
+    // 显示计算中提示
+    swal({
+        title: "计算中...",
+        text: "正在计算选中的 " + requestDataList.length + " 条记录\n后端将处理所有传入字段",
+        icon: "info",
+        buttons: false,
+        closeOnClickOutside: false,
+        closeOnEsc: false
+    });
+
+    // 存储成功和失败的数量
+    let successCount = 0;
+    let failCount = 0;
+    let totalCount = requestDataList.length;
+
+    // 使用Promise.all来处理并发请求
+    let promises = requestDataList.map(function(data) {
+        return new Promise(function(resolve, reject) {
+            console.log('发送数据（ID ' + data.id + '）字段数:', Object.keys(data).length);
+
+            $.ajax({
+                type: 'post',
+                url: '/ywc/updateField',
+                data: JSON.stringify(data),  // 传递包含id和所有字段的对象
+                dataType: 'json',
+                contentType: 'application/json;charset=utf-8',
+                success: function(res) {
+                    console.log('ID ' + data.id + ' 计算响应:', res);
+                    if (res.code == 200) {
+                        successCount++;
+                        resolve({ id: data.id, success: true, msg: res.msg });
+                    } else {
+                        failCount++;
+                        resolve({ id: data.id, success: false, msg: res.msg });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('ID ' + data.id + ' 计算请求失败:', error);
+                    failCount++;
+                    resolve({ id: data.id, success: false, msg: "网络错误" });
+                }
+            });
+        });
+    });
+
+    // 所有请求完成后
+    Promise.all(promises).then(function(results) {
+        // 关闭计算中提示
+        swal.close();
+
+        // 重新加载数据
+        getList(currentPage);
+
+        // 显示计算结果
+        let message = "计算完成！\n\n";
+        message += "✓ 成功: " + successCount + " 条\n";
+        message += "✗ 失败: " + failCount + " 条\n";
+        message += "总计: " + totalCount + " 条\n\n";
+
+        // 显示每个成功处理的字段数
+        if (successCount > 0 && requestDataList.length > 0) {
+            let firstData = requestDataList[0];
+            let fieldCount = Object.keys(firstData).length - 1; // 减去id字段
+            message += "每条记录传递了 " + fieldCount + " 个字段\n";
+            message += "后端已按照原有逻辑处理所有字段";
+        }
+
+        if (failCount === 0) {
+            swal({
+                title: "计算成功",
+                text: message,
+                icon: "success",
+                timer: 3000,
+                buttons: false
+            });
+        } else {
+            swal({
+                title: "计算完成（有失败记录）",
+                text: message,
+                icon: "warning",
+                buttons: ["确定", "查看详情"]
+            }).then((value) => {
+                if (value) {
+                    // 显示失败详情
+                    let failDetails = results.filter(r => !r.success);
+                    let detailMsg = "失败记录详情：\n\n";
+                    failDetails.forEach(item => {
+                        detailMsg += "ID: " + item.id + " - " + item.msg + "\n";
+                    });
+                    swal("失败记录详情", detailMsg, "info");
+                }
+            });
+        }
+    }).catch(function(error) {
+        swal.close();
+        console.error('计算过程中出错:', error);
+        swal("计算异常", "计算过程中出现异常错误", "error");
+    });
+}
+
+function loadhth() {
+    console.log('开始加载员工列表...');
+
+    $ajax({
         type: 'post',
-        url: '/ywc/updateField',
-        data: JSON.stringify({
-            id: idList,
-        }),
-        dataType: 'json',
-        contentType: 'application/json;charset=utf-8',
-        success: function(res) {
-            console.log('更新响应:', res);
-            if (res.code == 200) {
-                $cell.text(newValue);
-                getList(currentPage);
-                swal("计算成功", res.msg, "error");
+        url: '/ywc/gethth',
+        contentType: 'application/json',
+        dataType: 'json'
+    }, false, '', function(res) {
+        if (res.code === 200) {
+            console.log('获取员工列表成功:', res.data);
+
+            var $select = $('#hetonghao');
+            $select.empty(); // 清空现有选项
+            $select.append('<option value="">请选择合同号</option>');
+
+            if (res.data && Array.isArray(res.data)) {
+                // 遍历数据，从m字段获取员工姓名
+                res.data.forEach(function(item) {
+                    // 安全地获取m字段的值
+                    var employeeName = item && item.d;
+
+                    // 检查是否为有效的字符串
+                    if (employeeName != null && employeeName !== '') {
+                        // 转换为字符串并去除首尾空格
+                        var nameStr = String(employeeName).trim();
+                        if (nameStr !== '') {
+                            $select.append(
+                                '<option value="' + nameStr + '">' +
+                                nameStr +
+                                '</option>'
+                            );
+                        }
+                    }
+                });
+
+                console.log('已加载 ' + res.data.length + ' 个员工选项');
             } else {
-                $cell.text(originalValue);
-                swal("计算失败", res.msg, "error");
+                console.warn('员工数据格式异常:', res.data);
+                $select.append('<option value="">暂无合同号数据</option>');
             }
-        },
-        error: function(xhr, status, error) {
-            $cell.text(originalValue);
-            console.error('更新请求失败:', error);
-            swal("计算失败", "网络错误，请重试", "error");
+        } else {
+            console.error('获取员工列表失败:', res.msg);
+            $('#hetonghao').html('<option value="">加载失败</option>');
         }
     });
+}
 
+
+function loadywdw() {
+    console.log('开始加载员工列表...');
+
+    $ajax({
+        type: 'post',
+        url: '/ywc/getywdw',
+        contentType: 'application/json',
+        dataType: 'json'
+    }, false, '', function(res) {
+        if (res.code === 200) {
+            console.log('获取员工列表成功:', res.data);
+
+            var $select = $('#name');
+            $select.empty(); // 清空现有选项
+            $select.append('<option value="">请选择业务单位</option>');
+
+            if (res.data && Array.isArray(res.data)) {
+                // 遍历数据，从m字段获取员工姓名
+                res.data.forEach(function(item) {
+                    // 安全地获取m字段的值
+                    var employeeName = item && item.c;
+
+                    // 检查是否为有效的字符串
+                    if (employeeName != null && employeeName !== '') {
+                        // 转换为字符串并去除首尾空格
+                        var nameStr = String(employeeName).trim();
+                        if (nameStr !== '') {
+                            $select.append(
+                                '<option value="' + nameStr + '">' +
+                                nameStr +
+                                '</option>'
+                            );
+                        }
+                    }
+                });
+
+                console.log('已加载 ' + res.data.length + ' 个员工选项');
+            } else {
+                console.warn('员工数据格式异常:', res.data);
+                $select.append('<option value="">暂无业务单位数据</option>');
+            }
+        } else {
+            console.error('获取员工列表失败:', res.msg);
+            $('#name').html('<option value="">加载失败</option>');
+        }
+    });
+}
+
+
+function loadrwh() {
+    console.log('开始加载员工列表...');
+
+    $ajax({
+        type: 'post',
+        url: '/ywc/getrwh',
+        contentType: 'application/json',
+        dataType: 'json'
+    }, false, '', function(res) {
+        if (res.code === 200) {
+            console.log('获取员工列表成功:', res.data);
+
+            var $select = $('#renwuhao');
+            $select.empty(); // 清空现有选项
+            $select.append('<option value="">请选择任务号</option>');
+
+            if (res.data && Array.isArray(res.data)) {
+                // 遍历数据，从m字段获取员工姓名
+                res.data.forEach(function(item) {
+                    // 安全地获取m字段的值
+                    var employeeName = item && item.e;
+
+                    // 检查是否为有效的字符串
+                    if (employeeName != null && employeeName !== '') {
+                        // 转换为字符串并去除首尾空格
+                        var nameStr = String(employeeName).trim();
+                        if (nameStr !== '') {
+                            $select.append(
+                                '<option value="' + nameStr + '">' +
+                                nameStr +
+                                '</option>'
+                            );
+                        }
+                    }
+                });
+
+                console.log('已加载 ' + res.data.length + ' 个员工选项');
+            } else {
+                console.warn('员工数据格式异常:', res.data);
+                $select.append('<option value="">暂无任务号数据</option>');
+            }
+        } else {
+            console.error('获取员工列表失败:', res.msg);
+            $('#renwuhao').html('<option value="">加载失败</option>');
+        }
+    });
+}
+
+
+function loadth() {
+    console.log('开始加载员工列表...');
+
+    $ajax({
+        type: 'post',
+        url: '/ywc/getth',
+        contentType: 'application/json',
+        dataType: 'json'
+    }, false, '', function(res) {
+        if (res.code === 200) {
+            console.log('获取员工列表成功:', res.data);
+
+            var $select = $('#tuhao');
+            $select.empty(); // 清空现有选项
+            $select.append('<option value="">请选择图号</option>');
+
+            if (res.data && Array.isArray(res.data)) {
+                // 遍历数据，从m字段获取员工姓名
+                res.data.forEach(function(item) {
+                    // 安全地获取m字段的值
+                    var employeeName = item && item.i;
+
+                    // 检查是否为有效的字符串
+                    if (employeeName != null && employeeName !== '') {
+                        // 转换为字符串并去除首尾空格
+                        var nameStr = String(employeeName).trim();
+                        if (nameStr !== '') {
+                            $select.append(
+                                '<option value="' + nameStr + '">' +
+                                nameStr +
+                                '</option>'
+                            );
+                        }
+                    }
+                });
+
+                console.log('已加载 ' + res.data.length + ' 个员工选项');
+            } else {
+                console.warn('员工数据格式异常:', res.data);
+                $select.append('<option value="">暂无图号数据</option>');
+            }
+        } else {
+            console.error('获取员工列表失败:', res.msg);
+            $('#tuhao').html('<option value="">加载失败</option>');
+        }
+    });
 }

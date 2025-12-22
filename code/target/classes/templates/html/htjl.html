@@ -226,6 +226,10 @@
             border-color: #007bff;
             box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
         }
+        /* 标注字段有值的高亮行样式 */
+        .highlighted-row {
+            background-color: #f59821 !important; /* 浅黄色背景 */
+        }
     </style>
 </head>
 
@@ -271,12 +275,33 @@
 
             <!-- 搜索字段 -->
             <div class="search-field">
-                <label for="name" class="form-label-custom">业务单位</label>
-                <input id="name" type="text" class="form-control form-control-custom" placeholder="请输入业务单位名称" autocomplete="off">
+                <select id="name" class="form-control form-control-custom" placeholder="请选择业务单位">
+                </select>
             </div>
             <div class="search-field">
-                <label for="department" class="form-label-custom">工艺规程状态</label>
-                <input id="department" type="text" class="form-control form-control-custom" placeholder="工艺规程状态" autocomplete="off">
+                <select id="department" class="form-control form-control-custom" placeholder="请选择工艺规程状态">
+                    <option value="">请选择工艺规程状态</option>
+                    <option value="未创建">未创建</option>
+                    <option value="已完成">已完成</option>
+                    <option value="未完成">未完成</option>
+                </select>
+            </div>
+            <div class="search-field">
+                <select id="dengjiyuan" class="form-control form-control-custom" placeholder="请选择登记员">
+                </select>
+            </div>
+            <div class="search-field">
+                <select id="hth" class="form-control form-control-custom" placeholder="请选择合同号">
+                </select>
+            </div>
+
+            <div class="search-field">
+                <select id="renwuhao" class="form-control form-control-custom" placeholder="请选择任务号">
+                </select>
+            </div>
+            <div class="search-field">
+                <select id="tuhao" class="form-control form-control-custom" placeholder="请选择图号">
+                </select>
             </div>
             <!-- 查询按钮 -->
             <div>
@@ -292,6 +317,9 @@
                 <button id="refresh-btn" class="btn btn-custom btn-primary-custom">
                     <i class="bi bi-arrow-clockwise"></i>
                     刷新
+                </button>
+                <button id="calculate-btn" class="btn btn-custom btn-primary-custom">
+                    <i class="bi bi-calculator-fill"></i> 计算
                 </button>
 
                 <button id="add-btn" class="btn btn-custom btn-primary-custom">
@@ -400,6 +428,7 @@
                             <div class="col-sm-8">
                                 <input type="date" class="form-control form-control-sm" id="return-date">
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -470,14 +499,14 @@
             <div class="row mt-4">
                 <div class="col-md-4">
                     <div class="form-group">
-                        <label><strong>地址：</strong></label>
-                        <input type="text" class="form-control form-control-sm" id="company-address">
+                        <label><strong>退货单位：</strong></label>
+                        <input type="text" class="form-control form-control-sm" id="company-address" value="成都龙辉机械设备制造有限公司">
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="form-group">
                         <label><strong>电话：</strong></label>
-                        <input type="text" class="form-control form-control-sm" id="company-phone">
+                        <input type="text" class="form-control form-control-sm" id="company-phone" value="13730601502">
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -1188,6 +1217,12 @@
             localStorage.setItem('workReportInstructionsRead', 'true');
             console.log('用户已确认阅读使用说明');
         });
+
+        // 初始化工序名称记忆功能
+        initProcessNameMemory();
+
+        // 新增：初始化退货原因记忆功能
+        initReturnReasonMemory();
     });
 
 </script>

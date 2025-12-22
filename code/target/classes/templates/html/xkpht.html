@@ -125,6 +125,10 @@
             border-radius: 3px;
             font-size: 14px;
         }
+        /* 标注字段有值的高亮行样式 */
+        .highlighted-row {
+            background-color: #f59821 !important; /* 浅黄色背景 */
+        }
     </style>
 
 
@@ -190,7 +194,9 @@
                     <i class="bi bi-arrow-clockwise"></i>
                     刷新
                 </button>
-
+                <button id="calculate-btn" class="btn btn-custom btn-primary-custom">
+                    <i class="bi bi-calculator-fill"></i> 计算
+                </button>
 
                 <button id="gongxu-config-btn" class="btn btn-custom btn-primary-custom">
                     <i class="bi bi-gear"></i>

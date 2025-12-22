@@ -347,7 +347,7 @@ table{
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); /* 柔和阴影 */
 
     /* 背景 */
-    background: #758a97;
+    background: #8eadc1;
 }
 
 /* ====表头样式 ===== */
@@ -367,6 +367,10 @@ table{
     text-align: left;       /* 左对齐文本 */
     border-bottom: 1px solid white; /* 半透明分割线 */
     color:white;
+    white-space: normal !important;
+    word-break: break-all !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
 }
 
 /* ===== 悬停交互效果 ===== */

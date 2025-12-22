@@ -39,6 +39,18 @@ public class HtjlController {
         if (StringUtils.isNotBlank(pageRequest.getZhuangtai())) {
             queryWrapper.like("zhuangtai", pageRequest.getZhuangtai());
         }
+        if (StringUtils.isNotBlank(pageRequest.getAS())) {
+            queryWrapper.like("as", pageRequest.getAS());
+        }
+        if (StringUtils.isNotBlank(pageRequest.getD())) {
+            queryWrapper.like("d", pageRequest.getD());
+        }
+        if (StringUtils.isNotBlank(pageRequest.getE())) {
+            queryWrapper.like("e", pageRequest.getE());
+        }
+        if (StringUtils.isNotBlank(pageRequest.getI())) {
+            queryWrapper.like("i", pageRequest.getI());
+        }
 
         // 执行查询 - 通过Service调用
         Page<Map<String, Object>> result = htjlService.selectDistinctByDdhPage(page,queryWrapper);
@@ -432,6 +444,87 @@ public class HtjlController {
         }
     }
 
+    @RequestMapping("/getdjy")
+    public ResultInfo getdjy(HttpSession session) {
+        try {
+            List<Htjl> getList = htjlService.getdjy();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
+    @RequestMapping("/getywdw")
+    public ResultInfo getywdw(HttpSession session) {
+        try {
+            List<Htjl> getList = htjlService.getywdw();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
 
+    @RequestMapping("/getrwh")
+    public ResultInfo getrwh(HttpSession session) {
+        try {
+            List<Htjl> getList = htjlService.getrwh();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
+
+    @RequestMapping("/getth")
+    public ResultInfo getth(HttpSession session) {
+        try {
+            List<Htjl> getList = htjlService.getth();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
+
+    @RequestMapping("/gethth")
+    public ResultInfo gethth(HttpSession session) {
+        try {
+            List<Htjl> getList = htjlService.gethth();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
+
+    @RequestMapping("/getxhth")
+    public ResultInfo getxhth(HttpSession session) {
+        try {
+            List<Htjl> getList = htjlService.getxhth();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
+
+    @RequestMapping("/getxCustomerList")
+    public ResultInfo getxCustomerList(HttpSession session) {
+        try {
+            List<Htjl> getList = htjlService.getxCustomerList();
+            return ResultInfo.success("获取成功", getList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
 
 }

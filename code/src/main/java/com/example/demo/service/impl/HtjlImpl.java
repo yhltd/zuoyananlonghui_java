@@ -451,6 +451,33 @@ public class HtjlImpl extends ServiceImpl<HtjlMapper, Htjl> implements HtjlServi
     public List<Htjl> getCustomerList() {  // 方法名必须一致
         return baseMapper.getCustomerList();
     }
-
+    @Override
+    public List<Htjl> getxCustomerList() {  // 方法名必须一致
+        return baseMapper.getxCustomerList();
+    }
+    @Override
+    public List<Htjl> getdjy() {  // 方法名必须一致
+        return baseMapper.getdjy();
+    }
+    @Override
+    public List<Htjl> getrwh() {  // 方法名必须一致
+        return baseMapper.getrwh();
+    }
+    @Override
+    public List<Htjl> getth() {  // 方法名必须一致
+        return baseMapper.getth();
+    }
+    @Override
+    public List<Htjl> getywdw() {  // 方法名必须一致
+        return baseMapper.getywdw();
+    }
+    @Override
+    public List<Htjl> gethth() {  // 方法名必须一致
+        return baseMapper.gethth();
+    }
+    @Override
+    public List<Htjl> getxhth() {  // 方法名必须一致
+        return baseMapper.getxhth();
+    }
 
 }

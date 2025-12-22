@@ -18,7 +18,7 @@ public interface XkphtMapper extends BaseMapper<Kpht> {
             "AA, AB, AC, AD, AE, AF, AG, AH, AI, AJ, AK, AL, AM, AN, AO, AP, AQ, AR, " +
             "[AS] as aas, AT, " +
             "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi, " +
-            "lingjianhao, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
+            "lingjianhao, xianshiji, cheshiji, biaozhu, qianshiji, tangshiji, geshiji, moshiji, " +
             "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
             "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
             "FROM hetong_jilu WHERE hetong_zhuangtai IN ('未开票', '已开票') " +
@@ -41,6 +41,7 @@ public interface XkphtMapper extends BaseMapper<Kpht> {
             "           hetong_zhuangtai as hetongzhuangtai, " +
             "           AU as au, AV as av, AW as aw, AX as ax, AY as ay, " +
             "           riqi as riqi, " +
+            "           biaozhu as biaozhu, " +
             "           lingjianhao as lingjianhao, " +
             "           xianshiji as xianshiji, " +
             "           cheshiji as cheshiji, " +
@@ -102,6 +103,7 @@ public interface XkphtMapper extends BaseMapper<Kpht> {
             "xianshiji = #{xianshiji}, " +
             "cheshiji = #{cheshiji}, " +
             "qianshiji = #{qianshiji}, " +
+            "biaozhu = #{biaozhu}, " +
             "tangshiji = #{tangshiji}, " +
             "geshiji = #{geshiji}, " +
             "moshiji = #{moshiji}, " +
@@ -174,6 +176,7 @@ public interface XkphtMapper extends BaseMapper<Kpht> {
             "<if test='params.xianshiji != null'>xianshiji = #{params.xianshiji},</if>" +
             "<if test='params.cheshiji != null'>cheshiji = #{params.cheshiji},</if>" +
             "<if test='params.qianshiji != null'>qianshiji = #{params.qianshiji},</if>" +
+            "<if test='params.biaozhu != null'>biaozhu = #{params.biaozhu},</if>" +
             "<if test='params.tangshiji != null'>tangshiji = #{params.tangshiji},</if>" +
             "<if test='params.geshiji != null'>geshiji = #{params.geshiji},</if>" +
             "<if test='params.moshiji != null'>moshiji = #{params.moshiji},</if>" +
@@ -203,7 +206,7 @@ public interface XkphtMapper extends BaseMapper<Kpht> {
             "AA, AB, AC, AD, AE, AF, AG, AH, AI, AJ, AK, AL, AM, AN, AO, AP, AQ, AR, " +
             "[AS] as aas, AT, " +
             "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi, " +
-            "lingjianhao, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
+            "lingjianhao, xianshiji, cheshiji, biaozhu, qianshiji, tangshiji, geshiji, moshiji, " +
             "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
             "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
             "FROM hetong_jilu " +
