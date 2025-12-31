@@ -105,6 +105,11 @@ public class Ckd_cImpl extends ServiceImpl<Ckd_cMapper, Ckd_c> implements Ckd_cS
             ckd.setT(getStringValue(formData, "t"));        // T: 送货人 (前端t字段)
             ckd.setU(getStringValue(formData, "u"));        // U: 收货人 (前端u字段)
 
+            ckd.setLingjianhao(getStringValue(formData, "lingjianhao"));        // R: 制单人 (前端r字段)
+            ckd.setGongzuoling(getStringValue(formData, "gongzuoling"));        // S: 审核人 (前端s字段)
+            ckd.setJiagongfei(getStringValue(formData, "jiagongfei"));        // T: 送货人 (前端t字段)
+            ckd.setCailiaofei(getStringValue(formData, "cailiaofei"));        // U: 收货人 (前端u字段)
+
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("转换数据时出错: " + e.getMessage());

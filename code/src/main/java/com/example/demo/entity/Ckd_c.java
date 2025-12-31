@@ -69,5 +69,14 @@ public class Ckd_c {
 
     @TableField("U")
     private String u;
+
+    private String lingjianhao;
+
+    private String cailiaofei;
+
+    private String jiagongfei;
+
+    private String gongzuoling;
+
 }
 

@@ -139,4 +139,8 @@ public class Ywc {
     private String cheshiji;
     private String skxshiji;
     private String biaozhu;
+
+    private String gongzuoling;
+    private String cailiaofei;
+    private String jiagongfei;
 }

@@ -72,7 +72,7 @@ function getList(page, options = {}) {
                         liveDrag: true,
                         gripInnerHtml: "<div class='grip'></div>",
                         draggingClass: "dragging",
-                        resizeMode: 'fit'
+                        resizeMode: 'overflow'
                     });
                 }
 
@@ -137,7 +137,7 @@ $(function () {
     });
     // 初始化页面加载
     getList();
-    loadhth();
+    // loadhth();
     loadywdw();
     // 重置所有状态
     currentPage = 1;
@@ -943,6 +943,7 @@ function createExcelFile(data, filename) {
                 '业务单位': item.c || '',
                 '登记日期': item.dengjiriqi || '',
                 '名称': item.h || '',
+                '工作令': item.gongzuoling || '',
                 '对账状态': item.hetongzhuangtai || '',
                 '出库单号': item.au || '',
                 '规格型号': item.i || '',
@@ -950,6 +951,8 @@ function createExcelFile(data, filename) {
                 '数量': item.k || '',
                 '单价': item.m || '',
                 '金额': item.n || '',
+                '材料费': item.cailiaofei || '',
+                '加工费': item.jiagongfei || '',
                 '材质': item.l || '',
                 '重量': item.aw || '',
                 '零件尺寸': item.ax || '',
@@ -971,12 +974,15 @@ function createExcelFile(data, filename) {
             { wch: 12 },  // 业务单位
             { wch: 12 },  // 登记日期
             { wch: 15 },  // 名称
+            { wch: 15 },  // 名称
             { wch: 10 },  // 对账状态
             { wch: 12 },  // 出库单号
             { wch: 12 },  // 规格型号
             { wch: 8 },   // 单位
             { wch: 8 },   // 数量
             { wch: 10 },  // 单价
+            { wch: 12 },  // 金额
+            { wch: 12 },  // 金额
             { wch: 12 },  // 金额
             { wch: 10 },  // 材质
             { wch: 8 },   // 重量
@@ -1201,6 +1207,13 @@ function setTable(data) {
                 sortable: true,
                 width: 120,
                 class: 'editable'
+            },{
+                field: 'gongzuoling',
+                title: '工作令',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
             },
             {
                 field: 'h',
@@ -1264,6 +1277,20 @@ function setTable(data) {
             {
                 field: 'n',
                 title: '金额',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
+                field: 'cailiaofei',
+                title: '材料费',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
+                field: 'jiagongfei',
+                title: '加工费',
                 align: 'center',
                 sortable: true,
                 width: 120,

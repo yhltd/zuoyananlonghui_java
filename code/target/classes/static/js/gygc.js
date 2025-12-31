@@ -4,6 +4,9 @@ $(document).ready(function() {
     // 初始化工序名称记忆功能
     initProcessNameMemory();
 
+    // 新增：初始化工序内容历史记录
+    initProcessContentMemory();
+
     // 从sessionStorage获取数据
     const processData = JSON.parse(sessionStorage.getItem('currentProcessData') || '{}');
     window.currentHtid = processData.id || '';
@@ -60,7 +63,6 @@ $(document).ready(function() {
         // 在最后插入新行
         tbody.appendChild(newRow);
     });
-
 
     // 删除选中行
     document.getElementById('deleteRow').addEventListener('click', function() {
@@ -323,18 +325,18 @@ function setTable(data) {
             row.dataset.id = item.id;
         }
         row.innerHTML = `
-            <td class="col-1">${index + 1}</td>
-            <td class="col-2" contenteditable="true"
-                list="process-name-history"
-                onfocus="showProcessNameSuggestions(this)"
-                oninput="saveProcessNameInput(this)">${item.j || ''}</td>
-            <td class="col-3" contenteditable="true" colspan="3">${item.k || ''}</td>
-            <td class="col-4" contenteditable="true">${item.l || ''}</td>
-            <td class="col-5" contenteditable="true">${item.m || ''}</td>
-            <td class="col-6" contenteditable="true">${item.n || ''}</td>
-            <td class="col-7" contenteditable="true">${item.o || ''}</td>
-            <td class="col-8" contenteditable="true">${item.p || ''}</td>
-        `;
+        <td class="col-1">${index + 1}</td>
+        <td class="col-2" contenteditable="true"
+            list="process-name-history"
+            onfocus="showProcessNameSuggestions(this)"
+            oninput="saveProcessNameInput(this)">${item.j || ''}</td>
+        <td class="col-3" contenteditable="true" colspan="3" list="process-content-history">${item.k || ''}</td>  <!-- 添加list属性 -->
+        <td class="col-4" contenteditable="true">${item.l || ''}</td>
+        <td class="col-5" contenteditable="true">${item.m || ''}</td>
+        <td class="col-6" contenteditable="true">${item.n || ''}</td>
+        <td class="col-7" contenteditable="true">${item.o || ''}</td>
+        <td class="col-8" contenteditable="true">${item.p || ''}</td>
+    `;
         tbody.appendChild(row);
     });
 
@@ -1163,6 +1165,362 @@ function printWithQRCode() {
 
 
 // 生成打印页面内容的函数
+// function generatePrintContent(qrCodeImageBase64, htid) {
+//     // 1. 收集所有当前页面显示的表格数据（包括表头和工序行）
+//     const headerData = {
+//         businessUnit: $('#business-unit').text().trim(),
+//         productName: $('#product-name').text().trim(),
+//         quantity: $('#quantity').text().trim(),
+//         material: $('#material').text().trim(),
+//         taskNo: $('#task-no').text().trim(),
+//         drawingNo: $('#drawing-no').text().trim(),
+//     };
+//
+//     // 2. 收集签名区域的值（直接取文本，不取下拉框）
+//     const signatureData = {
+//         gyy: getSignatureText('gyy'), // 工艺员
+//         gyrq: $('#gyrq').val() || '',
+//         jdy: getSignatureText('jdy'), // 校对员
+//         jdrq: $('#jdrq').val() || '',
+//         pzr: getSignatureText('pzr'), // 批准
+//         pzrq: $('#pzrq').val() || ''
+//     };
+//
+//     // 3. 收集表格主体内容
+//     const tableRows = [];
+//     $('#processTable tbody tr').each(function() {
+//         const cells = $(this).find('td');
+//
+//         // 只收集有内容的行
+//         if (cells.length >= 8 && (cells.eq(1).text().trim() || cells.eq(2).text().trim())) {
+//             // 添加数据行
+//             tableRows.push({
+//                 index: cells.eq(0).text().trim(),
+//                 processName: cells.eq(1).text().trim(),
+//                 processContent: cells.eq(2).text().trim(),
+//                 totalHours: cells.eq(3).text().trim(),
+//                 workerSign: cells.eq(4).text().trim(),
+//                 finishTime: cells.eq(5).text().trim(),
+//                 inspectionSeal: cells.eq(6).text().trim(),
+//                 remark: cells.eq(7).text().trim()
+//             });
+//
+//             // 为这条数据添加一个空白行
+//             tableRows.push({
+//                 index: '', // 空白行不标序号
+//                 processName: '',
+//                 processContent: '',
+//                 totalHours: '',
+//                 workerSign: '',
+//                 finishTime: '',
+//                 inspectionSeal: '',
+//                 remark: ''
+//             });
+//         }
+//     });
+//
+//     // 4. 构建完整的打印页面HTML
+//     return `
+// <!DOCTYPE html>
+// <html lang="zh-CN">
+// <head>
+//     <meta charset="UTF-8">
+//     <title>成都龙辉机械设备制造有限公司工艺规程 - 打印版</title>
+//     <style>
+//         * {
+//             margin: 0;
+//             padding: 0;
+//             box-sizing: border-box;
+//             font-family: "SimSun", "宋体", serif;
+//         }
+//         body {
+//             background-color: white !important;
+//             color: black !important;
+//             width: 210mm; /* A4宽度 */
+//             min-height: 297mm; /* A4高度 */
+//             padding: 10mm;
+//             margin: 0 auto;
+//         }
+//
+//         /* 打印专用样式 [citation:2][citation:7] */
+//         @media print {
+//             @page {
+//                 size: auto;
+//                 margin: 15mm;
+//             }
+//             body {
+//                 -webkit-print-color-adjust: exact;
+//                 print-color-adjust: exact;
+//                 background: white !important;
+//                 width: auto !important; /* 移除固定宽度，适应纸张 */
+//                 height: auto !important;
+//                 min-height: auto !important;
+//                 padding: 0 !important;
+//                 margin: 0 !important;
+//             }
+//
+//              .main-title {
+//                 width: 100% !important;
+//                 text-align: center !important;
+//                 margin: 10mm auto 30mm auto !important;
+//                 position: static !important;  /* 移除绝对定位 */
+//                 left: auto !important;
+//                 transform: none !important;
+//             }
+//
+//              /* 确保表格适应页面宽度 */
+//             .info-header, .process-table {
+//                 width: 100% !important;
+//                 max-width: 100% !important;
+//                 table-layout: fixed !important;
+//             }
+//         }
+//
+//         /* 二维码容器 - 右上角 */
+//         .qrcode-container {
+//             position: absolute;
+//             top: 10mm;
+//             right: 10mm;
+//             width: 30mm;
+//             height: 30mm;
+//             text-align: center;
+//             padding: 2mm;
+//         }
+//         .qrcode-container img {
+//             width: 100%;
+//             height: auto;
+//         }
+//         .qrcode-container p {
+//             font-size: 10pt;
+//             margin-top: 2mm;
+//             padding-top: 1mm;
+//         }
+//
+//         /* 主标题 */
+//         .main-title {
+//
+//             font-size: 18pt;
+//             font-weight: bold;
+//             margin-bottom: 30mm;
+//             padding: 20mm 0 2mm 30mm;
+//
+//             position: relative;
+//             left: 50%;
+//             transform: translateX(-50%); /* 水平居中 */
+//         }
+//
+//         /* 信息表头 */
+//         .info-header {
+//             width: 100%;
+//             border-collapse: collapse;
+//             border: 1.5px solid #000; /* 整体外边框 */
+//         }
+//         .info-header th, .info-header td {
+//             border: 1px solid #000; /* 所有单元格黑边框 */
+//             padding: 3mm 2mm;
+//             text-align: center;
+//             font-size: 11pt;
+//             height: 8mm;
+//             background-color: white !important; /* 确保白色背景 [citation:4] */
+//         }
+//         .info-header th {
+//             font-weight: bold;
+//             width: 15%;
+//             font-size: 20px;
+//         }
+//         .info-header .value-cell {
+//             width: 35%;
+//             font-weight: normal;
+//             font-size: 20px;
+//         }
+//
+//         /* 工序表格 */
+//         .process-table {
+//             width: 100%;
+//             border-collapse: collapse;
+//             border: 1.5px solid #000;
+//         }
+//         .process-table th, .process-table td {
+//             border: 1px solid #000;
+//             padding: 2mm 1mm;
+//             text-align: center;
+//             font-size: 10pt;
+//             height: 7mm;
+//             background-color: white !important;
+//             page-break-inside: avoid; /* 避免跨页截断 [citation:2] */
+//             font-size: 20px;
+//         }
+//         .process-table th {
+//             font-weight: bold;
+//             -webkit-print-color-adjust: exact;
+//             print-color-adjust: exact;
+//         }
+//         .col-1 { width: 8%; }
+//         .col-2 { width: 12%; }
+//         .col-3 { width: 30%; }
+//         .col-4 { width: 10%; }
+//         .col-5 { width: 10%; }
+//         .col-6 { width: 10%; }
+//         .col-7 { width: 10%; }
+//         .col-8 { width: 10%; }
+//
+//         /* 签名行 - 单行显示 */
+//         .signature-row {
+//             width: 100%;
+//             font-size: 11pt;
+//             display: flex;
+//             justify-content: space-between;
+//             border-left: 1.5px solid #000;
+//             border-right: 1.5px solid #000;
+//             border-bottom: 1.5px solid #000;
+//         }
+//         .signature-item {
+//             text-align: center;
+//             display: flex;
+//         }
+//         .signature-label {
+//             font-weight: bold;
+//             margin-bottom: 1mm;
+//             padding: 3mm;
+//         }
+//         .signature-value {
+//             min-height: 6mm;
+//             margin: 0 5mm 1mm 5mm;
+//             padding-bottom: 1mm;
+//             padding-top: 3mm;
+//         }
+//         .signature-date {
+//             padding-right: 3mm;
+//             padding-top: 3mm;
+//             font-size: 10pt;
+//             color: #333;
+//         }
+//
+//         /* 打印控制 - 屏幕显示时可见 */
+//         @media screen {
+//             .print-controls {
+//                 position: fixed;
+//                 bottom: 20px;
+//                 right: 20px;
+//                 z-index: 1000;
+//             }
+//              body {
+//                 width: 210mm; /* A4预览 */
+//                 min-height: 297mm;
+//                 padding: 10mm;
+//                 margin: 0 auto;
+//             }
+//             .print-btn {
+//                 padding: 10px 20px;
+//                 background: #2c5e9c;
+//                 color: white;
+//                 border: none;
+//                 border-radius: 4px;
+//                 cursor: pointer;
+//             }
+//         }
+//         @media print {
+//             .print-controls {
+//                 display: none !important;
+//             }
+//         }
+//     </style>
+// </head>
+// <body>
+//     ${qrCodeImageBase64 ? `
+//     <div class="qrcode-container">
+//         <img src="data:image/png;base64,${qrCodeImageBase64}" alt="合同二维码">
+//         <p>合同ID: ${htid}</p>
+//     </div>
+//     ` : ''}
+//
+//     <h1 class="main-title">成都龙辉机械设备制造有限公司工艺规程</h1>
+//
+//     <!-- 表头信息 -->
+//     <table class="info-header">
+//         <tr>
+//             <th>业务单位</th>
+//             <td class="value-cell">${headerData.businessUnit || ''}</td>
+//             <th>数量</th>
+//             <td class="value-cell">${headerData.quantity || ''}</td>
+//             <th>材质</th>
+//             <td class="value-cell">${headerData.material || ''}</td>
+//         </tr>
+//         <tr>
+//             <th>零件名称</th>
+//             <td class="value-cell">${headerData.productName || ''}</td>
+//             <th>任务号</th>
+//             <td class="value-cell">${headerData.taskNo || ''}</td>
+//             <th>图号</th>
+//             <td class="value-cell">${headerData.drawingNo || ''}</td>
+//         </tr>
+//     </table>
+//
+//     <!-- 工序表格 -->
+//     <table class="process-table">
+//         <thead>
+//             <tr>
+//                 <th class="col-1">序号</th>
+//                 <th class="col-2">工序名称</th>
+//                 <th class="col-3">工序内容</th>
+//                 <th class="col-4">合计工时</th>
+//                 <th class="col-5">员工签名</th>
+//                 <th class="col-6">完工时间</th>
+//                 <th class="col-7">检验盖章</th>
+//                 <th class="col-8">备注</th>
+//             </tr>
+//         </thead>
+//         <tbody>
+//             ${tableRows.map((row, rowIndex) => `
+//             <tr class="${row.index === '' ? 'blank-row' : 'data-row'}">
+//                 <td>${row.index || ''}</td>
+//                 <td>${row.processName || ''}</td>
+//                 <td>${row.processContent || ''}</td>
+//                 <td>${row.totalHours || ''}</td>
+//                 <td>${row.workerSign || ''}</td>
+//                 <td>${row.finishTime || ''}</td>
+//                 <td>${row.inspectionSeal || ''}</td>
+//                 <td>${row.remark || ''}</td>
+//             </tr>
+//             `).join('')}
+//         </tbody>
+//     </table>
+//
+//     <!-- 签名行 - 单行显示 -->
+//     <div class="signature-row">
+//         <div class="signature-item">
+//             <div class="signature-label">工艺员</div>
+//             <div class="signature-value">${signatureData.gyy || ''}</div>
+//             <div class="signature-date">${signatureData.gyrq || '日期'}</div>
+//         </div>
+//         <div class="signature-item">
+//             <div class="signature-label">校对员</div>
+//             <div class="signature-value">${signatureData.jdy || ''}</div>
+//             <div class="signature-date">${signatureData.jdrq || '日期'}</div>
+//         </div>
+//         <div class="signature-item">
+//             <div class="signature-label">批准</div>
+//             <div class="signature-value">${signatureData.pzr || ''}</div>
+//             <div class="signature-date">${signatureData.pzrq || '日期'}</div>
+//         </div>
+//     </div>
+//
+//     <div class="print-controls">
+//         <button class="print-btn" onclick="window.print();">立即打印</button>
+//         <button class="print-btn" onclick="window.close();" style="margin-left:10px;">关闭窗口</button>
+//     </div>
+//
+//     <script>
+//         // 页面加载完成后自动聚焦，方便用户操作
+//         window.onload = function() {
+//             console.log('打印页面加载完成');
+//         };
+//     </script>
+// </body>
+// </html>`;
+// }
+
+// 生成打印页面内容的函数（分页版）
 function generatePrintContent(qrCodeImageBase64, htid) {
     // 1. 收集所有当前页面显示的表格数据（包括表头和工序行）
     const headerData = {
@@ -1184,12 +1542,14 @@ function generatePrintContent(qrCodeImageBase64, htid) {
         pzrq: $('#pzrq').val() || ''
     };
 
-    // 3. 收集表格主体内容
+    // 3. 收集表格主体内容，每条数据后加一个空白行
     const tableRows = [];
     $('#processTable tbody tr').each(function() {
         const cells = $(this).find('td');
+
         // 只收集有内容的行
         if (cells.length >= 8 && (cells.eq(1).text().trim() || cells.eq(2).text().trim())) {
+            // 添加数据行
             tableRows.push({
                 index: cells.eq(0).text().trim(),
                 processName: cells.eq(1).text().trim(),
@@ -1198,26 +1558,116 @@ function generatePrintContent(qrCodeImageBase64, htid) {
                 workerSign: cells.eq(4).text().trim(),
                 finishTime: cells.eq(5).text().trim(),
                 inspectionSeal: cells.eq(6).text().trim(),
-                remark: cells.eq(7).text().trim()
+                remark: cells.eq(7).text().trim(),
+                isDataRow: true
             });
-        }
 
-
-        if (cells.length >= 8 && cells.eq(0).text().trim()=="2"){
+            // 每条数据后面添加一个空白行（没有序号）
             tableRows.push({
-                index: cells.eq(0).text().trim(),
-                processName: cells.eq(1).text().trim(),
-                processContent: cells.eq(2).text().trim(),
-                totalHours: cells.eq(3).text().trim(),
-                workerSign: cells.eq(4).text().trim(),
-                finishTime: cells.eq(5).text().trim(),
-                inspectionSeal: cells.eq(6).text().trim(),
-                remark: cells.eq(7).text().trim()
+                index: '', // 空白行没有序号
+                processName: '',
+                processContent: '',
+                totalHours: '',
+                workerSign: '',
+                finishTime: '',
+                inspectionSeal: '',
+                remark: '',
+                isDataRow: false
             });
         }
     });
 
-    // 4. 构建完整的打印页面HTML
+    // 4. 分页处理：每页24行数据（注意：这里已经是双倍行数了）
+    const rowsPerPage = 20;
+    const totalPages = Math.ceil(tableRows.length / rowsPerPage);
+    const printPages = [];
+
+    // 计算每个页面的起始序号
+    let globalDataRowCount = 0;
+    let pageStartIndexes = [];
+
+    // 先计算每页的起始数据行序号
+    for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+        const startIndex = pageIndex * rowsPerPage;
+        const endIndex = Math.min(startIndex + rowsPerPage, tableRows.length);
+        const pageRows = tableRows.slice(startIndex, endIndex);
+
+        // 统计当前页的数据行数
+        let pageDataRowCount = 0;
+        pageRows.forEach(row => {
+            if (row.isDataRow) pageDataRowCount++;
+        });
+
+        pageStartIndexes.push({
+            pageNumber: pageIndex + 1,
+            startDataRow: globalDataRowCount + 1,
+            pageDataRowCount: pageDataRowCount
+        });
+
+        globalDataRowCount += pageDataRowCount;
+    }
+
+    // 重新遍历生成页面
+    for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+        const startIndex = pageIndex * rowsPerPage;
+        const endIndex = Math.min(startIndex + rowsPerPage, tableRows.length);
+        const pageRows = tableRows.slice(startIndex, endIndex);
+
+        // 如果最后一页不足24行，补充空白行
+        if (pageIndex === totalPages - 1 && pageRows.length < rowsPerPage) {
+            const remainingRows = rowsPerPage - pageRows.length;
+            for (let i = 0; i < remainingRows; i++) {
+                pageRows.push({
+                    index: '',
+                    processName: '',
+                    processContent: '',
+                    totalHours: '',
+                    workerSign: '',
+                    finishTime: '',
+                    inspectionSeal: '',
+                    remark: '',
+                    isDataRow: false
+                });
+            }
+        }
+
+        // 添加页码信息
+        const pageInfo = {
+            pageNumber: pageIndex + 1,
+            totalPages: totalPages,
+            rows: pageRows,
+            startDataRow: pageStartIndexes[pageIndex].startDataRow  // 添加起始序号
+        };
+
+        printPages.push(pageInfo);
+    }
+
+    // 5. 生成分页的HTML内容
+    const printContent = generatePagedPrintHTML(
+        qrCodeImageBase64,
+        htid,
+        headerData,
+        signatureData,
+        printPages
+    );
+
+    return printContent;
+}
+
+// 生成分页的打印HTML
+function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureData, printPages) {
+    // 生成每个页面的HTML
+    const pageHTMLs = printPages.map(pageInfo => {
+        return generateSinglePageHTML(
+            qrCodeImageBase64,
+            htid,
+            headerData,
+            signatureData,
+            pageInfo
+        );
+    });
+
+    // 将所有页面合并为一个HTML文档
     return `
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -1231,49 +1681,85 @@ function generatePrintContent(qrCodeImageBase64, htid) {
             box-sizing: border-box;
             font-family: "SimSun", "宋体", serif;
         }
+        
         body {
             background-color: white !important;
             color: black !important;
-            width: 210mm; /* A4宽度 */
-            min-height: 297mm; /* A4高度 */
-            padding: 10mm;
-            margin: 0 auto;
         }
         
-        /* 打印专用样式 [citation:2][citation:7] */
+        /* 打印分页控制 */
+        .print-page {
+            width: 210mm; /* A4宽度 */
+            min-height: 297mm; /* A4高度 */
+            max-height: 297mm; /* 防止溢出 */
+            padding: 10mm;
+            margin: 0 auto;
+            position: relative;
+            background: white;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .print-page:not(:last-child) {
+            page-break-after: always;
+        }
+        
+        /* 打印专用样式 */
         @media print {
             @page {
                 size: auto; 
                 margin: 15mm;
             }
+            
             body {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
                 background: white !important;
-                width: auto !important; /* 移除固定宽度，适应纸张 */
+                width: auto !important;
                 height: auto !important;
                 min-height: auto !important;
                 padding: 0 !important;
                 margin: 0 !important;
             }
             
-             /* 确保表格适应页面宽度 */
-            .info-header, .process-table {
-                width: 100% !important;
-                max-width: 100% !important;
-                table-layout: fixed !important;
+            .print-page {
+                width: auto !important;
+                min-height: auto !important;
+                max-height: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                position: relative;
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+            
+            /* 确保表格不跨页断裂 */
+            .process-table {
+                page-break-inside: auto;
+            }
+            
+            .process-table tr {
+                min-height: 11mm; /* 表格行最小高度 */
+                height: auto;
+            }
+            
+            .process-table td {
+                page-break-inside: avoid;
+                page-break-before: auto;
             }
         }
         
-        /* 二维码容器 - 右上角 */
+        /* 二维码容器 */
         .qrcode-container {
             position: absolute;
-            top: 10mm;
+            top: -5mm;
             right: 10mm;
-            width: 40mm;
-            height: 40mm;
+            width: 30mm;
+            height: 30mm;
             text-align: center;
             padding: 2mm;
+            z-index: 10;
         }
         .qrcode-container img {
             width: 100%;
@@ -1289,35 +1775,44 @@ function generatePrintContent(qrCodeImageBase64, htid) {
         .main-title {
             font-size: 18pt;
             font-weight: bold;
-            margin-bottom: 30mm;
-            padding-bottom: 2mm;
-            padding-top: 20mm;
-            padding-left: 30mm;
+            text-align: center;
+            margin: 10mm auto 5mm auto;
+            width: 100%;
+        }
+        
+        /* 页码信息 */
+        .page-number {
+            position: absolute;
+            bottom: 20mm;
+            right: 15mm;
+            font-size: 10pt;
+            color: #666;
         }
         
         /* 信息表头 */
         .info-header {
             width: 100%;
             border-collapse: collapse;
-            border: 1.5px solid #000; /* 整体外边框 */
+            border: 1.5px solid #000;
+            margin-top: 10mm;
         }
         .info-header th, .info-header td {
-            border: 1px solid #000; /* 所有单元格黑边框 */
-            padding: 3mm 2mm;
+            border: 1px solid #000;
+            padding: 2mm 1mm;
             text-align: center;
             font-size: 11pt;
-            height: 8mm;
-            background-color: white !important; /* 确保白色背景 [citation:4] */
+            height: 6mm;
+            background-color: white !important;
         }
         .info-header th {
             font-weight: bold;
-            width: 15%;
-            font-size: 20px;
+            width: 7%;
+            font-size: 18px;
         }
         .info-header .value-cell {
-            width: 35%;
+            width: 10%;
             font-weight: normal;
-            font-size: 20px;
+            font-size: 18px;
         }
         
         /* 工序表格 */
@@ -1328,13 +1823,13 @@ function generatePrintContent(qrCodeImageBase64, htid) {
         }
         .process-table th, .process-table td {
             border: 1px solid #000;
-            padding: 2mm 1mm;
+            padding: 1mm 0.5mm;
             text-align: center;
             font-size: 10pt;
-            height: 7mm;
+            height: 9mm;
             background-color: white !important;
-            page-break-inside: avoid; /* 避免跨页截断 [citation:2] */
-            font-size: 20px;
+            page-break-inside: avoid;
+            font-size: 16px;
         }
         .process-table th {
             font-weight: bold;
@@ -1343,43 +1838,54 @@ function generatePrintContent(qrCodeImageBase64, htid) {
         }
         .col-1 { width: 8%; }
         .col-2 { width: 12%; }
-        .col-3 { width: 30%; }
+        .col-3 { width: 25%; }
         .col-4 { width: 10%; }
         .col-5 { width: 10%; }
-        .col-6 { width: 10%; }
+        .col-6 { width: 15%; }
         .col-7 { width: 10%; }
         .col-8 { width: 10%; }
         
-        /* 签名行 - 单行显示 */
+        /* 签名行 */
         .signature-row {
             width: 100%;
             font-size: 11pt;
             display: flex;
             justify-content: space-between;
-            border-left: 1.5px solid #000;
-            border-right: 1.5px solid #000;
-            border-bottom: 1.5px solid #000;
+            border: 1.5px solid #000;
+            bottom: 10mm;
+            left: 10mm;
+            right: 10mm;
         }
         .signature-item {
             text-align: center;
             display: flex;
+            align-items: center;
+            flex: 1;
         }
         .signature-label {
             font-weight: bold;
-            margin-bottom: 1mm;
-            padding: 3mm;
+            padding: 2mm;
+            flex-shrink: 0;
         }
         .signature-value {
-            min-height: 6mm;
-            margin: 0 5mm 1mm 5mm;
-            padding-bottom: 1mm;
-            padding-top: 3mm;
+            padding: 2mm;
         }
         .signature-date {
-            padding-right: 3mm;
-            padding-top: 3mm;
+            padding: 2mm;
             font-size: 10pt;
             color: #333;
+            flex-shrink: 0;
+        }
+        
+        /* 内容区域，留出签名行的空间 */
+        .content-area {
+            min-height: 150mm; /* 添加最小高度 */
+            overflow: hidden;
+        }
+        
+        /* 空白行样式 */
+        .blank-row {
+            height: 5mm;
         }
         
         /* 打印控制 - 屏幕显示时可见 */
@@ -1390,8 +1896,8 @@ function generatePrintContent(qrCodeImageBase64, htid) {
                 right: 20px;
                 z-index: 1000;
             }
-             body {
-                width: 210mm; /* A4预览 */
+            body {
+                width: 210mm;
                 min-height: 297mm;
                 padding: 10mm;
                 margin: 0 auto;
@@ -1413,84 +1919,7 @@ function generatePrintContent(qrCodeImageBase64, htid) {
     </style>
 </head>
 <body>
-    ${qrCodeImageBase64 ? `
-    <div class="qrcode-container">
-        <img src="data:image/png;base64,${qrCodeImageBase64}" alt="合同二维码">
-        <p>合同ID: ${htid}</p>
-    </div>
-    ` : ''}
-    
-    <h1 class="main-title">成都龙辉机械设备制造有限公司工艺规程</h1>
-    
-    <!-- 表头信息 -->
-    <table class="info-header">
-        <tr>
-            <th>业务单位</th>
-            <td class="value-cell">${headerData.businessUnit || ''}</td>
-            <th>数量</th>
-            <td class="value-cell">${headerData.quantity || ''}</td>
-            <th>材质</th>
-            <td class="value-cell">${headerData.material || ''}</td>
-        </tr>
-        <tr>
-            <th>零件名称</th>
-            <td class="value-cell">${headerData.productName || ''}</td>
-            <th>任务号</th>
-            <td class="value-cell">${headerData.taskNo || ''}</td>
-            <th>图号</th>
-            <td class="value-cell">${headerData.drawingNo || ''}</td>
-        </tr>
-    </table>
-    
-    <!-- 工序表格 -->
-    <table class="process-table">
-        <thead>
-            <tr>
-                <th class="col-1">序号</th>
-                <th class="col-2">工序名称</th>
-                <th class="col-3">工序内容</th>
-                <th class="col-4">合计工时</th>
-                <th class="col-5">员工签名</th>
-                <th class="col-6">完工时间</th>
-                <th class="col-7">检验盖章</th>
-                <th class="col-8">备注</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${tableRows.map(row => `
-            <tr>
-                <td>${row.index || ''}</td>
-                <td>${row.processName || ''}</td>
-                <td>${row.processContent || ''}</td>
-                <td>${row.totalHours || ''}</td>
-                <td>${row.workerSign || ''}</td>
-                <td>${row.finishTime || ''}</td>
-                <td>${row.inspectionSeal || ''}</td>
-                <td>${row.remark || ''}</td>
-            </tr>
-            `).join('')}
-            
-        </tbody>
-    </table>
-    
-    <!-- 签名行 - 单行显示 -->
-    <div class="signature-row">
-        <div class="signature-item">
-            <div class="signature-label">工艺员</div>
-            <div class="signature-value">${signatureData.gyy || ''}</div>
-            <div class="signature-date">${signatureData.gyrq || '日期'}</div>
-        </div>
-        <div class="signature-item">
-            <div class="signature-label">校对员</div>
-            <div class="signature-value">${signatureData.jdy || ''}</div>
-            <div class="signature-date">${signatureData.jdrq || '日期'}</div>
-        </div>
-        <div class="signature-item">
-            <div class="signature-label">批准</div>
-            <div class="signature-value">${signatureData.pzr || ''}</div>
-            <div class="signature-date">${signatureData.pzrq || '日期'}</div>
-        </div>
-    </div>
+    ${pageHTMLs.join('')}
     
     <div class="print-controls">
         <button class="print-btn" onclick="window.print();">立即打印</button>
@@ -1498,13 +1927,122 @@ function generatePrintContent(qrCodeImageBase64, htid) {
     </div>
     
     <script>
-        // 页面加载完成后自动聚焦，方便用户操作
         window.onload = function() {
-            console.log('打印页面加载完成');
+            console.log('打印页面加载完成，共 ${printPages.length} 页');
         };
     </script>
 </body>
 </html>`;
+}
+
+// 生成单个页面的HTML
+function generateSinglePageHTML(qrCodeImageBase64, htid, headerData, signatureData, pageInfo) {
+    const { pageNumber, totalPages, rows, startDataRow } = pageInfo;
+
+    // 计算序号（使用全局起始序号）
+    let currentDataRowCount = 0;
+    const processedRows = rows.map((row) => {
+        // 如果是数据行，计算序号（使用全局连续序号）
+        if (row.isDataRow) {
+            currentDataRowCount++;
+            return {
+                ...row,
+                displayIndex: startDataRow + currentDataRowCount - 1
+            };
+        }
+        // 空白行或非数据行不显示序号
+        return {
+            ...row,
+            displayIndex: ''
+        };
+    });
+
+    return `
+    <div class="print-page">
+        <!-- 二维码 -->
+        ${qrCodeImageBase64 ? `
+        <div class="qrcode-container">
+            <img src="data:image/png;base64,${qrCodeImageBase64}" alt="合同二维码">
+            <p>合同ID: ${htid}</p>
+        </div>
+        ` : ''}
+        
+        <!-- 主标题 -->
+        <h1 class="main-title">成都龙辉机械设备制造有限公司工艺规程</h1>
+        
+        <!-- 表头信息 -->
+        <table class="info-header">
+            <tr>
+                <th>业务单位</th>
+                <td class="value-cell">${headerData.businessUnit || ''}</td>
+                <th>数量</th>
+                <td class="value-cell">${headerData.quantity || ''}</td>
+                <th>材质</th>
+                <td class="value-cell">${headerData.material || ''}</td>
+            </tr>
+            <tr>
+                <th>零件名称</th>
+                <td class="value-cell">${headerData.productName || ''}</td>
+                <th>任务号</th>
+                <td class="value-cell">${headerData.taskNo || ''}</td>
+                <th>图号</th>
+                <td class="value-cell">${headerData.drawingNo || ''}</td>
+            </tr>
+        </table>
+        
+        <!-- 内容区域 -->
+        <div class="content-area">
+            <!-- 工序表格 -->
+            <table class="process-table">
+                <thead>
+                    <tr>
+                        <th class="col-1">序号</th>
+                        <th class="col-2">工序名称</th>
+                        <th class="col-3">工序内容</th>
+                        <th class="col-4">合计工时</th>
+                        <th class="col-5">员工签名</th>
+                        <th class="col-6">完工时间</th>
+                        <th class="col-7">检验盖章</th>
+                        <th class="col-8">备注</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${processedRows.map((row) => `
+                    <tr class="${row.isDataRow ? 'data-row' : 'blank-row'}">
+                        <td>${row.displayIndex}</td>
+                        <td>${row.processName || ''}</td>
+                        <td>${row.processContent || ''}</td>
+                        <td>${row.totalHours || ''}</td>
+                        <td>${row.workerSign || ''}</td>
+                        <td>${row.finishTime || ''}</td>
+                        <td>${row.inspectionSeal || ''}</td>
+                        <td>${row.remark || ''}</td>
+                    </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 签名行 -->
+        <div class="signature-row">
+            <div class="signature-item">
+                <div class="signature-label">工艺员</div>
+                <div class="signature-value">${signatureData.gyy || ''}</div>
+                <div class="signature-value">${signatureData.gyrq || ''}</div>
+            </div>
+            <div class="signature-item">
+                <div class="signature-label">校对员</div>
+                <div class="signature-value">${signatureData.jdy || ''}</div>
+                <div class="signature-value">${signatureData.jdrq || ''}</div>
+            </div>
+            <div class="signature-item">
+                <div class="signature-label">批准</div>
+                <div class="signature-value">${signatureData.pzr || ''}</div>
+                <div class="signature-value">${signatureData.pzrq || ''}</div>
+            </div>
+        </div>
+        
+    </div>`;
 }
 
 // 辅助函数：获取签名文本（兼容下拉框和普通文本）
@@ -1524,7 +2062,6 @@ function getSignatureText(fieldId) {
 
 
 //-----------------------获取输入内容记录-----------------------
-// 在 initProcessNameMemory 中调用
 function initProcessNameMemory() {
     console.log('=== 初始化工序名称记忆功能 ===');
 
@@ -1534,11 +2071,19 @@ function initProcessNameMemory() {
     // 创建自定义下拉
     createCustomDropdown();
 
-    // 监听输入事件
-    $(document).on('input', '#processTable tbody td.col-2', function() {
+    // 监听输入事件 - 工序名称（第2列）
+    $(document).on('blur', '#processTable tbody td.col-2', function() {
         const processName = $(this).text().trim();
         if (processName) {
             saveProcessNameToHistory(processName);
+        }
+    });
+
+    // 新增：监听工序内容（第3列）的blur事件
+    $(document).on('blur', '#processTable tbody td.col-3', function() {
+        const processContent = $(this).text().trim();
+        if (processContent) {
+            saveProcessContentToHistory(processContent);
         }
     });
 
@@ -1742,21 +2287,60 @@ function saveProcessNameInput(cell) {
         // 延迟保存，避免频繁操作
         clearTimeout(window.processNameSaveTimer);
         window.processNameSaveTimer = setTimeout(() => {
-            saveProcessNameToHistory(processName);
+            // saveProcessNameToHistory(processName);
         }, 500);
     }
 }
 
-// 添加工序内容记忆功能
+// 初始化工序内容记忆功能
 function initProcessContentMemory() {
-    // 加载工序内容历史记录
-    loadProcessContentHistory();
+    console.log('=== 初始化工序内容记忆功能 ===');
 
-    // 监听所有工序内容单元格的输入
-    $(document).on('input', '#processTable tbody td.col-3', function() {
-        const processContent = $(this).text().trim();
-        if (processContent) {
-            saveProcessContentToHistory(processContent);
+    // 加载工序内容历史记录
+    const contentHistory = getProcessContentHistory();
+    console.log('工序内容历史记录:', contentHistory.length, '条');
+
+    // 监听所有工序内容单元格的blur事件
+    // 已经在initProcessNameMemory中添加了，这里可以添加其他初始化逻辑
+
+    // 如果需要为工序内容也创建datalist，可以在这里添加
+    createProcessContentDatalist(contentHistory);
+}
+
+// 创建工序内容datalist（如果需要）
+function createProcessContentDatalist(history) {
+    if (history.length === 0) return;
+
+    // 确保datalist元素存在
+    let datalist = document.getElementById('process-content-history');
+    if (!datalist) {
+        datalist = document.createElement('datalist');
+        datalist.id = 'process-content-history';
+        document.body.appendChild(datalist);
+    }
+
+    // 清空现有选项
+    datalist.innerHTML = '';
+
+    // 添加新选项
+    history.forEach(item => {
+        const option = document.createElement('option');
+        option.value = String(item);
+        option.textContent = String(item);
+        datalist.appendChild(option);
+    });
+
+    // 为所有工序内容单元格绑定datalist
+    updateProcessContentBindings();
+}
+
+// 更新工序内容单元格的datalist绑定
+function updateProcessContentBindings() {
+    const contentCells = document.querySelectorAll('#processTable tbody td.col-3');
+
+    contentCells.forEach(cell => {
+        if (!cell.hasAttribute('list')) {
+            cell.setAttribute('list', 'process-content-history');
         }
     });
 }
@@ -1775,6 +2359,11 @@ function getProcessContentHistory() {
 // 保存工序内容到历史记录
 function saveProcessContentToHistory(content) {
     try {
+        if (!content || content.trim() === '') {
+            return;
+        }
+
+        content = content.trim();
         let history = getProcessContentHistory();
 
         // 去重
@@ -1783,13 +2372,19 @@ function saveProcessContentToHistory(content) {
         // 新记录放前面
         history.unshift(content);
 
-        // 只保留最近的15条记录（内容可能较长）
+        // 只保留最近的15条记录
         if (history.length > 15) {
             history = history.slice(0, 15);
         }
 
         // 保存到本地存储
         localStorage.setItem('process_content_history', JSON.stringify(history));
+
+        console.log('工序内容保存成功:', content);
+
+        // 更新datalist
+        createProcessContentDatalist(history);
+
     } catch (error) {
         console.error('保存工序内容历史记录失败:', error);
     }
@@ -1808,7 +2403,7 @@ function saveAllProcessNamesToHistory() {
 
     // 保存每个工序名称
     processNames.forEach(name => {
-        saveProcessNameToHistory(name);
+        // saveProcessNameToHistory(name);
     });
 }
 

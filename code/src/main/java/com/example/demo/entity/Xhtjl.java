@@ -139,6 +139,10 @@ public class Xhtjl {
     private String shijijiaohuoriqi;
     private String muban;
 
+    private String gongzuoling;
+    private String cailiaofei;
+    private String jiagongfei;
+
 
 
 }

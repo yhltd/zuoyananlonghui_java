@@ -97,6 +97,9 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "    ISNULL(hj.cheshiji, '') as cheshiji, ",    // 新增
             "    ISNULL(hj.skxshiji, '') as skxshiji, ",    // 新增
             "    ISNULL(hj.riqi, '') as riqi, ",            // 注意：这里有个问题，缺了逗号
+            "    ISNULL(hj.cailiaofei, '') as cailiaofei, ",    // 新增
+            "    ISNULL(hj.jiagongfei, '') as jiagongfei, ",    // 新增
+            "    ISNULL(hj.gongzuoling, '') as gongzuoling, ",
             "    ISNULL(hj.muban, '') as muban " +          // 新增muban字段
                     "FROM filtered_hetong hj ",
             "OPTION (RECOMPILE)",
@@ -190,6 +193,9 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "           ISNULL(hj.xianshiji, '') as xianshiji, " +        // 新增
             "           ISNULL(hj.cheshiji, '') as cheshiji, " +          // 新增
             "           ISNULL(hj.skxshiji, '') as skxshiji, " +          // 新增
+            "           ISNULL(hj.cailiaofei, '') as cailiaofei, " +        // 新增
+            "           ISNULL(hj.jiagongfei, '') as jiagongfei, " +          // 新增
+            "           ISNULL(hj.gongzuoling, '') as gongzuoling, " +
             "           ISNULL(hj.riqi, '') as riqi, " +                  // 修正：添加逗号
             "           ISNULL(hj.muban, '') as muban " +                 // 新增muban字段
             "    FROM filtered_hetong hj " +
@@ -228,6 +234,7 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "[av] = #{av}, [aw] = #{aw}, [ax] = #{ax}, [ay] = #{ay}, " +
             "hetong_zhuangtai = #{hetongzhuangtai},biaozhu = #{biaozhu} " +
             "lingjianhao = #{lingjianhao}, qianshiji = #{qianshiji}, tangshiji = #{tangshiji}, " +
+            "cailiaofei = #{cailiaofei}, jiagongfei = #{jiagongfei}, gongzuoling = #{gongzuoling}, " +
             "geshiji = #{geshiji}, moshiji = #{moshiji}, licheshiji = #{licheshiji}, " +
             "dianhuohuashiji = #{dianhuohuashiji}, zhongzuosishiji = #{zhongzuosishiji}, " +
             "jingmixianqiege = #{jingmixianqiege}, hanjiegongshi = #{hanjiegongshi}, " +
@@ -240,9 +247,9 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
 
 
     @Insert("INSERT INTO hetong_jilu (c, d, e, hetong_zhuangtai, zhuangtai, muban, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, [aa], [ab], [ac], [ad], [ae], [af], [ag], [ah], [ai], [aj], [ak], [al], [am], [an], [ao], [ap], [aq], [ar], [as], [at], [au], [av], [aw], [ax], [ay], " +
-            "lingjianhao, qianshiji, tangshiji, geshiji, moshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, xianshiji, cheshiji, skxshiji, riqi) " +  // 新增三个字段
+            "lingjianhao, qianshiji, tangshiji, geshiji, moshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, xianshiji, cheshiji, skxshiji, riqi,cailiaofei,jiagongfei,gongzuoling) " +  // 新增三个字段
             "VALUES (#{c}, #{d}, #{e}, #{hetongzhuangtai}, '未创建', '', #{g}, #{h}, #{i}, #{j}, #{k}, #{l}, #{m}, #{n}, #{o}, #{p}, #{q}, #{r}, #{s}, #{t}, #{u}, #{v}, #{w}, #{x}, #{y}, #{z}, #{aa}, #{ab}, #{ac}, #{ad}, #{ae}, #{af}, #{ag}, #{ah}, #{ai}, #{aj}, #{ak}, #{al}, #{am}, #{an}, #{ao}, #{ap}, #{aq}, #{ar}, #{aas}, #{at}, #{au}, #{av}, #{aw}, #{ax}, #{ay}, " +
-            "#{lingjianhao}, #{qianshiji}, #{tangshiji}, #{geshiji}, #{moshiji}, #{licheshiji}, #{dianhuohuashiji}, #{zhongzuosishiji}, #{jingmixianqiege}, #{hanjiegongshi}, #{dengjiriqi}, #{shijijiaohuoriqi}, #{xianshiji}, #{cheshiji}, #{skxshiji}, #{riqi})")  // 新增三个字段
+            "#{lingjianhao}, #{qianshiji}, #{tangshiji}, #{geshiji}, #{moshiji}, #{licheshiji}, #{dianhuohuashiji}, #{zhongzuosishiji}, #{jingmixianqiege}, #{hanjiegongshi}, #{dengjiriqi}, #{shijijiaohuoriqi}, #{xianshiji}, #{cheshiji}, #{skxshiji}, #{riqi}, #{cailiaofei}, #{jiagongfei}, #{gongzuoling})")  // 新增三个字段
     boolean add(Htjl htjl);
 
     @Delete("delete from hetong_jilu where id=#{id}")
@@ -313,6 +320,9 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "    ISNULL(hj.dianhuohuashiji, '') as dianhuohuashiji, ",
             "    ISNULL(hj.zhongzuosishiji, '') as zhongzuosishiji, ",
             "    ISNULL(hj.jingmixianqiege, '') as jingmixianqiege, ",
+            "    ISNULL(hj.cailiaofei, '') as cailiaofei, ",
+            "    ISNULL(hj.jiagongfei, '') as jiagongfei, ",
+            "    ISNULL(hj.gongzuoling, '') as gongzuoling, ",
             "    ISNULL(hj.hanjiegongshi, '') as hanjiegongshi, ",
             "    ISNULL(hj.dengjiriqi, '') as dengjiriqi, ",
             "    ISNULL(hj.shijijiaohuoriqi, '') as shijijiaohuoriqi, ",
@@ -383,6 +393,7 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "    [aj], [ak], [al], [am], [an], [ao], [ap], [ay], [aq], [ar], [as], [at], " +
             "    hetong_zhuangtai, lingjianhao, biaozhu, qianshiji, tangshiji, geshiji, moshiji, " +
             "    licheshiji, dianhuohuashiji, zhongzuosishiji, jingmixianqiege, hanjiegongshi, " +
+            "    cailiaofei, jiagongfei, gongzuoling, " +
             "    dengjiriqi, shijijiaohuoriqi, xianshiji, cheshiji, skxshiji, riqi, muban " +  // 新增三个字段和muban
             "FROM hetong_jilu WHERE id = #{id}")
     Htjl getById(String id);
@@ -397,6 +408,7 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "    [aj], [ak], [al], [am], [an], [ao], [ap], [ay], [aq], [ar], [as], [at], ",
             "    hetong_zhuangtai, lingjianhao, biaozhu, qianshiji, tangshiji, geshiji, moshiji, ",
             "    licheshiji, dianhuohuashiji, zhongzuosishiji, jingmixianqiege, hanjiegongshi, ",
+            "    cailiaofei, jiagongfei, gongzuoling, ",
             "    dengjiriqi, shijijiaohuoriqi, xianshiji, cheshiji, skxshiji, riqi, muban ",  // 新增三个字段和muban
             "FROM hetong_jilu WHERE id IN",
             "<foreach collection='ids' item='id' open='(' separator=',' close=')'>",
@@ -469,6 +481,9 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
             "<if test='params.dianhuohuashiji != null'>dianhuohuashiji = #{params.dianhuohuashiji},</if>" +
             "<if test='params.zhongzuosishiji != null'>zhongzuosishiji = #{params.zhongzuosishiji},</if>" +
             "<if test='params.jingmixianqiege != null'>jingmixianqiege = #{params.jingmixianqiege},</if>" +
+            "<if test='params.cailiaofei != null'>cailiaofei = #{params.cailiaofei},</if>" +
+            "<if test='params.jiagongfei != null'>jiagongfei = #{params.jiagongfei},</if>" +
+            "<if test='params.gongzuoling != null'>gongzuoling = #{params.gongzuoling},</if>" +
             "<if test='params.hanjiegongshi != null'>hanjiegongshi = #{params.hanjiegongshi},</if>" +
             "<if test='params.dengjiriqi != null'>dengjiriqi = #{params.dengjiriqi},</if>" +
             "<if test='params.shijijiaohuoriqi != null'>shijijiaohuoriqi = #{params.shijijiaohuoriqi},</if>" +

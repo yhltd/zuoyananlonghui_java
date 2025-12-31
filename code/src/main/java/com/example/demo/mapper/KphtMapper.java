@@ -24,6 +24,7 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi, " +
             "lingjianhao, biaozhu, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
             "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
+            "cailiaofei, jiagongfei, gongzuoling, " +
             "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
             "FROM hetong_jilu WHERE hetong_zhuangtai IN ('未开票', '已开票') " +
             "AND ISNULL(muban, '') != '新'")  // 新增条件
@@ -57,6 +58,9 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "           dianhuohuashiji as dianhuohuashiji, " +
             "           zhongzuosishiji as zhongzuosishiji, " +
             "           jingmixianqiege as jingmixianqiege, " +
+            "           cailiaofei as cailiaofei, " +
+            "           jiagongfei as jiagongfei, " +
+            "           gongzuoling as gongzuoling, " +
             "           hanjiegongshi as hanjiegongshi, " +
             "           dengjiriqi as dengjiriqi, " +
             "           shijijiaohuoriqi as shijijiaohuoriqi, " +
@@ -115,6 +119,9 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "dianhuohuashiji = #{dianhuohuashiji}, " +
             "zhongzuosishiji = #{zhongzuosishiji}, " +
             "jingmixianqiege = #{jingmixianqiege}, " +
+            "cailiaofei = #{cailiaofei}, " +
+            "jiagongfei = #{jiagongfei}, " +
+            "gongzuoling = #{gongzuoling}, " +
             "hanjiegongshi = #{hanjiegongshi}, " +
             "dengjiriqi = #{dengjiriqi}, " +
             "shijijiaohuoriqi = #{shijijiaohuoriqi}, " +
@@ -184,6 +191,9 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "<if test='params.geshiji != null'>geshiji = #{params.geshiji},</if>" +
             "<if test='params.moshiji != null'>moshiji = #{params.moshiji},</if>" +
             "<if test='params.skxshiji != null'>skxshiji = #{params.skxshiji},</if>" +
+            "<if test='params.cailiaofei != null'>cailiaofei = #{params.cailiaofei},</if>" +
+            "<if test='params.jiagongfei != null'>jiagongfei = #{params.jiagongfei},</if>" +
+            "<if test='params.gongzuoling != null'>gongzuoling = #{params.gongzuoling},</if>" +
             "<if test='params.licheshiji != null'>licheshiji = #{params.licheshiji},</if>" +
             "<if test='params.dianhuohuashiji != null'>dianhuohuashiji = #{params.dianhuohuashiji},</if>" +
             "<if test='params.zhongzuosishiji != null'>zhongzuosishiji = #{params.zhongzuosishiji},</if>" +
@@ -211,6 +221,7 @@ public interface KphtMapper extends BaseMapper<Kpht> {
             "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi,biaozhu " +
             "lingjianhao, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
             "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
+            "cailiaofei, jiagongfei, gongzuoling, " +
             "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
             "FROM hetong_jilu " +
             "WHERE hetong_zhuangtai IN ('未开票', '已开票') " +

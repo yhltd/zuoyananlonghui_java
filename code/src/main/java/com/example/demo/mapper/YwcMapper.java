@@ -23,6 +23,7 @@ public interface YwcMapper extends BaseMapper<Ywc> {
             "          t.id, t.C, t.D, t.E, t.F, t.G, t.H, t.I, t.J, t.K, t.L, t.M, t.N, t.O, t.P, t.Q, t.R, t.S, t.T, t.U, t.V, t.W, t.X, t.Y, t.Z, " +
             "          t.AA, t.AB, t.AC, t.AD, t.AE, t.AF, t.AG, t.AH, t.AI, t.AJ, t.AK, t.AL, t.AM, t.AN, t.AO, t.AP, t.AQ, t.AR, " +
             "          t.[AS] as aas, t.AT, t.biaozhu," +
+            "          t.cailiaofei, t.jiagongfei, t.gongzuoling," +
             "          t.hetong_zhuangtai, t.AU, t.AV, t.AW, t.AX, t.AY, t.riqi, " +
             "          t.lingjianhao, t.xianshiji, t.cheshiji, t.qianshiji, t.tangshiji, t.geshiji, t.moshiji, " +
             "          t.skxshiji, t.licheshiji, t.dianhuohuashiji, t.zhongzuosishiji, " +
@@ -76,6 +77,7 @@ public interface YwcMapper extends BaseMapper<Ywc> {
             "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi, " +
             "lingjianhao, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
             "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
+            "cailiaofei, gongzuoling, jiagongfei, " +
             "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
             "FROM hetong_jilu WHERE hetong_zhuangtai IN ('未对账', '已对账') " +
             "AND ISNULL(muban, '') != '新'")
@@ -103,6 +105,9 @@ public interface YwcMapper extends BaseMapper<Ywc> {
             "dianhuohuashiji = #{dianhuohuashiji}, " +
             "zhongzuosishiji = #{zhongzuosishiji}, " +
             "jingmixianqiege = #{jingmixianqiege}, " +
+            "cailiaofei = #{cailiaofei}, " +
+            "jiagongfei = #{jiagongfei}, " +
+            "gongzuoling = #{gongzuoling}, " +
             "hanjiegongshi = #{hanjiegongshi}, " +
             "dengjiriqi = #{dengjiriqi}, " +
             "shijijiaohuoriqi = #{shijijiaohuoriqi}, " +
@@ -163,6 +168,9 @@ public interface YwcMapper extends BaseMapper<Ywc> {
             "<if test='params.aw != null'>[aw] = #{params.aw},</if>" +
             "<if test='params.ax != null'>[ax] = #{params.ax},</if>" +
             "<if test='params.ay != null'>[ay] = #{params.ay},</if>" +
+            "<if test='params.cailiaofei != null'>cailiaofei = #{params.cailiaofei},</if>" +
+            "<if test='params.jiagongfei != null'>jiagongfei = #{params.jiagongfei},</if>" +
+            "<if test='params.gongzuoling != null'>gongzuoling = #{params.gongzuoling},</if>" +
             "<if test='params.hetong_zhuangtai != null'>hetong_zhuangtai = #{params.hetong_zhuangtai},</if>" +
             "<if test='params.lingjianhao != null'>lingjianhao = #{params.lingjianhao},</if>" +
             "<if test='params.xianshiji != null'>xianshiji = #{params.xianshiji},</if>" +
@@ -199,6 +207,7 @@ public interface YwcMapper extends BaseMapper<Ywc> {
             "hetong_zhuangtai, AU, AV, AW, AX, AY, riqi, " +
             "lingjianhao, biaozhu, xianshiji, cheshiji, qianshiji, tangshiji, geshiji, moshiji, " +
             "skxshiji, licheshiji, dianhuohuashiji, zhongzuosishiji, " +
+            "cailiaofei, jiagongfei, gongzuoling, " +
             "jingmixianqiege, hanjiegongshi, dengjiriqi, shijijiaohuoriqi, muban " +
             "FROM hetong_jilu " +
             "WHERE hetong_zhuangtai IN ('已对账', '未对账') " +

@@ -56,7 +56,7 @@ function getList(page, size, searchParams) {
                 liveDrag: true,
                 gripInnerHtml: "<div class='grip'></div>",
                 draggingClass: "dragging",
-                resizeMode: 'fit'
+                resizeMode: 'overflow'
             });
             if (res.data && res.data.length > 0) {
                 idd = res.data[res.data.length - 1].id;
@@ -109,9 +109,9 @@ $(function () {
     // // 初始化员工下拉框
     loadEmployeeList();
     loadReturnNos();
-    loadhth();
-    loadrwh();
-    loadth();
+    // loadhth();
+    // loadrwh();
+    // loadth();
     loadywdw();
     // 新增：加载客户列表
     loadCustomerList();
@@ -390,13 +390,11 @@ $(function () {
         $('#name').val("");
         $('#department').val("");
         $('#dengjiyuan').val("");
-        $('#hth').val("");
-        $('#renwuhao').val("");
-        $('#tuhao').val("");
+        $('#hth').val("");       // input元素清空
+        $('#renwuhao').val("");  // input元素清空
+        $('#tuhao').val("");     // input元素清空
         getList();
 
-        // 显示所有数据
-        // setTable(currentTableData);
         swal("刷新成功", "已显示所有数据", "success");
     });
 
@@ -505,6 +503,9 @@ $(function () {
             aas: $('#add-aas').val(),          // 登记员（新增）
             at: $('#add-at').val(),             // 备注（修改）
             lingjianhao: $('#add-lingjianhao').val(),  // 新增：零件号
+            cailiaofei: $('#add-cailiaofei').val(),  // 新增：零件号
+            jiagongfei: $('#add-jiagongfei').val(),  // 新增：零件号
+            gongzuoling: $('#add-gongzuoling').val(),  // 新增：零件号
             xianshiji: $('#add-xianshiji').val(),      // 新增：铣实际工时
             cheshiji: $('#add-cheshiji').val(),        // 新增：车实际工时
             qianshiji: $('#add-qianshiji').val(),      // 新增：钳实际工时
@@ -893,7 +894,7 @@ function setTable(data) {
     $('#userTable').bootstrapTable({
         data: data,
         sortStable: true,
-        classes: 'table table-hover table-bordered',
+        classes: 'table table-hover table-bordered table-custom',
         idField: 'id',
         pagination: false, // 关键修改：禁用分页
         clickToSelect: false, // 禁用默认的点击选择
@@ -953,6 +954,13 @@ function setTable(data) {
                 sortable: true,
                 width: 120,
                 class: 'editable'
+            },{
+                field: 'gongzuoling',
+                title: '工作令',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
             }, {
                 field: 'zhuangtai',
                 title: '工艺规程状态',
@@ -1004,6 +1012,20 @@ function setTable(data) {
                 align: 'center',
                 sortable: true,
                 width: 100,
+                class: 'editable'
+            },{
+                field: 'cailiaofei',
+                title: '材料费',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
+                field: 'jiagongfei',
+                title: '加工费',
+                align: 'center',
+                sortable: true,
+                width: 120,
                 class: 'editable'
             }, {
                 field: 'av',
@@ -1995,6 +2017,10 @@ function gotoReturnOrderPage() {
             return {
                 id: row.id,
                 c: row.c,           // 业务单位
+                gongzuoling: row.gongzuoling,
+                lingjianhao: row.lingjianhao,
+                cailiaofei: row.cailiaofei,
+                jiagongfei: row.jiagongfei,
                 d: row.d,           // 合同号
                 e: row.e,           // 任务号
                 f: row.f || '',     // 工艺规程状态
@@ -2979,12 +3005,12 @@ function bindPaginationEvents() {
 // 获取搜索参数
 function getSearchParams() {
     return {
-        C: $('#name').val() || '',    // 订单号
-        zhuangtai: $('#department').val() || '',
-        AS: $('#dengjiyuan').val() || '',
-        D: $('#hth').val() || '',
-        E: $('#renwuhao').val() || '',
-        I: $('#tuhao').val() || '',
+        C: $('#name').val() || '',    // 业务单位（下拉）
+        zhuangtai: $('#department').val() || '',  // 工艺规程状态（下拉）
+        AS: $('#dengjiyuan').val() || '',  // 登记员（下拉）
+        D: $('#hth').val() || '',    // 合同号（改为手动输入）
+        E: $('#renwuhao').val() || '',  // 任务号（改为手动输入）
+        I: $('#tuhao').val() || '',   // 图号（改为手动输入）
     };
 }
 
@@ -3236,6 +3262,9 @@ var databaseFields = [
     { field: 'c', name: '退货客户', description: '退货客户名称' },
     { field: 'd', name: '退货电话', description: '联系电话' },
     { field: 'e', name: '退货日期', description: '退货日期' },
+    { field: 'gongzuoling', name: '工作令', description: '工作令' },
+    { field: 'jiagongfei', name: '加工费', description: '加工费' },
+    { field: 'cailiaofei', name: '材料费', description: '材料费' },
     { field: 'f', name: '退货单号', description: '退货单编号' },
     { field: 'g', name: '合同号', description: '合同编号' },
     { field: 'h', name: '任务号', description: '任务编号' },
@@ -3265,7 +3294,6 @@ var databaseFields = [
     { field: 'dianhuohuashiji', name: '电火花实际工时', description: '电火花加工实际工时' },
     { field: 'zhongzuosishiji', name: '中走丝实际工时', description: '中走丝加工实际工时' },
     { field: 'jingmixianqiege', name: '精密线切割', description: '精密线切割加工' },
-    // 根据您的需求添加更多字段...
 ];
 
 // 导入数据对象
@@ -3487,6 +3515,9 @@ function getFieldDescription(field) {
         'c': '业务单位',
         'd': '合同号',
         'e': '任务号',
+        'cailiaofei': '材料费',
+        'jiagongfei': '加工费',
+        'gongzuoling': '工作令',
         'zhuangtai': '工艺规程状态',
         'g': '工序',
         'h': '名称',
@@ -4734,6 +4765,7 @@ function getTableColumnDefinitions() {
         { field: 'c', title: '业务单位', category: '基础信息', default: true },
         { field: 'd', title: '合同号', category: '基础信息', default: true },
         { field: 'e', title: '任务号', category: '基础信息', default: true },
+        { field: 'gongzuoling', title: '工作令', category: '基础信息', default: true },
         { field: 'lingjianhao', title: '零件号', category: '基础信息', default: false },
         { field: 'zhuangtai', title: '工艺规程状态', category: '状态', default: true },
         { field: 'g', title: '工序', category: '基础信息', default: false },
@@ -4743,6 +4775,8 @@ function getTableColumnDefinitions() {
         { field: 'k', title: '数量', category: '基础信息', default: true },
         { field: 'l', title: '材质', category: '基础信息', default: true },
         { field: 'av', title: '序合计', category: '财务', default: false },
+        { field: 'jiagongfei', title: '加工费', category: '财务', default: false },
+        { field: 'cailiaofei', title: '材料费', category: '财务', default: false },
         { field: 'aw', title: '重量', category: '物理属性', default: false },
         { field: 'ax', title: '工件尺寸', category: '物理属性', default: false },
         { field: 'm', title: '单价元', category: '财务', default: true },

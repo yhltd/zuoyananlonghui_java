@@ -31,7 +31,7 @@ function getList(page, size, searchParams) {
                 liveDrag: true,
                 gripInnerHtml: "<div class='grip'></div>",
                 draggingClass: "dragging",
-                resizeMode: 'fit'
+                resizeMode: 'overflow'
             });
             if (res.data && res.data.length > 0) {
                 let maxId = Math.max(...res.data.map(item => item.id));
@@ -480,6 +480,13 @@ function setTable(data) {
                 width: 120,
                 class: 'editable'
             },{
+                field: 'gongzuoling',
+                title: '工作令',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
                 field: 'hetongzhuangtai',
                 title: '对账状态',
                 align: 'center',
@@ -524,6 +531,20 @@ function setTable(data) {
                 align: 'center',
                 sortable: true,
                 width: 80,
+                class: 'editable'
+            },{
+                field: 'cailiaofei',
+                title: '材料费',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
+                field: 'jiagongfei',
+                title: '加工费',
+                align: 'center',
+                sortable: true,
+                width: 120,
                 class: 'editable'
             }, {
                 field: 'l',
@@ -1306,6 +1327,7 @@ function createExcelFile(data, filename) {
                 '合同号': item.d || '',
                 '任务号': item.e || '',
                 '零件号': item.lingjianhao || '',
+                '工作令': item.gongzuoling || '',
                 '对账状态': item.hetongzhuangtai || '',
                 '工序': item.g || '',
                 '名称': item.h || '',
@@ -1314,6 +1336,8 @@ function createExcelFile(data, filename) {
                 '数量': item.k || '',
                 '材质': item.l || '',
                 '出库单号': item.au || '',
+                '材料费': item.cailiaofei || '',
+                '加工费': item.jiagongfei || '',
                 '序合计': item.av || '',
                 '重量': item.aw || '',
                 '工件尺寸': item.ax || '',
@@ -1374,9 +1398,9 @@ function createExcelFile(data, filename) {
 
         // 设置列宽
         var colWidths = [
-            { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
+            { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },{ wch: 12 },
             { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 8 },
-            { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 12 },
+            { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 12 },{ wch: 12 },{ wch: 12 },
             { wch: 10 }, { wch: 8 }, { wch: 12 }, { wch: 10 },
             { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
             { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 },

@@ -175,6 +175,8 @@
                     <th width="50">序号</th>
                     <th width="100">合同号</th>
                     <th width="100">任务号</th>
+                    <th width="100">零件号</th>
+                    <th width="100">工作令</th>
                     <th width="120">加工工序</th>
                     <th width="120">产品名称</th>
                     <th width="120">图号</th>
@@ -182,6 +184,8 @@
                     <th width="60">数量</th>
                     <th width="80">单价</th>
                     <th width="80">金额</th>
+                    <th width="80">加工费</th>
+                    <th width="80">材料费</th>
                     <th width="80">材质</th>
                     <th width="80">重量</th>
                     <th width="100">备注</th>
@@ -191,19 +195,23 @@
                 <!-- 初始一行 -->
                 <tr>
                     <td><input type="checkbox" class="row-select"></td>
-                    <td><input type="text" class="form-control form-control-sm" name="xuhao"  contenteditable="false"></td>
-                    <td><input type="text" class="form-control form-control-sm" name="contractNo"  contenteditable="false"></td>
-                    <td><input type="text" class="form-control form-control-sm" name="taskNo"  contenteditable="false"></td>
-                    <td><input type="text" class="form-control form-control-sm" name="gongxu"  contenteditable="false"></td>
-                    <td><input type="text" class="form-control form-control-sm" name="productName"  contenteditable="false"></td>
-                    <td><input type="text" class="form-control form-control-sm" name="drawingNo"  contenteditable="false"></td>
-                    <td><input type="text" class="form-control form-control-sm" name="unit"  contenteditable="false"></td>
-                    <td><input type="number" class="form-control form-control-sm" name="quantity"  contenteditable="false"></td>
-                    <td><input type="number" class="form-control form-control-sm" name="unitPrice"  contenteditable="false"></td>
-                    <td><input type="number" class="form-control form-control-sm" name="amount" contenteditable="false" ></td>
-                    <td><input type="text" class="form-control form-control-sm" name="material"  contenteditable="false"></td>
-                    <td><input type="text" class="form-control form-control-sm" name="weight"  contenteditable="false"></td>
-                    <td><input type="text" class="form-control form-control-sm" name="remark"  contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="xuhao" contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="contractNo" contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="taskNo" contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="partNumber" contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="workOrder" contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="gongxu" contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="productName" contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="drawingNo" contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="unit" contenteditable="false"></td>
+                    <td><input type="number" class="form-control form-control-sm" name="quantity" contenteditable="false"></td>
+                    <td><input type="number" class="form-control form-control-sm" name="unitPrice" contenteditable="false"></td>
+                    <td><input type="number" class="form-control form-control-sm" name="amount" contenteditable="false" readonly></td>
+                    <td><input type="number" class="form-control form-control-sm" name="processingFee" contenteditable="false"></td>
+                    <td><input type="number" class="form-control form-control-sm" name="materialFee" contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="material" contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="weight" contenteditable="false"></td>
+                    <td><input type="text" class="form-control form-control-sm" name="remark" contenteditable="false"></td>
                 </tr>
                 </tbody>
             </table>
@@ -366,16 +374,24 @@
                             <label class="form-check-label" for="col-任务号">任务号</label>
                         </div>
                         <div class="form-check mb-2">
-                            <input class="form-check-input column-checkbox" type="checkbox" id="col-加工工序" value="加工工序" checked>
-                            <label class="form-check-label" for="col-加工工序">加工工序</label>
+                            <input class="form-check-input column-checkbox" type="checkbox" id="col-零件号" value="零件号" checked>
+                            <label class="form-check-label" for="col-零件号">零件号</label>
                         </div>
                         <div class="form-check mb-2">
-                            <input class="form-check-input column-checkbox" type="checkbox" id="col-产品名称" value="产品名称" checked>
-                            <label class="form-check-label" for="col-产品名称">产品名称</label>
+                            <input class="form-check-input column-checkbox" type="checkbox" id="col-工作令" value="工作令" checked>
+                            <label class="form-check-label" for="col-工作令">工作令</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input column-checkbox" type="checkbox" id="col-加工工序" value="加工工序" checked>
+                            <label class="form-check-label" for="col-加工工序">加工工序</label>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <h6>其他列</h6>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input column-checkbox" type="checkbox" id="col-产品名称" value="产品名称" checked>
+                            <label class="form-check-label" for="col-产品名称">产品名称</label>
+                        </div>
                         <div class="form-check mb-2">
                             <input class="form-check-input column-checkbox" type="checkbox" id="col-图号" value="图号" checked>
                             <label class="form-check-label" for="col-图号">图号</label>
@@ -395,6 +411,14 @@
                         <div class="form-check mb-2">
                             <input class="form-check-input column-checkbox" type="checkbox" id="col-金额" value="金额" checked>
                             <label class="form-check-label" for="col-金额">金额</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input column-checkbox" type="checkbox" id="col-加工费" value="加工费" checked>
+                            <label class="form-check-label" for="col-加工费">加工费</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input column-checkbox" type="checkbox" id="col-材料费" value="材料费" checked>
+                            <label class="form-check-label" for="col-材料费">材料费</label>
                         </div>
                         <div class="form-check mb-2">
                             <input class="form-check-input column-checkbox" type="checkbox" id="col-材质" value="材质" checked>

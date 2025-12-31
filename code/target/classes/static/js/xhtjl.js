@@ -53,7 +53,7 @@ function getList(page, size, searchParams) {
                 liveDrag: true,
                 gripInnerHtml: "<div class='grip'></div>",
                 draggingClass: "dragging",
-                resizeMode: 'fit'
+                resizeMode: 'overflow'
             });
             if (res.data && res.data.length > 0) {
                 idd = res.data[res.data.length - 1].id;
@@ -105,7 +105,7 @@ $(function () {
     getList();
 
     loadReturnNos();
-    loadhth();
+    // loadhth();
     // 新增：加载客户列表
     loadCustomerList();
     loadxCustomerList();
@@ -730,7 +730,7 @@ function setTable(data) {
     $('#userTable').bootstrapTable({
         data: data,
         sortStable: true,
-        classes: 'table table-hover table-bordered',
+        classes: 'table table-hover table-bordered table-custom',
         idField: 'id',
         pagination: false, // 关键修改：禁用分页
         clickToSelect: false, // 禁用默认的点击选择
@@ -772,6 +772,13 @@ function setTable(data) {
             },{
                 field: 'dengjiriqi',
                 title: '登记日期',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
+                field: 'gongzuoling',
+                title: '工作令',
                 align: 'center',
                 sortable: true,
                 width: 120,
@@ -824,6 +831,20 @@ function setTable(data) {
             }, {
                 field: 'n',
                 title: '金额',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
+                field: 'cailiaofei',
+                title: '材料费',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
+                field: 'jiagongfei',
+                title: '加工费',
                 align: 'center',
                 sortable: true,
                 width: 120,
@@ -1518,6 +1539,10 @@ function gotoReturnOrderPage() {
                 id: row.id,
                 c: row.c,           // 业务单位
                 d: row.d,           // 合同号
+                gongzuoling: row.gongzuoling,
+                lingjianhao: "",
+                cailiaofei: row.cailiaofei,
+                jiagongfei: row.jiagongfei,
                 e: row.e,           // 任务号
                 f: row.f || '',     // 工艺规程状态
                 g: row.g || '',     // 工序
@@ -2631,12 +2656,15 @@ function createExcelFile(data, filename) {
                 '业务单位': item.c || '',
                 '登记日期': item.dengjiriqi || '',
                 '名称': item.h || '',
+                '工作令': item.gongzuoling || '',
                 '工艺规程状态': item.zhuangtai || '',
                 '规格型号': item.i || '',
                 '单位': item.j || '',
                 '数量': item.k || '',
                 '单价': item.m || '',
                 '金额': item.n || '',
+                '材料费': item.cailiaofei || '',
+                '加工费': item.jiagongfei || '',
                 '材质': item.l || '',
                 '重量': item.aw || '',
                 '零件尺寸': item.ax || '',
@@ -2658,11 +2686,14 @@ function createExcelFile(data, filename) {
             { wch: 12 },
             { wch: 12 },  // 登记日期
             { wch: 15 },  // 名称
+            { wch: 15 },  // 名称
             { wch: 12 },
             { wch: 12 },  // 规格型号
             { wch: 8 },   // 单位
             { wch: 8 },   // 数量
             { wch: 10 },  // 单价
+            { wch: 10 },  // 金额
+            { wch: 10 },  // 金额
             { wch: 10 },  // 金额
             { wch: 10 },  // 材质
             { wch: 8 },   // 重量

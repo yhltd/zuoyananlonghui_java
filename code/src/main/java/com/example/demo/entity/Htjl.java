@@ -142,5 +142,9 @@ public class Htjl {
     private String cheshiji;
     private String skxshiji;
 
+    private String gongzuoling;
+    private String cailiaofei;
+    private String jiagongfei;
+
 
 }

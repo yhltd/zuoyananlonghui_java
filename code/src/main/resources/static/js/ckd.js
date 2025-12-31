@@ -127,7 +127,7 @@ function fillReturnOrderTableFromData(dataRows) {
         console.log('数据为空');
         tableBody.append(`
             <tr>
-                <td colspan="14" class="text-center">暂无数据</td>
+                <td colspan="19" class="text-center">暂无数据</td>
             </tr>
         `);
         return;
@@ -152,11 +152,13 @@ function fillReturnOrderTableFromData(dataRows) {
         }
 
         var row = `
-             <tr data-original-id="${originalId}">
+            <tr data-original-id="${originalId}">
                 <td><input type="checkbox" class="row-select1"></td>
                 <td>${index + 1}</td>
                 <td><input type="text" class="form-control form-control-sm" name="contractNo" value="${rowData.d || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="taskNo" value="${rowData.e || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="partNumber" value="${rowData.lingjianhao || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="workOrder" value="${rowData.gongzuoling || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="gongxu" value="${rowData.g || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="productName" value="${rowData.h || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="drawingNo" value="${rowData.i || ''}"></td>
@@ -164,6 +166,8 @@ function fillReturnOrderTableFromData(dataRows) {
                 <td><input type="number" class="form-control form-control-sm quantity-input" name="quantity" value="${rowData.k || '1'}"></td>
                 <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="${rowData.m || '1'}"></td>
                 <td><input type="number" class="form-control form-control-sm" name="amount" value="${amount}" readonly></td>
+                <td><input type="number" class="form-control form-control-sm" name="processingFee" value="${rowData.jiagongfei || ''}"></td>
+                <td><input type="number" class="form-control form-control-sm" name="materialFee" value="${rowData.cailiaofei || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="material" value="${rowData.l || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="weight" value="${rowData.aw || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="remark" value="${rowData.ax || ''}"></td>
@@ -251,7 +255,7 @@ function bindReturnOrderEvents1() {
     });
 
     // 实时计算金额和数量 - 合并成一个事件处理
-    $(document).off('input', 'input[name="quantity"], input[name="unitPrice"]').on('input', 'input[name="quantity"], input[name="unitPrice"]', function() {
+    $(document).off('input', 'input[name="quantity"], input[name="unitPrice"], input[name="processingFee"], input[name="materialFee"]').on('input', 'input[name="quantity"], input[name="unitPrice"], input[name="processingFee"], input[name="materialFee"]', function() {
         calculateRowAmount1($(this).closest('tr'));
     });
 
@@ -269,7 +273,6 @@ function updateSelectAllState1() {
     $('#select-all1').prop('checked', allChecked);
 }
 
-// 同样修改 addReturnRow1 函数
 function addReturnRow1() {
     var table = $('#return-detail-table1 tbody');
     var rowCount = table.find('tr').length;
@@ -279,6 +282,8 @@ function addReturnRow1() {
             <td>${rowCount + 1}</td>
             <td><input type="text" class="form-control form-control-sm" name="contractNo"></td>
             <td><input type="text" class="form-control form-control-sm" name="taskNo"></td>
+            <td><input type="text" class="form-control form-control-sm" name="partNumber"></td>
+            <td><input type="text" class="form-control form-control-sm" name="workOrder"></td>
             <td><input type="text" class="form-control form-control-sm" name="process"></td>
             <td><input type="text" class="form-control form-control-sm" name="productName"></td>
             <td><input type="text" class="form-control form-control-sm" name="drawingNo"></td>
@@ -286,6 +291,8 @@ function addReturnRow1() {
             <td><input type="number" class="form-control form-control-sm quantity-input" name="quantity" value="1"></td>
             <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="0"></td>
             <td><input type="number" class="form-control form-control-sm" name="amount" value="0" readonly></td>
+            <td><input type="number" class="form-control form-control-sm" name="processingFee" value="0"></td>
+            <td><input type="number" class="form-control form-control-sm" name="materialFee" value="0"></td>
             <td><input type="text" class="form-control form-control-sm" name="material"></td>
             <td><input type="text" class="form-control form-control-sm" name="weight"></td>
             <td><input type="text" class="form-control form-control-sm" name="remark"></td>
@@ -322,6 +329,15 @@ function updateRowNumbers1() {
 function calculateRowAmount1(row) {
     var quantity = parseFloat(row.find('input[name="quantity"]').val()) || 0;
     var unitPrice = parseFloat(row.find('input[name="unitPrice"]').val()) || 0;
+    var processingFee = parseFloat(row.find('input[name="processingFee"]').val()) || 0;
+    var materialFee = parseFloat(row.find('input[name="materialFee"]').val()) || 0;
+
+    // 如果单价为0，但加工费和材料费有值，可以自动计算单价
+    if (unitPrice === 0 && (processingFee > 0 || materialFee > 0)) {
+        unitPrice = processingFee + materialFee;
+        row.find('input[name="unitPrice"]').val(unitPrice.toFixed(2));
+    }
+
     var amount = quantity * unitPrice;
     row.find('input[name="amount"]').val(amount.toFixed(2));
 
@@ -681,7 +697,13 @@ function saveReturnOrder() {
             k: $row.find('input[name="amount"]').val() || '0.00',        // 金额 (k字段)
             l: $row.find('input[name="material"]').val() || '',          // 材质 (l字段)
             m: $row.find('input[name="weight"]').val() || '',            // 重量 (m字段)
-            n: $row.find('input[name="remark"]').val() || ''             // 备注 (n字段)
+            n: $row.find('input[name="remark"]').val() || '',            // 备注 (n字段)
+
+            // 新增字段
+            lingjianhao: $row.find('input[name="partNumber"]').val() || '',       // 零件号 (ay字段)
+            gongzuoling: $row.find('input[name="workOrder"]').val() || '',        // 工作令 (az字段)
+            jiagongfei: $row.find('input[name="processingFee"]').val() || '0.00', // 加工费 (ba字段)
+            cailiaofei: $row.find('input[name="materialFee"]').val() || '0.00'   // 材料费 (bb字段)
         };
 
         console.log(`第${index + 1}行数据:`, rowData);
@@ -864,7 +886,6 @@ $(document).ready(function() {
     // =================================================
 });
 
-// 修改 addNewRow 函数
 function addNewRow() {
     var tableBody = $('#return-detail-table1 tbody');
     var currentRows = tableBody.find('tr').length;
@@ -875,6 +896,8 @@ function addNewRow() {
             <td>${currentRows + 1}</td>
             <td><input type="text" class="form-control form-control-sm" name="contractNo" contenteditable="false"></td>
             <td><input type="text" class="form-control form-control-sm" name="taskNo" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="partNumber" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="workOrder" contenteditable="false"></td>
             <td><input type="text" class="form-control form-control-sm" name="gongxu" contenteditable="false"></td>
             <td><input type="text" class="form-control form-control-sm" name="productName" contenteditable="false"></td>
             <td><input type="text" class="form-control form-control-sm" name="drawingNo" contenteditable="false"></td>
@@ -882,6 +905,8 @@ function addNewRow() {
             <td><input type="number" class="form-control form-control-sm" name="quantity" value="1" contenteditable="false"></td>
             <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="0" contenteditable="false"></td>
             <td><input type="number" class="form-control form-control-sm" name="amount" value="0" contenteditable="false" readonly></td>
+            <td><input type="number" class="form-control form-control-sm" name="processingFee" value="0" contenteditable="false"></td>
+            <td><input type="number" class="form-control form-control-sm" name="materialFee" value="0" contenteditable="false"></td>
             <td><input type="text" class="form-control form-control-sm" name="material" contenteditable="false"></td>
             <td><input type="text" class="form-control form-control-sm" name="weight" contenteditable="false"></td>
             <td><input type="text" class="form-control form-control-sm" name="remark" contenteditable="false"></td>
@@ -1048,28 +1073,36 @@ function fillFormWithData(dataList) {
             l: item.l || '',      // 材质 (对应返回的l字段)
             n: item.m || '',      // 重量 (对应返回的m字段)
             ax: item.n || '',     // 备注 (对应返回的n字段)
+            ay: item.ay || '',    // 零件号 (对应返回的ay字段)
+            az: item.az || '',    // 工作令 (对应返回的az字段)
+            ba: item.ba || '0.00', // 加工费 (对应返回的ba字段)
+            bb: item.bb || '0.00', // 材料费 (对应返回的bb字段)
             unitPrice: item.j || '0.00',   // 单价
             amount: item.k || '0.00'       // 金额
         };
 
         var row = `
-            <tr data-original-id="${rowData.id}">
-                <td><input type="checkbox" class="row-select1"></td>
-                <td>${index + 1}</td>
-                <td><input type="text" class="form-control form-control-sm" name="contractNo" value="${rowData.d || ''}" contenteditable="false"></td>
-                <td><input type="text" class="form-control form-control-sm" name="taskNo" value="${rowData.e || ''}" contenteditable="false"></td>
-                <td><input type="text" class="form-control form-control-sm" name="gongxu" value="${rowData.g || ''}" contenteditable="false"></td>
-                <td><input type="text" class="form-control form-control-sm" name="productName" value="${rowData.h || ''}" contenteditable="false"></td>
-                <td><input type="text" class="form-control form-control-sm" name="drawingNo" value="${rowData.i || ''}" contenteditable="false"></td>
-                <td><input type="text" class="form-control form-control-sm" name="unit" value="${rowData.j || ''}" contenteditable="false"></td>
-                <td><input type="number" class="form-control form-control-sm" name="quantity" value="${rowData.k || '1'}" contenteditable="false"></td>
-                <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="${rowData.unitPrice}" contenteditable="false"></td>
-                <td><input type="number" class="form-control form-control-sm" name="amount" value="${rowData.amount}" contenteditable="false" readonly></td>
-                <td><input type="text" class="form-control form-control-sm" name="material" value="${rowData.l || ''}" contenteditable="false"></td>
-                <td><input type="text" class="form-control form-control-sm" name="weight" value="${rowData.n || ''}" contenteditable="false"></td>
-                <td><input type="text" class="form-control form-control-sm" name="remark" value="${rowData.ax || ''}" contenteditable="false"></td>
-            </tr>
-        `;
+        <tr data-original-id="${rowData.id}">
+            <td><input type="checkbox" class="row-select1"></td>
+            <td>${index + 1}</td>
+            <td><input type="text" class="form-control form-control-sm" name="contractNo" value="${rowData.d || ''}" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="taskNo" value="${rowData.e || ''}" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="partNumber" value="${rowData.ay || ''}" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="workOrder" value="${rowData.az || ''}" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="gongxu" value="${rowData.g || ''}" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="productName" value="${rowData.h || ''}" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="drawingNo" value="${rowData.i || ''}" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="unit" value="${rowData.j || ''}" contenteditable="false"></td>
+            <td><input type="number" class="form-control form-control-sm" name="quantity" value="${rowData.k || '1'}" contenteditable="false"></td>
+            <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="${rowData.unitPrice}" contenteditable="false"></td>
+            <td><input type="number" class="form-control form-control-sm" name="amount" value="${rowData.amount}" contenteditable="false" readonly></td>
+            <td><input type="number" class="form-control form-control-sm" name="processingFee" value="${rowData.ba}" contenteditable="false"></td>
+            <td><input type="number" class="form-control form-control-sm" name="materialFee" value="${rowData.bb}" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="material" value="${rowData.l || ''}" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="weight" value="${rowData.n || ''}" contenteditable="false"></td>
+            <td><input type="text" class="form-control form-control-sm" name="remark" value="${rowData.ax || ''}" contenteditable="false"></td>
+        </tr>
+    `;
 
         tableBody.append(row);
     });
@@ -1209,7 +1242,6 @@ function deleteExistingChukudan(chukudanhao, successCallback, errorCallback) {
 }
 
 // ==================== 保存出库单数据的函数 ====================
-// ==================== 保存出库单数据的函数 ====================
 function saveChukudanData(formData, contractIds, $btn) {
     var originalText = $btn.html();
     $btn.html('<i class="bi bi-arrow-clockwise icon"></i>提交中...');
@@ -1240,6 +1272,12 @@ function saveChukudanData(formData, contractIds, $btn) {
             o: detail.l || '',            // 合同号 (o字段) - 材质映射到合同号
             p: detail.m || '',            // 任务号 (p字段) - 重量映射到任务号
             q: detail.n || '',            // 工序 (q字段) - 备注映射到工序
+
+            // 新增字段映射
+            lingjianhao: detail.lingjianhao || '',          // 零件号 (ay字段)
+            gongzuoling: detail.gongzuoling || '',          // 工作令 (az字段)
+            jiagongfei: detail.jiagongfei || '0.00',      // 加工费 (ba字段)
+            cailiaofei: detail.cailiaofei || '0.00',      // 材料费 (bb字段)
 
             // 人员信息
             r: formData.r || '',          // 制单人 (r字段)
@@ -1343,6 +1381,8 @@ function clearChukuForm() {
         var $firstRow = $('#return-detail-table1 tbody tr:first');
         $firstRow.find('input[name="contractNo"]').val('');
         $firstRow.find('input[name="taskNo"]').val('');
+        $firstRow.find('input[name="partNumber"]').val('');
+        $firstRow.find('input[name="workOrder"]').val('');
         $firstRow.find('input[name="gongxu"]').val('');
         $firstRow.find('input[name="productName"]').val('');
         $firstRow.find('input[name="drawingNo"]').val('');
@@ -1350,6 +1390,8 @@ function clearChukuForm() {
         $firstRow.find('input[name="quantity"]').val('1');
         $firstRow.find('input[name="unitPrice"]').val('0');
         $firstRow.find('input[name="amount"]').val('0');
+        $firstRow.find('input[name="processingFee"]').val('0');
+        $firstRow.find('input[name="materialFee"]').val('0');
         $firstRow.find('input[name="material"]').val('');
         $firstRow.find('input[name="weight"]').val('');
         $firstRow.find('input[name="remark"]').val('');
@@ -1502,7 +1544,6 @@ function loadContactUnitList() {
 // ==================== 简单打印函数（纯表单样式） ====================
 function printOutboundOrder() {
     console.log('开始打印出库单...');
-
 
     // 验证必填字段
     if (!$('#return-customer1').val() || $('#return-customer1').val().trim() === '') {
@@ -1658,6 +1699,8 @@ function printOutboundOrder() {
         '序号': { field: 'index', type: 'index' },
         '合同号': { field: 'contractNo', input: 'contractNo' },
         '任务号': { field: 'taskNo', input: 'taskNo' },
+        '零件号': { field: 'partNumber', input: 'partNumber' },
+        '工作令': { field: 'workOrder', input: 'workOrder' },
         '加工工序': { field: 'gongxu', input: 'gongxu' },
         '产品名称': { field: 'productName', input: 'productName' },
         '图号': { field: 'drawingNo', input: 'drawingNo' },
@@ -1665,6 +1708,8 @@ function printOutboundOrder() {
         '数量': { field: 'quantity', input: 'quantity' },
         '单价': { field: 'unitPrice', input: 'unitPrice' },
         '金额': { field: 'amount', input: 'amount' },
+        '加工费': { field: 'processingFee', input: 'processingFee' },
+        '材料费': { field: 'materialFee', input: 'materialFee' },
         '材质': { field: 'material', input: 'material' },
         '重量': { field: 'weight', input: 'weight' },
         '备注': { field: 'remark', input: 'remark' }
@@ -1685,15 +1730,21 @@ function printOutboundOrder() {
     var rowNumber = 1;
     var calculatedTotalAmount = 0;
     var calculatedTotalQuantity = 0;
+    var totalProcessingFee = 0;
+    var totalMaterialFee = 0;
 
     $('#return-detail-table1 tbody tr').each(function() {
         var $row = $(this);
         var contractNo = $row.find('input[name="contractNo"]').val();
         var quantity = parseFloat($row.find('input[name="quantity"]').val()) || 0;
         var amount = parseFloat($row.find('input[name="amount"]').val()) || 0;
+        var processingFee = parseFloat($row.find('input[name="processingFee"]').val()) || 0;
+        var materialFee = parseFloat($row.find('input[name="materialFee"]').val()) || 0;
 
         calculatedTotalAmount += amount;
         calculatedTotalQuantity += quantity;
+        totalProcessingFee += processingFee;
+        totalMaterialFee += materialFee;
 
         if (contractNo && contractNo.trim() !== '') {
             tableRows += '<tr>';
@@ -1728,6 +1779,18 @@ function printOutboundOrder() {
     // 使用外部定义的numberToChinese1函数
     var chineseAmount = numberToChinese1(displayAmount);
 
+    // 添加费用合计行（可选）
+    var feeSummaryRow = '';
+    if (totalProcessingFee > 0 || totalMaterialFee > 0) {
+        feeSummaryRow = `
+            <div class="fee-summary" style="display: flex;justify-content: space-around;margin-bottom: 3mm;">
+                <div><strong>加工费合计：</strong>${totalProcessingFee.toFixed(2)} 元</div>
+                <div><strong>材料费合计：</strong>${totalMaterialFee.toFixed(2)} 元</div>
+                <div><strong>费用总计：</strong>${(totalProcessingFee + totalMaterialFee).toFixed(2)} 元</div>
+            </div>
+        `;
+    }
+
     // 完成打印内容
     printContent += `
         <div class="print-title">成都龙辉机械设备制造有限公司出库单</div>
@@ -1750,6 +1813,8 @@ function printOutboundOrder() {
             <div><strong>合计金额(大写)：</strong>${chineseAmount}</div>
             <div><strong>合计金额：</strong>${displayAmount.toFixed(2)} 元</div>
         </div>
+        
+        ${feeSummaryRow}
         
         <div class="footer">
             <div class="footer-top">
@@ -1823,6 +1888,8 @@ var printColumnConfig = {
     '序号': { selected: true, width: '50px' },
     '合同号': { selected: true, width: '100px' },
     '任务号': { selected: true, width: '100px' },
+    '零件号': { selected: true, width: '100px' },
+    '工作令': { selected: true, width: '100px' },
     '加工工序': { selected: true, width: '120px' },
     '产品名称': { selected: true, width: '120px' },
     '图号': { selected: true, width: '120px' },
@@ -1830,6 +1897,8 @@ var printColumnConfig = {
     '数量': { selected: true, width: '60px' },
     '单价': { selected: true, width: '80px' },
     '金额': { selected: true, width: '80px' },
+    '加工费': { selected: true, width: '80px' },
+    '材料费': { selected: true, width: '80px' },
     '材质': { selected: true, width: '80px' },
     '重量': { selected: true, width: '80px' },
     '备注': { selected: true, width: '100px' }
@@ -1967,6 +2036,13 @@ function showPrintPreview() {
                     border-left: 1px solid black;
                     border-right: 1px solid black;
                 }
+                .fee-summary {
+                    display: flex;
+                    justify-content: space-around;
+                    margin-top: 10px;
+                    padding: 10px 0;
+                    border: 1px solid black;
+                }
                 .footer {
                     margin-top: 30px;
                 }
@@ -2004,6 +2080,8 @@ function showPrintPreview() {
         '序号': { field: 'index', type: 'index' },
         '合同号': { field: 'contractNo', input: 'contractNo' },
         '任务号': { field: 'taskNo', input: 'taskNo' },
+        '零件号': { field: 'partNumber', input: 'partNumber' },
+        '工作令': { field: 'workOrder', input: 'workOrder' },
         '加工工序': { field: 'gongxu', input: 'gongxu' },
         '产品名称': { field: 'productName', input: 'productName' },
         '图号': { field: 'drawingNo', input: 'drawingNo' },
@@ -2011,6 +2089,8 @@ function showPrintPreview() {
         '数量': { field: 'quantity', input: 'quantity' },
         '单价': { field: 'unitPrice', input: 'unitPrice' },
         '金额': { field: 'amount', input: 'amount' },
+        '加工费': { field: 'processingFee', input: 'processingFee' },
+        '材料费': { field: 'materialFee', input: 'materialFee' },
         '材质': { field: 'material', input: 'material' },
         '重量': { field: 'weight', input: 'weight' },
         '备注': { field: 'remark', input: 'remark' }
@@ -2030,12 +2110,19 @@ function showPrintPreview() {
     var tableRows = '';
     var rowNumber = 1;
     var totalAmount = 0;
+    var totalProcessingFee = 0;
+    var totalMaterialFee = 0;
 
     $('#return-detail-table1 tbody tr').each(function() {
         var $row = $(this);
         var contractNo = $row.find('input[name="contractNo"]').val();
         var amount = parseFloat($row.find('input[name="amount"]').val()) || 0;
+        var processingFee = parseFloat($row.find('input[name="processingFee"]').val()) || 0;
+        var materialFee = parseFloat($row.find('input[name="materialFee"]').val()) || 0;
+
         totalAmount += amount;
+        totalProcessingFee += processingFee;
+        totalMaterialFee += materialFee;
 
         if (contractNo && contractNo.trim() !== '') {
             tableRows += '<tr>';
@@ -2131,6 +2218,18 @@ function showPrintPreview() {
         return result;
     }
 
+    // 费用汇总行
+    var feeSummaryRow = '';
+    if (totalProcessingFee > 0 || totalMaterialFee > 0) {
+        feeSummaryRow = `
+            <div class="fee-summary" style="display: flex;justify-content: space-around;margin-bottom: 3mm;">
+                <div><strong>加工费合计：</strong>${totalProcessingFee.toFixed(2)} 元</div>
+                <div><strong>材料费合计：</strong>${totalMaterialFee.toFixed(2)} 元</div>
+                <div><strong>费用总计：</strong>${(totalProcessingFee + totalMaterialFee).toFixed(2)} 元</div>
+            </div>
+        `;
+    }
+
     // 完成预览内容
     previewContent += `
         <div class="preview-title">打印预览 - 出库单</div>
@@ -2153,6 +2252,8 @@ function showPrintPreview() {
             <div><strong>合计金额：</strong>${totalAmount.toFixed(2)} 元</div>
         </div>
         
+        ${feeSummaryRow}
+        
         <div class="footer">
             <div style="display: flex;justify-content: space-around;border: 1px solid black;">
                 <div><strong>制单人：</strong>${$('#company-address1').val() || ''}</div>
@@ -2160,13 +2261,11 @@ function showPrintPreview() {
                 <div><strong>送货人：</strong>${$('#songhuoren').val() || ''}</div>
                 <div><strong>收货人：</strong>${$('#shouhuoren').val() || ''}</div>
             </div>
-            </div style="display: flex;justify-content: space-around;border-left: 1px solid black;border-right: 1px solid black;">
+            <div style="display: flex;justify-content: space-around;border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;">
                 <div><strong>地址：</strong>四川省成都市新都区石板滩街道石木路588号</div>
                 <div><strong>联系电话：</strong>13730601502</div>
             </div>
         </div>
-        
-        
         
         <div style="border: 1px solid black;padding: 3px;">
             <div><strong>声明：</strong></div>
@@ -2214,10 +2313,12 @@ function addTotalRow() {
 
     var totalRow = `
         <tr class="total-row">
-            <td colspan="8" class="text-right"><strong>合计：</strong></td>
+            <td colspan="10" class="text-right"><strong>合计：</strong></td>
             <td><input type="number" class="form-control form-control-sm" id="total-quantity" value="0" readonly style="font-weight: bold;"></td>
             <td></td>
             <td><input type="number" class="form-control form-control-sm" id="total-amount-display" value="0" readonly style="font-weight: bold;"></td>
+            <td></td>
+            <td></td>
             <td colspan="3"></td>
         </tr>
     `;
