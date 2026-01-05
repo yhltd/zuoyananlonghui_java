@@ -3475,6 +3475,7 @@ var excelToDbMapping = {
     13: 'ay',  // M列 → 要求日期
     14: 'd',   // N列 → 合同
     15: 'at',   // O列 → 备注
+    16:  'c',
 };
 
 // 文件选择变化 - 确保这个事件绑定正确
@@ -3569,7 +3570,7 @@ function convertExcelData(jsonData) {
 
         // 根据预定义的映射转换数据
         for (var col = 0; col < row.length; col++) {
-            if (col > 55) break; // 限制到BD列
+            if (col > 56) break; // 限制到BD列
 
             var field = excelToDbMapping[col];
             var value = row[col];

@@ -3997,7 +3997,7 @@ var excelToDbMapping = {
     53: 'ar',  // AT列 → 车
     54: 'aas', // AU列 → 登记员
     55: 'at',  // AV列 → 备注
-
+    56: 'c',
     2: 'lingjianhao',      // 新增：零件号（假设在某个列）
     14: 'xianshiji',        // 新增：铣实际工时
     17: 'cheshiji',         // 新增：车实际工时
@@ -4104,7 +4104,7 @@ function convertExcelData(jsonData) {
 
         // 根据预定义的映射转换数据
         for (var col = 0; col < row.length; col++) {
-            if (col > 55) break; // 限制到BD列
+            if (col > 56) break; // 限制到BD列
 
             var field = excelToDbMapping[col];
             var value = row[col];
