@@ -39,7 +39,8 @@ function getList(page, size, searchParams) {
             pageSize: pageSize,
             C: searchParams.C || '',
             zhuangtai:searchParams.zhuangtai|| '',// 订单号（后端需要但前端没有，传空）
-            D:searchParams.D|| ''
+            D:searchParams.D|| '',
+            I:searchParams.I|| ''
         }),
         dataType: 'json'
     }, false, '', function (res) {
@@ -362,6 +363,7 @@ $(function () {
         $('#name').val("");
         $('#department').val("");
         $('#hth').val("");
+        $('#i').val("");
         getList();
 
         // 显示所有数据
@@ -802,7 +804,7 @@ function setTable(data) {
                 }
             }, {
                 field: 'i',
-                title: '规格型号',
+                title: '图号',
                 align: 'center',
                 sortable: true,
                 width: 120,
@@ -822,20 +824,6 @@ function setTable(data) {
                 width: 80,
                 class: 'editable'
             },{
-                field: 'm',
-                title: '单价',
-                align: 'center',
-                sortable: true,
-                width: 100,
-                class: 'editable'
-            }, {
-                field: 'n',
-                title: '金额',
-                align: 'center',
-                sortable: true,
-                width: 120,
-                class: 'editable'
-            },{
                 field: 'cailiaofei',
                 title: '材料费',
                 align: 'center',
@@ -845,6 +833,20 @@ function setTable(data) {
             },{
                 field: 'jiagongfei',
                 title: '加工费',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
+                field: 'm',
+                title: '单价',
+                align: 'center',
+                sortable: true,
+                width: 100,
+                class: 'editable'
+            }, {
+                field: 'n',
+                title: '金额',
                 align: 'center',
                 sortable: true,
                 width: 120,
@@ -1792,8 +1794,7 @@ function addReturnRow() {
         <tr>
             <td><input type="checkbox" class="row-select"></td>
             <td>${rowCount + 1}</td>
-            <td><input type="text" class="form-control form-control-sm" name="contractNo"></td>
-            <td><input type="text" class="form-control form-control-sm" name="taskNo"></td>
+            <td><input type="text" class="form-control form-control-sm" name="gongzuoling"></td>
             <td><input type="text" class="form-control form-control-sm" name="productName"></td>
             <td><input type="text" class="form-control form-control-sm" name="drawingNo"></td>
             <td><input type="text" class="form-control form-control-sm" name="unit"></td>
@@ -1801,7 +1802,6 @@ function addReturnRow() {
             <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="0"></td>
             <td><input type="number" class="form-control form-control-sm" name="amount" value="0" readonly></td>
             <td><input type="text" class="form-control form-control-sm" name="material"></td>
-            <td><input type="text" class="form-control form-control-sm" name="weight"></td>
             <td><input type="date" class="form-control form-control-sm" name="returnDate"></td>
             <td><input type="text" class="form-control form-control-sm" name="returnReason" list="return-reason-history"></td>
             <td><input type="text" class="form-control form-control-sm" name="remark"></td>
@@ -2003,8 +2003,7 @@ function setReturnCustomerDefault(customerName) {
 }
 // 填充退货单行数据
 function fillReturnRowData($row, rowData) {
-    $row.find('input[name="contractNo"]').val(rowData.d || '');
-    $row.find('input[name="taskNo"]').val(rowData.e || '');
+    $row.find('input[name="gongzuoling"]').val(rowData.gongzuoling || '');
     $row.find('input[name="productName"]').val(rowData.h || '');
     $row.find('input[name="drawingNo"]').val(rowData.i || '');
     $row.find('input[name="unit"]').val(rowData.j || '');
@@ -2012,7 +2011,6 @@ function fillReturnRowData($row, rowData) {
     $row.find('input[name="unitPrice"]').val(rowData.m || '0');
     $row.find('input[name="amount"]').val(rowData.n || '0');
     $row.find('input[name="material"]').val(rowData.l || '');
-    $row.find('input[name="weight"]').val(rowData.aw || '');
     $row.find('input[name="remark"]').val(rowData.at || '');
 // 设置隐藏的原表id
     $row.data('original-id', rowData.id);  // 将原表id存储在data属性中
@@ -2207,8 +2205,8 @@ function fillReturnTable(data) {
             <tr data-original-id="${item.v || ''}">
                 <td><input type="checkbox" class="row-select"></td>
                 <td>${index + 1}</td>
-                <td><input type="text" class="form-control form-control-sm" name="contractNo" value="${item.g || ''}"></td>
-                <td><input type="text" class="form-control form-control-sm" name="taskNo" value="${item.h || ''}"></td>
+              
+                <td><input type="text" class="form-control form-control-sm" name="gongzuoling" value="${item.gongzuoling || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="productName" value="${item.i || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="drawingNo" value="${item.j || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="unit" value="${item.k || ''}"></td>
@@ -2216,7 +2214,7 @@ function fillReturnTable(data) {
                 <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="${item.m || ''}"></td>
                 <td><input type="number" class="form-control form-control-sm" name="amount" value="${item.n || ''}" readonly></td>
                 <td><input type="text" class="form-control form-control-sm" name="material" value="${item.o || ''}"></td>
-                <td><input type="text" class="form-control form-control-sm" name="weight" value="${item.p || ''}"></td>
+             
                 <td><input type="date" class="form-control form-control-sm" name="returnDate" value="${item.w || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="returnReason" value="${item.q || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="remark" value="${item.u || ''}"></td>
@@ -2337,8 +2335,7 @@ function saveReturnOrderData() {
             s: $('#customer-signature').val(),
             // 明细特有信息
             q: $row.find('input[name="returnReason"]').val(),
-            g: $row.find('input[name="contractNo"]').val(),
-            h: $row.find('input[name="taskNo"]').val(),
+            gongzuoling: $row.find('input[name="gongzuoling"]').val(),
             i: $row.find('input[name="productName"]').val(),
             j: $row.find('input[name="drawingNo"]').val(),
             k: $row.find('input[name="unit"]').val(),
@@ -2346,7 +2343,6 @@ function saveReturnOrderData() {
             m: $row.find('input[name="unitPrice"]').val(),
             n: $row.find('input[name="amount"]').val(),
             o: $row.find('input[name="material"]').val(),
-            p: $row.find('input[name="weight"]').val(),
             w: $row.find('input[name="returnDate"]').val(),
             u: $row.find('input[name="remark"]').val(),
             v: $row.data('original-id') || ''  // 从data属性获取原表id
@@ -2521,6 +2517,7 @@ function getSearchParams() {
         C: $('#name').val() || '',    // 订单号
         zhuangtai: $('#department').val() || '',
         D: $('#hth').val() || '',
+        I: $('#tuhao').val() || '',
     };
 }
 
@@ -2550,8 +2547,7 @@ function clearReturnForm() {
     } else {
         // 清空第一行的数据
         var $firstRow = $('#return-detail-table tbody tr:first');
-        $firstRow.find('input[name="contractNo"]').val('');
-        $firstRow.find('input[name="taskNo"]').val('');
+        $firstRow.find('input[name="gongzuoling"]').val('');
         $firstRow.find('input[name="productName"]').val('');
         $firstRow.find('input[name="drawingNo"]').val('');
         $firstRow.find('input[name="unit"]').val('');
@@ -2559,7 +2555,6 @@ function clearReturnForm() {
         $firstRow.find('input[name="unitPrice"]').val('0');
         $firstRow.find('input[name="amount"]').val('0');
         $firstRow.find('input[name="material"]').val('');
-        $firstRow.find('input[name="weight"]').val('');
         $firstRow.find('input[name="returnDate"]').val('');
         $firstRow.find('input[name="returnReason"]').val('');
         $firstRow.find('input[name="remark"]').val('');
@@ -2658,13 +2653,13 @@ function createExcelFile(data, filename) {
                 '名称': item.h || '',
                 '工作令': item.gongzuoling || '',
                 '工艺规程状态': item.zhuangtai || '',
-                '规格型号': item.i || '',
+                '图号': item.i || '',
                 '单位': item.j || '',
                 '数量': item.k || '',
-                '单价': item.m || '',
-                '金额': item.n || '',
                 '材料费': item.cailiaofei || '',
                 '加工费': item.jiagongfei || '',
+                '单价': item.m || '',
+                '金额': item.n || '',
                 '材质': item.l || '',
                 '重量': item.aw || '',
                 '零件尺寸': item.ax || '',
@@ -3893,7 +3888,7 @@ function buildReturnOrderPrintContent() {
                 <tr>
                     <td>${rowNumber++}</td>
                     <td>${contractNo}</td>
-                    <td>${$row.find('input[name="taskNo"]').val() || ''}</td>
+                    <td>${$row.find('input[name="gongzuoling"]').val() || ''}</td>
                     <td>${$row.find('input[name="productName"]').val() || ''}</td>
                     <td>${$row.find('input[name="drawingNo"]').val() || ''}</td>
                     <td>${$row.find('input[name="unit"]').val() || ''}</td>
@@ -3901,7 +3896,6 @@ function buildReturnOrderPrintContent() {
                     <td>${parseFloat($row.find('input[name="unitPrice"]').val() || 0).toFixed(2)}</td>
                     <td>${parseFloat($row.find('input[name="amount"]').val() || 0).toFixed(2)}</td>
                     <td>${$row.find('input[name="material"]').val() || ''}</td>
-                    <td>${$row.find('input[name="weight"]').val() || ''}</td>
                     <td>${$row.find('input[name="returnDate"]').val() || ''}</td>
                     <td>${$row.find('input[name="returnReason"]').val() || ''}</td>
                     <td>${$row.find('input[name="remark"]').val() || ''}</td>

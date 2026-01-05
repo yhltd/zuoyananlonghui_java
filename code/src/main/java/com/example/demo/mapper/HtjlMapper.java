@@ -365,9 +365,9 @@ public interface HtjlMapper extends BaseMapper<Htjl> {
 
 
     //    退货单
-    @Insert("INSERT INTO tuihuo (C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W) " +
+    @Insert("INSERT INTO tuihuo (C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W,lingjianhao) " +
             "VALUES (#{c}, #{d}, #{e}, #{f}, #{g}, #{h}, #{i}, #{j}, #{k}, #{l}, #{m}, #{n}, " +
-            "#{o}, #{p}, #{q}, #{r}, #{s}, #{t}, #{u}, #{v}, #{w})")
+            "#{o}, #{p}, #{q}, #{r}, #{s}, #{t}, #{u}, #{v}, #{w}, #{lingjianhao})")
     boolean save(Htjl htjl);
 
     @Select("select isnull(max(F),'') from tuihuo where F like 'No:' + CONVERT(varchar(8), GETDATE(), 112) + '%'")

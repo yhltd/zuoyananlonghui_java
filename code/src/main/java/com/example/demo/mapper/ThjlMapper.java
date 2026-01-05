@@ -99,11 +99,11 @@ public interface ThjlMapper extends BaseMapper<Thjl> {
     List<Thjl> queryList(String ksrq, String jsrq, String h, String i, String k, String r);
 
 
-    @Update("UPDATE tuihuo SET c = #{c},w = #{w}, d = #{d}, e = #{e}, f = #{f}, g = #{g}, h = #{h}, i = #{i}, j = #{j}, k = #{k}, l = #{l}, m = #{m}, n = #{n}, o = #{o}, p = #{p}, q = #{q}, r = #{r}, s = #{s}, t = #{t}, u = #{u}, v = #{v} WHERE id = #{id}")
+    @Update("UPDATE tuihuo SET c = #{c},w = #{w}, d = #{d}, e = #{e}, f = #{f}, g = #{g}, h = #{h}, i = #{i}, j = #{j}, k = #{k}, l = #{l}, m = #{m}, n = #{n}, o = #{o}, p = #{p}, q = #{q}, r = #{r}, s = #{s}, t = #{t}, u = #{u}, v = #{v}, gongzuoling = #{gongzuoling}, lingjianhao = #{lingjianhao} WHERE id = #{id}")
     boolean update(Thjl thjl);
 
-    @Insert("INSERT INTO tuihuo (w,c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v) " +
-            "VALUES (#{w},#{c}, #{d}, #{e}, #{f}, #{g}, #{h}, #{i}, #{j}, #{k}, #{l}, #{m}, #{n}, #{o}, #{p}, #{q}, #{r}, #{s}, #{t}, #{u}, #{v})")
+    @Insert("INSERT INTO tuihuo (w,c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v,gongzuoling,lingjianhao) " +
+            "VALUES (#{w},#{c}, #{d}, #{e}, #{f}, #{g}, #{h}, #{i}, #{j}, #{k}, #{l}, #{m}, #{n}, #{o}, #{p}, #{q}, #{r}, #{s}, #{t}, #{u}, #{v}, #{gongzuoling}, #{lingjianhao})")
     boolean add(Thjl thjl);
 
 

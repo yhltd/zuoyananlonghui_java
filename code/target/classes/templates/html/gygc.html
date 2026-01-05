@@ -344,9 +344,9 @@
         <thead>
         <tr>
             <th>业务单位</th>
-            <th id="business-unit" contenteditable="true"></th>
+            <th id="business-unit" colspan="3" contenteditable="true"></th>
             <th id="">数量</th>
-            <th id="quantity" colspan="3" contenteditable="true"></th>
+            <th id="quantity" colspan="1" contenteditable="true"></th>
             <th>材质</th>
             <th id="material" colspan="3" contenteditable="true"></th>
         </tr>
@@ -380,7 +380,10 @@
                 list="process-name-history"
                 onfocus="showProcessNameSuggestions(this)"
                 oninput="saveProcessNameInput(this)"></td>
-            <td class="col-3" contenteditable="true" colspan="3"></td>
+            <td class="col-3" contenteditable="true" colspan="3"
+                list="process-content-history"
+                onfocus="showProcessContentSuggestions(this)"
+                oninput="saveProcessContentInput(this)"></td>
             <td class="col-4" contenteditable="true"></td>
             <td class="col-5" contenteditable="true"></td>
             <td class="col-6" contenteditable="true"></td>
@@ -495,6 +498,11 @@
 <datalist id="process-name-history">
     <!-- 选项将通过JavaScript动态添加 -->
 </datalist>
+
+<datalist id="process-content-history">
+    <!-- 选项将通过JavaScript动态添加 -->
+</datalist>
+
 
 <script>
     $(document).ready(function() {

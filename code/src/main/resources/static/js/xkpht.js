@@ -508,7 +508,7 @@ function setTable(data) {
             },
             {
                 field: 'i',
-                title: '规格型号',
+                title: '图号',
                 align: 'center',
                 sortable: true,
                 width: 120,
@@ -531,6 +531,20 @@ function setTable(data) {
                 class: 'editable'
             },
             {
+                field: 'cailiaofei',
+                title: '材料费',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
+                field: 'jiagongfei',
+                title: '加工费',
+                align: 'center',
+                sortable: true,
+                width: 120,
+                class: 'editable'
+            },{
                 field: 'm',
                 title: '单价',
                 align: 'center',
@@ -541,20 +555,6 @@ function setTable(data) {
             {
                 field: 'n',
                 title: '金额',
-                align: 'center',
-                sortable: true,
-                width: 120,
-                class: 'editable'
-            },{
-                field: 'cailiaofei',
-                title: '材料费',
-                align: 'center',
-                sortable: true,
-                width: 120,
-                class: 'editable'
-            },{
-                field: 'jiagongfei',
-                title: '加工费',
                 align: 'center',
                 sortable: true,
                 width: 120,
@@ -1035,13 +1035,13 @@ function createExcelFile(data, filename) {
                 '工作令': item.gongzuoling || '',
                 '对账状态': item.hetongzhuangtai || '',
                 '出库单号': item.au || '',
-                '规格型号': item.i || '',
+                '图号': item.i || '',
                 '单位': item.j || '',
                 '数量': item.k || '',
-                '单价': item.m || '',
-                '金额': item.n || '',
                 '材料费': item.cailiaofei || '',
                 '加工费': item.jiagongfei || '',
+                '单价': item.m || '',
+                '金额': item.n || '',
                 '材质': item.l || '',
                 '重量': item.aw || '',
                 '零件尺寸': item.ax || '',

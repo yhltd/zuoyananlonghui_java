@@ -7,6 +7,14 @@ $(document).ready(function() {
     // 新增：初始化工序内容历史记录
     initProcessContentMemory();
 
+    // 新增：初始化工序内容下拉功能
+    initProcessContentMemorySync();
+
+    setTimeout(() => {
+        initNameDropdownMemory();
+    }, 1500); // 延迟1.5秒，确保所有下拉框都已加载
+
+
     // 从sessionStorage获取数据
     const processData = JSON.parse(sessionStorage.getItem('currentProcessData') || '{}');
     window.currentHtid = processData.id || '';
@@ -47,17 +55,20 @@ $(document).ready(function() {
         // 创建新行 - 修改工序名称单元格
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
-        <td class="col-1">${newIndex}</td>
-        <td class="col-2" contenteditable="true" 
-            data-list="process-name-history"
-            onfocus="showProcessNameSuggestions(this)"
-            oninput="saveProcessNameInput(this)"></td>
-        <td class="col-3" contenteditable="true" colspan="3"></td>
-        <td class="col-4" contenteditable="true"></td>
-        <td class="col-5" contenteditable="true"></td>
-        <td class="col-6" contenteditable="true"></td>
-        <td class="col-7" contenteditable="true"></td>
-        <td class="col-8" contenteditable="true"></td>
+            <td class="col-1">${newIndex}</td>
+            <td class="col-2" contenteditable="true" 
+                data-list="process-name-history"
+                onfocus="showProcessNameSuggestions(this)"
+                oninput="saveProcessNameInput(this)"></td>
+            <td class="col-3" contenteditable="true" colspan="3"
+                list="process-content-history"
+                onfocus="showProcessContentSuggestions(this)"
+                oninput="saveProcessContentInput(this)"></td>
+            <td class="col-4" contenteditable="true"></td>
+            <td class="col-5" contenteditable="true"></td>
+            <td class="col-6" contenteditable="true"></td>
+            <td class="col-7" contenteditable="true"></td>
+            <td class="col-8" contenteditable="true"></td>
     `;
 
         // 在最后插入新行
@@ -86,6 +97,7 @@ $(document).ready(function() {
 
     document.getElementById('printBtn').addEventListener('click', function() {
         printWithQRCode();
+       saveProcessData();
     });
 
     document.getElementById('baocun').addEventListener('click', function() {
@@ -133,6 +145,21 @@ $(document).ready(function() {
         }
     });
 });
+
+// 修改为类似工序名称的初始化方式：
+function initProcessContentMemorySync() {
+    console.log('=== 同步初始化工序内容记忆功能 ===');
+
+    // 加载历史记录
+    const history = getProcessContentHistory();
+    console.log('同步加载工序内容历史记录:', history);
+
+    // 创建自定义下拉（与工序名称相同的方式）
+    createProcessContentCustomDropdown();
+
+    // 更新datalist
+    updateProcessContentDatalist(history);
+}
 
 // 从后端删除行
 function deleteRowFromBackend(rowId, selectedRow) {
@@ -206,9 +233,9 @@ function fillProcessHeader(data) {
     $('#business-unit').text(data.c || '');      // 业务单位
     $('#task-no').text(data.e || '');            // 任务号
     $('#process-status').text(data.f || '未创建'); // 工艺规程状态
-    $('#product-name').text(data.h || '');       // 零件名称
+    $('#product-name').text(data.g || '');       // 零件名称
     $('#drawing-no').text(data.i || '');         // 图号
-    $('#quantity').text(data.k || '');           // 数量
+    $('#quantity').text(data.h || '');           // 数量
     $('#material').text(data.l || '');           // 材质
     $('#contract-no').text(data.d || '');        // 合同号
 
@@ -236,31 +263,108 @@ function fillProcessHeader(data) {
         if (res.code == 200) {
             if (res.data && res.data.length > 0) {
                 const firstItem = res.data[0];
-                // 设置三个日期字段
-                $('#gyrq').val(formatDateForInput(firstItem.r) || '');  // 工艺员日期 - r字段
-                $('#jdrq').val(formatDateForInput(firstItem.t) || '');  // 校对员日期 - t字段
-                $('#pzrq').val(formatDateForInput(firstItem.v) || '');
 
-                // 修改这里：不直接设置文本，而是设置下拉框的值
+                // 设置日期字段 - 如果数据库中有值就用数据库的值，否则用当前日期
+                const today = new Date().toISOString().split('T')[0]; // 当前日期YYYY-MM-DD
+
+                // 工艺员日期
+                $('#gyrq').val(formatDateForInput(firstItem.r) || today);
+
+                // 校对员日期 - 如果是新记录，设置为当前日期
+                $('#jdrq').val(formatDateForInput(firstItem.t) || today);
+
+                // 批准日期 - 如果是新记录，设置为当前日期
+                $('#pzrq').val(formatDateForInput(firstItem.v) || today);
+
+                // 设置人名下拉框的值，并记录上一次选择
                 if (firstItem.q) {
                     setDropdownValue('gyy', firstItem.q);
+                    saveLastSelectedName('gyy', firstItem.q);
+                } else {
+                    // 如果没有值，使用上一次选择的值
+                    const lastGyy = getLastSelectedName('gyy');
+                    if (lastGyy) {
+                        setDropdownValue('gyy', lastGyy);
+                    }
                 }
+
                 if (firstItem.s) {
                     setDropdownValue('jdy', firstItem.s);
+                    saveLastSelectedName('jdy', firstItem.s);
+                } else {
+                    const lastJdy = getLastSelectedName('jdy');
+                    if (lastJdy) {
+                        setDropdownValue('jdy', lastJdy);
+                    }
                 }
+
                 if (firstItem.u) {
                     setDropdownValue('pzr', firstItem.u);
+                    saveLastSelectedName('pzr', firstItem.u);
+                } else {
+                    const lastPzr = getLastSelectedName('pzr');
+                    if (lastPzr) {
+                        setDropdownValue('pzr', lastPzr);
+                    }
                 }
 
                 // 填充表格数据
                 setTable(res.data);
                 swal("加载成功", "已加载 " + res.data.length + " 条工艺规程数据", "success");
             } else {
-                // 如果没有数据，清空表格或显示提示
+                // 如果没有数据，清空表格并设置默认值
                 clearTable();
-                swal("提示", "暂无工艺规程数据", "info");
+
+                // 设置日期字段为当前日期
+                const today = new Date().toISOString().split('T')[0];
+                $('#gyrq').val(today);
+                $('#jdrq').val(today);
+                $('#pzrq').val(today);
+
+                // 设置人名下拉框为上一次选择的值
+                const lastGyy = getLastSelectedName('gyy');
+                if (lastGyy) {
+                    setDropdownValue('gyy', lastGyy);
+                }
+
+                const lastJdy = getLastSelectedName('jdy');
+                if (lastJdy) {
+                    setDropdownValue('jdy', lastJdy);
+                }
+
+                const lastPzr = getLastSelectedName('pzr');
+                if (lastPzr) {
+                    setDropdownValue('pzr', lastPzr);
+                }
+
+                swal("提示", "暂无工艺规程数据，已初始化新表格", "info");
             }
         } else {
+            // 查询失败时也初始化默认值
+            clearTable();
+
+            // 设置日期字段为当前日期
+            const today = new Date().toISOString().split('T')[0];
+            $('#gyrq').val(today);
+            $('#jdrq').val(today);
+            $('#pzrq').val(today);
+
+            // 设置人名下拉框为上一次选择的值
+            const lastGyy = getLastSelectedName('gyy');
+            if (lastGyy) {
+                setDropdownValue('gyy', lastGyy);
+            }
+
+            const lastJdy = getLastSelectedName('jdy');
+            if (lastJdy) {
+                setDropdownValue('jdy', lastJdy);
+            }
+
+            const lastPzr = getLastSelectedName('pzr');
+            if (lastPzr) {
+                setDropdownValue('pzr', lastPzr);
+            }
+
             swal("查询失败", res.msg || "加载工艺规程数据失败", "error");
         }
     }, function(xhr, status, error) {
@@ -301,7 +405,10 @@ function clearTable() {
                 list="process-name-history"
                 onfocus="showProcessNameSuggestions(this)"
                 oninput="saveProcessNameInput(this)"></td>
-            <td class="col-3" contenteditable="true" colspan="3"></td>
+            <td class="col-3" contenteditable="true" colspan="3"
+                list="process-content-history"
+                onfocus="showProcessContentSuggestions(this)"
+                oninput="saveProcessContentInput(this)"></td>
             <td class="col-4" contenteditable="true"></td>
             <td class="col-5" contenteditable="true"></td>
             <td class="col-6" contenteditable="true"></td>
@@ -325,18 +432,21 @@ function setTable(data) {
             row.dataset.id = item.id;
         }
         row.innerHTML = `
-        <td class="col-1">${index + 1}</td>
-        <td class="col-2" contenteditable="true"
-            list="process-name-history"
-            onfocus="showProcessNameSuggestions(this)"
-            oninput="saveProcessNameInput(this)">${item.j || ''}</td>
-        <td class="col-3" contenteditable="true" colspan="3" list="process-content-history">${item.k || ''}</td>  <!-- 添加list属性 -->
-        <td class="col-4" contenteditable="true">${item.l || ''}</td>
-        <td class="col-5" contenteditable="true">${item.m || ''}</td>
-        <td class="col-6" contenteditable="true">${item.n || ''}</td>
-        <td class="col-7" contenteditable="true">${item.o || ''}</td>
-        <td class="col-8" contenteditable="true">${item.p || ''}</td>
-    `;
+            <td class="col-1">${index + 1}</td>
+            <td class="col-2" contenteditable="true"
+                list="process-name-history"
+                onfocus="showProcessNameSuggestions(this)"
+                oninput="saveProcessNameInput(this)">${item.j || ''}</td>
+            <td class="col-3" contenteditable="true" colspan="3"
+                list="process-content-history"
+                onfocus="showProcessContentSuggestions(this)"
+                oninput="saveProcessContentInput(this)">${item.k || ''}</td>
+            <td class="col-4" contenteditable="true">${item.l || ''}</td>
+            <td class="col-5" contenteditable="true">${item.m || ''}</td>
+            <td class="col-6" contenteditable="true">${item.n || ''}</td>
+            <td class="col-7" contenteditable="true">${item.o || ''}</td>
+            <td class="col-8" contenteditable="true">${item.p || ''}</td>
+            `;
         tbody.appendChild(row);
     });
 
@@ -349,7 +459,10 @@ function setTable(data) {
                 list="process-name-history"
                 onfocus="showProcessNameSuggestions(this)"
                 oninput="saveProcessNameInput(this)"></td>
-            <td class="col-3" contenteditable="true" colspan="3"></td>
+            <td class="col-3" contenteditable="true" colspan="3"
+                list="process-content-history"
+                onfocus="showProcessContentSuggestions(this)"
+                oninput="saveProcessContentInput(this)"></td>
             <td class="col-4" contenteditable="true"></td>
             <td class="col-5" contenteditable="true"></td>
             <td class="col-6" contenteditable="true"></td>
@@ -369,7 +482,10 @@ function setTable(data) {
                 list="process-name-history"
                 onfocus="showProcessNameSuggestions(this)"
                 oninput="saveProcessNameInput(this)"></td>
-            <td class="col-3" contenteditable="true" colspan="3"></td>
+            <td class="col-3" contenteditable="true" colspan="3"
+                list="process-content-history"
+                onfocus="showProcessContentSuggestions(this)"
+                oninput="saveProcessContentInput(this)"></td>
             <td class="col-4" contenteditable="true"></td>
             <td class="col-5" contenteditable="true"></td>
             <td class="col-6" contenteditable="true"></td>
@@ -545,6 +661,9 @@ function saveProcessData() {
     setTimeout(() => {
         saveAllProcessNamesToHistory();
     }, 1000);
+    setTimeout(() => {
+        saveAllProcessContentsToHistory();
+    }, 1000);
 
     // 如果没有数据需要保存
     if (totalRequests === 0) {
@@ -716,16 +835,17 @@ function queryListById(id) {
 }
 
 // 将查询到的数据替换表格现有数据
+// 将查询到的数据替换表格现有数据
 function replaceTableData(data) {
     if (data && data.length > 0) {
         // 使用第一条数据填充表头
         const headerData = data[0];
 
         $('#business-unit').text(headerData.d || '');      // 业务单位
-        $('#task-no').text(headerData.h || '');            // 任务号
+        $('#task-no').text(headerData.e || '');            // 任务号
         $('#product-name').text(headerData.g || '');       // 零件名称
         $('#drawing-no').text(headerData.i || '');         // 图号
-        $('#quantity').text(headerData.e || '');           // 数量
+        $('#quantity').text(headerData.h || '');           // 数量
         $('#material').text(headerData.f || '');           // 材质
 
         // 修改这里：设置下拉框的值
@@ -763,7 +883,10 @@ function replaceTableData(data) {
                 list="process-name-history"
                 onfocus="showProcessNameSuggestions(this)"
                 oninput="saveProcessNameInput(this)">${item.j || ''}</td>
-            <td class="col-3" contenteditable="true" colspan="3">${item.k || ''}</td>
+            <td class="col-3" contenteditable="true" colspan="3"
+                list="process-content-history"
+                onfocus="showProcessContentSuggestions(this)"
+                oninput="saveProcessContentInput(this)">${item.k || ''}</td>
             <td class="col-4" contenteditable="true">${item.l || ''}</td>
             <td class="col-5" contenteditable="true">${item.m || ''}</td>
             <td class="col-6" contenteditable="true">${item.n || ''}</td>
@@ -783,7 +906,10 @@ function replaceTableData(data) {
                 list="process-name-history"
                 onfocus="showProcessNameSuggestions(this)"
                 oninput="saveProcessNameInput(this)"></td>
-            <td class="col-3" contenteditable="true" colspan="3"></td>
+            <td class="col-3" contenteditable="true" colspan="3"
+                list="process-content-history"
+                onfocus="showProcessContentSuggestions(this)"
+                oninput="saveProcessContentInput(this)"></td>
             <td class="col-4" contenteditable="true"></td>
             <td class="col-5" contenteditable="true"></td>
             <td class="col-6" contenteditable="true"></td>
@@ -803,7 +929,10 @@ function replaceTableData(data) {
                 list="process-name-history"
                 onfocus="showProcessNameSuggestions(this)"
                 oninput="saveProcessNameInput(this)"></td>
-            <td class="col-3" contenteditable="true" colspan="3"></td>
+            <td class="col-3" contenteditable="true" colspan="3"
+                list="process-content-history"
+                onfocus="showProcessContentSuggestions(this)"
+                oninput="saveProcessContentInput(this)"></td>
             <td class="col-4" contenteditable="true"></td>
             <td class="col-5" contenteditable="true"></td>
             <td class="col-6" contenteditable="true"></td>
@@ -838,7 +967,10 @@ function addNewRow() {
                 list="process-name-history"
                 onfocus="showProcessNameSuggestions(this)"
                 oninput="saveProcessNameInput(this)"></td>
-            <td class="col-3" contenteditable="true" colspan="3"></td>
+            <td class="col-3" contenteditable="true" colspan="3"
+                list="process-content-history"
+                onfocus="showProcessContentSuggestions(this)"
+                oninput="saveProcessContentInput(this)"></td>
             <td class="col-4" contenteditable="true"></td>
             <td class="col-5" contenteditable="true"></td>
             <td class="col-6" contenteditable="true"></td>
@@ -982,6 +1114,10 @@ function createDropdown(fieldId, options, defaultValue) {
         return;
     }
 
+    // 获取上一次保存的值作为默认值
+    const lastSelectedValue = getLastSelectedName(fieldId);
+    const finalDefaultValue = defaultValue || lastSelectedValue;
+
     // 创建下拉框
     let selectHtml = '<select class="signature-dropdown" style="width: 100%; border: none; background: transparent; font-size: 14px;">';
     selectHtml += '<option value="">请选择</option>';
@@ -990,7 +1126,7 @@ function createDropdown(fieldId, options, defaultValue) {
     const uniqueOptions = [...new Set(options)].sort();
 
     uniqueOptions.forEach(option => {
-        const selected = (option === defaultValue) ? 'selected' : '';
+        const selected = (option === finalDefaultValue) ? 'selected' : '';
         selectHtml += `<option value="${option}" ${selected}>${option}</option>`;
     });
 
@@ -1001,10 +1137,21 @@ function createDropdown(fieldId, options, defaultValue) {
 
     // 监听变化，更新签名区域
     element.find('select').on('change', function() {
-        updateSignatureField(fieldId, $(this).val());
+        const value = $(this).val();
+        updateSignatureField(fieldId, value);
+
+        // 保存选择
+        if (value) {
+            saveLastSelectedName(fieldId, value);
+        }
+    });
+
+    console.log(`创建下拉框 ${fieldId}:`, {
+        options: uniqueOptions,
+        defaultValue: finalDefaultValue,
+        lastSelectedValue: lastSelectedValue
     });
 }
-
 // 新增函数：更新下拉框选项
 function updateDropdownOptions(fieldId, options, defaultValue) {
     const selectElement = $('#' + fieldId + ' select');
@@ -1578,7 +1725,7 @@ function generatePrintContent(qrCodeImageBase64, htid) {
     });
 
     // 4. 分页处理：每页24行数据（注意：这里已经是双倍行数了）
-    const rowsPerPage = 20;
+    const rowsPerPage = 10;
     const totalPages = Math.ceil(tableRows.length / rowsPerPage);
     const printPages = [];
 
@@ -1807,12 +1954,12 @@ function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureDa
         .info-header th {
             font-weight: bold;
             width: 7%;
-            font-size: 18px;
+            font-size: 11px;
         }
         .info-header .value-cell {
             width: 10%;
             font-weight: normal;
-            font-size: 18px;
+            font-size: 11px;
         }
         
         /* 工序表格 */
@@ -1829,17 +1976,17 @@ function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureDa
             height: 9mm;
             background-color: white !important;
             page-break-inside: avoid;
-            font-size: 16px;
+            font-size: 11px;
         }
         .process-table th {
             font-weight: bold;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
-        .col-1 { width: 8%; }
-        .col-2 { width: 12%; }
-        .col-3 { width: 25%; }
-        .col-4 { width: 10%; }
+        .col-1 { width: 4%; }
+        .col-2 { width: 7%; }
+        .col-3 { width: 37%; }
+        .col-4 { width: 7%; }
         .col-5 { width: 10%; }
         .col-6 { width: 15%; }
         .col-7 { width: 10%; }
@@ -1879,7 +2026,6 @@ function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureDa
         
         /* 内容区域，留出签名行的空间 */
         .content-area {
-            min-height: 150mm; /* 添加最小高度 */
             overflow: hidden;
         }
         
@@ -2083,7 +2229,7 @@ function initProcessNameMemory() {
     $(document).on('blur', '#processTable tbody td.col-3', function() {
         const processContent = $(this).text().trim();
         if (processContent) {
-            saveProcessContentToHistory(processContent);
+            saveProcessContentToHistoryEnhanced(processContent);
         }
     });
 
@@ -2309,7 +2455,12 @@ function initProcessContentMemory() {
 
 // 创建工序内容datalist（如果需要）
 function createProcessContentDatalist(history) {
-    if (history.length === 0) return;
+    if (!history || history.length === 0) {
+        console.log('没有工序内容历史记录，不创建datalist');
+        return;
+    }
+
+    console.log('创建工序内容datalist，历史记录:', history);
 
     // 确保datalist元素存在
     let datalist = document.getElementById('process-content-history');
@@ -2317,6 +2468,7 @@ function createProcessContentDatalist(history) {
         datalist = document.createElement('datalist');
         datalist.id = 'process-content-history';
         document.body.appendChild(datalist);
+        console.log('创建新的工序内容datalist元素');
     }
 
     // 清空现有选项
@@ -2324,25 +2476,47 @@ function createProcessContentDatalist(history) {
 
     // 添加新选项
     history.forEach(item => {
-        const option = document.createElement('option');
-        option.value = String(item);
-        option.textContent = String(item);
-        datalist.appendChild(option);
+        if (item && item.trim() !== '') {
+            const option = document.createElement('option');
+            option.value = String(item);
+            option.textContent = String(item);
+            datalist.appendChild(option);
+        }
     });
+
+    console.log(`工序内容datalist创建完成，添加了 ${history.length} 个选项`);
 
     // 为所有工序内容单元格绑定datalist
     updateProcessContentBindings();
 }
-
+// 更新工序内容单元格的datalist绑定
 // 更新工序内容单元格的datalist绑定
 function updateProcessContentBindings() {
     const contentCells = document.querySelectorAll('#processTable tbody td.col-3');
+    const datalist = document.getElementById('process-content-history');
 
-    contentCells.forEach(cell => {
+    console.log(`找到 ${contentCells.length} 个工序内容单元格`);
+
+    contentCells.forEach((cell, index) => {
+        // 确保datalist存在
+        if (!datalist) {
+            console.error('没有找到工序内容datalist');
+            return;
+        }
+
+        // 设置list属性指向datalist
         if (!cell.hasAttribute('list')) {
             cell.setAttribute('list', 'process-content-history');
+            console.log(`单元格 ${index} 绑定datalist`);
+        }
+
+        // 检查绑定是否有效
+        if (cell.getAttribute('list') !== 'process-content-history') {
+            console.warn(`单元格 ${index} 的list属性不匹配:`, cell.getAttribute('list'));
         }
     });
+
+    console.log('工序内容单元格绑定完成');
 }
 
 // 获取工序内容历史记录
@@ -2407,3 +2581,311 @@ function saveAllProcessNamesToHistory() {
     });
 }
 
+// 新增：初始化工序内容历史记录和下拉功能
+function initProcessContentWithDropdown() {
+    console.log('=== 初始化工序内容下拉功能 ===');
+
+    // 创建工序内容datalist
+    let datalist = document.getElementById('process-content-history');
+    if (!datalist) {
+        datalist = document.createElement('datalist');
+        datalist.id = 'process-content-history';
+        document.body.appendChild(datalist);
+        console.log('创建工序内容datalist元素');
+    }
+
+    // 加载历史记录到datalist
+    updateProcessContentDatalist();
+
+    // 监听工序内容单元格焦点事件，显示历史记录
+    $(document).on('focus', '#processTable tbody td.col-3', function() {
+        showProcessContentSuggestions(this);
+    });
+
+    // 监听工序内容输入事件，实时保存
+    $(document).on('input', '#processTable tbody td.col-3', function() {
+        saveProcessContentInput(this);
+    });
+
+    // 初始化绑定所有现有的工序内容单元格
+    setTimeout(() => {
+        updateProcessContentBindings();
+    }, 1000);
+}
+
+// 显示工序内容建议
+function showProcessContentSuggestions(cell) {
+    const history = getProcessContentHistory();
+    if (history.length === 0) {
+        console.log('没有工序内容历史记录');
+        return;
+    }
+
+    // 确保有datalist
+    let datalist = document.getElementById('process-content-history');
+    if (!datalist) {
+        console.log('创建新的工序内容datalist');
+        datalist = document.createElement('datalist');
+        datalist.id = 'process-content-history';
+        document.body.appendChild(datalist);
+    }
+
+    // 检查datalist选项数量
+    const optionCount = datalist.querySelectorAll('option').length;
+    console.log(`工序内容datalist有 ${optionCount} 个选项，历史记录有 ${history.length} 条`);
+
+    if (optionCount === 0) {
+        // 如果datalist为空，重新加载
+        updateProcessContentDatalist();
+    }
+
+    // 记录用户输入，用于调试
+    console.log('用户点击工序内容单元格，当前内容:', cell.textContent);
+}
+
+// 更新工序内容datalist
+function updateProcessContentDatalist() {
+    const history = getProcessContentHistory();
+    const datalist = document.getElementById('process-content-history');
+
+    if (!datalist) {
+        console.error('找不到工序内容datalist元素');
+        return;
+    }
+
+    console.log('更新工序内容datalist，历史记录:', history);
+
+    // 清空现有选项
+    datalist.innerHTML = '';
+
+    if (history.length === 0) {
+        console.log('没有工序内容历史记录');
+        return;
+    }
+
+    // 添加新选项
+    history.forEach(item => {
+        if (item && item.trim() !== '') {
+            const option = document.createElement('option');
+            option.value = String(item);
+            datalist.appendChild(option);
+        }
+    });
+
+    console.log(`工序内容datalist已更新，添加了 ${history.length} 个选项`);
+
+    // 立即更新所有绑定
+    updateProcessContentBindings();
+}
+
+// 保存工序内容输入
+function saveProcessContentInput(cell) {
+    const processContent = cell.textContent.trim();
+    if (processContent) {
+        clearTimeout(window.processContentSaveTimer);
+        window.processContentSaveTimer = setTimeout(() => {
+            saveProcessContentToHistory(processContent);
+        }, 500);
+    }
+}
+
+// 保存上一次选择的人名
+function saveLastSelectedName(fieldId, name) {
+    if (name && name.trim()) {
+        localStorage.setItem(`last_name_${fieldId}`, name.trim());
+    }
+}
+
+// 获取上一次选择的人名
+function getLastSelectedName(fieldId) {
+    return localStorage.getItem(`last_name_${fieldId}`) || '';
+}
+
+// 监听下拉框变化，保存选择
+function initNameDropdownMemory() {
+    // 监听工艺员下拉框变化
+    $('#gyy').on('change', 'select', function() {
+        const value = $(this).val();
+        if (value) {
+            saveLastSelectedName('gyy', value);
+            console.log('保存工艺员选择:', value);
+        }
+    });
+
+    // 监听校对员下拉框变化
+    $('#jdy').on('change', 'select', function() {
+        const value = $(this).val();
+        if (value) {
+            saveLastSelectedName('jdy', value);
+            console.log('保存校对员选择:', value);
+        }
+    });
+
+    // 监听批准人下拉框变化
+    $('#pzr').on('change', 'select', function() {
+        const value = $(this).val();
+        if (value) {
+            saveLastSelectedName('pzr', value);
+            console.log('保存批准人选择:', value);
+        }
+    });
+
+    // 页面加载时，如果没有下拉框值，使用上一次保存的值
+    setTimeout(() => {
+        // 检查工艺员下拉框是否有值，没有则使用上次保存的
+        if (!$('#gyy select').val()) {
+            const lastGyy = getLastSelectedName('gyy');
+            if (lastGyy) {
+                setDropdownValue('gyy', lastGyy);
+                console.log('页面加载时设置工艺员默认值:', lastGyy);
+            }
+        }
+
+        // 检查校对员下拉框是否有值，没有则使用上次保存的
+        if (!$('#jdy select').val()) {
+            const lastJdy = getLastSelectedName('jdy');
+            if (lastJdy) {
+                setDropdownValue('jdy', lastJdy);
+                console.log('页面加载时设置校对员默认值:', lastJdy);
+            }
+        }
+
+        // 检查批准人下拉框是否有值，没有则使用上次保存的
+        if (!$('#pzr select').val()) {
+            const lastPzr = getLastSelectedName('pzr');
+            if (lastPzr) {
+                setDropdownValue('pzr', lastPzr);
+                console.log('页面加载时设置批准人默认值:', lastPzr);
+            }
+        }
+    }, 1000); // 延迟1秒确保下拉框已创建
+}
+
+// 创建工序内容自定义下拉（与工序名称保持同步）
+function createProcessContentCustomDropdown() {
+    // 1. 创建自定义下拉容器（如果不存在）
+    let dropdownContainer = document.getElementById('process-content-dropdown');
+    if (!dropdownContainer) {
+        dropdownContainer = document.createElement('div');
+        dropdownContainer.id = 'process-content-dropdown';
+        dropdownContainer.style.cssText = `
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        `;
+        document.body.appendChild(dropdownContainer);
+        console.log('创建工序内容自定义下拉容器');
+    }
+
+    // 2. 监听工序内容单元格的焦点/点击/输入事件
+    $(document).on('focus click input', '#processTable tbody td.col-3', function(e) {
+        const cell = this;
+        const rect = cell.getBoundingClientRect();
+        const history = getProcessContentHistory();
+
+        if (history.length === 0) {
+            console.log('没有工序内容历史记录');
+            return;
+        }
+
+        // 显示下拉
+        dropdownContainer.innerHTML = '';
+        dropdownContainer.style.display = 'block';
+        dropdownContainer.style.left = rect.left + 'px';
+        dropdownContainer.style.top = (rect.bottom + 5) + 'px';
+        dropdownContainer.style.width = rect.width + 'px';
+
+        // 添加选项
+        history.forEach(item => {
+            if (item && item.trim() !== '') {
+                const option = document.createElement('div');
+                option.textContent = item;
+                option.style.cssText = `
+                    padding: 5px 10px;
+                    cursor: pointer;
+                    border-bottom: 1px solid #eee;
+                `;
+                option.onmouseover = () => option.style.background = '#f0f0f0';
+                option.onmouseout = () => option.style.background = 'white';
+                option.onclick = () => {
+                    cell.textContent = item;
+                    dropdownContainer.style.display = 'none';
+                    // 触发输入事件
+                    const event = new Event('input', { bubbles: true });
+                    cell.dispatchEvent(event);
+                };
+                dropdownContainer.appendChild(option);
+            }
+        });
+    });
+
+    // 3. 点击其他地方隐藏下拉
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#process-content-dropdown') &&
+            !e.target.closest('#processTable tbody td.col-3')) {
+            dropdownContainer.style.display = 'none';
+        }
+    });
+}
+
+// 在saveProcessData函数中，添加保存所有工序内容到历史记录的功能
+function saveAllProcessContentsToHistory() {
+    const processContents = new Set();
+
+    $('#processTable tbody tr').each(function() {
+        const processContent = $(this).find('td.col-3').text().trim();
+        if (processContent) {
+            processContents.add(processContent);
+        }
+    });
+
+    // 保存每个工序内容
+    processContents.forEach(content => {
+        saveProcessContentToHistory(content);
+    });
+}
+
+// 增强工序内容历史记录保存函数，与工序名称保持一致
+function saveProcessContentToHistoryEnhanced(content) {
+    if (!content || content.trim() === '') {
+        return;
+    }
+
+    const name = content.trim();
+    console.log('保存工序内容:', name);
+
+    try {
+        // 1. 获取当前历史记录
+        let history = getProcessContentHistory();
+        console.log('当前工序内容历史记录:', history);
+
+        // 2. 去重（不区分大小写）
+        history = history.filter(item =>
+            item.toString().toLowerCase() !== name.toLowerCase()
+        );
+
+        // 3. 新记录放前面
+        history.unshift(name);
+
+        // 4. 只保留最近的20条记录（与工序名称一致）
+        if (history.length > 20) {
+            history = history.slice(0, 20);
+        }
+
+        // 5. 保存到localStorage
+        const historyStr = JSON.stringify(history);
+        localStorage.setItem('process_content_history', historyStr);
+        console.log('工序内容保存到localStorage:', historyStr);
+
+        // 6. 立即更新datalist
+        updateProcessContentDatalist(history);
+
+    } catch (error) {
+        console.error('保存工序内容历史记录失败:', error);
+    }
+}

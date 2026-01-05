@@ -12,6 +12,8 @@ var columnMultipliers = {
 
 var currentTableData = [];
 
+var gongxuConfigData = [];
+
 
 var idd;
 var currentPage = 1;
@@ -117,6 +119,8 @@ $(function () {
     loadCustomerList();
     // 新增：初始绑定所有退货原因输入框
     updateAllReturnReasonInputBindings();
+    // 工序配置
+    loadGongxuConfig();
 
     // 初始化退货原因记忆功能
     initReturnReasonMemory();
@@ -955,13 +959,6 @@ function setTable(data) {
                 width: 120,
                 class: 'editable'
             },{
-                field: 'gongzuoling',
-                title: '工作令',
-                align: 'center',
-                sortable: true,
-                width: 120,
-                class: 'editable'
-            }, {
                 field: 'zhuangtai',
                 title: '工艺规程状态',
                 align: 'center',
@@ -1014,20 +1011,6 @@ function setTable(data) {
                 width: 100,
                 class: 'editable'
             },{
-                field: 'cailiaofei',
-                title: '材料费',
-                align: 'center',
-                sortable: true,
-                width: 120,
-                class: 'editable'
-            },{
-                field: 'jiagongfei',
-                title: '加工费',
-                align: 'center',
-                sortable: true,
-                width: 120,
-                class: 'editable'
-            }, {
                 field: 'av',
                 title: '序合计',
                 align: 'center',
@@ -1035,22 +1018,8 @@ function setTable(data) {
                 width: 100,
                 class: 'editable'
             }, {
-                field: 'aw',
-                title: '重量',
-                align: 'center',
-                sortable: true,
-                width: 80,
-                class: 'editable'
-            }, {
-                field: 'ax',
-                title: '工件尺寸',
-                align: 'center',
-                sortable: true,
-                width: 120,
-                class: 'editable'
-            }, {
                 field: 'm',
-                title: '单价元',
+                title: '单价',
                 align: 'center',
                 sortable: true,
                 width: 100,
@@ -2274,6 +2243,7 @@ function addReturnRow() {
             <td>${rowCount + 1}</td>
             <td><input type="text" class="form-control form-control-sm" name="contractNo"></td>
             <td><input type="text" class="form-control form-control-sm" name="taskNo"></td>
+            <td><input type="text" class="form-control form-control-sm" name="lingjianhao"></td>
             <td><input type="text" class="form-control form-control-sm" name="productName"></td>
             <td><input type="text" class="form-control form-control-sm" name="drawingNo"></td>
             <td><input type="text" class="form-control form-control-sm" name="unit"></td>
@@ -2281,7 +2251,7 @@ function addReturnRow() {
             <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="0"></td>
             <td><input type="number" class="form-control form-control-sm" name="amount" value="0" readonly></td>
             <td><input type="text" class="form-control form-control-sm" name="material"></td>
-            <td><input type="text" class="form-control form-control-sm" name="weight"></td>
+  
             <td><input type="date" class="form-control form-control-sm" name="returnDate"></td>
             <td><input type="text" class="form-control form-control-sm" name="returnReason" list="return-reason-history"></td>
             <td><input type="text" class="form-control form-control-sm" name="remark"></td>
@@ -2485,6 +2455,7 @@ function setReturnCustomerDefault(customerName) {
 function fillReturnRowData($row, rowData) {
     $row.find('input[name="contractNo"]').val(rowData.d || '');
     $row.find('input[name="taskNo"]').val(rowData.e || '');
+    $row.find('input[name="lingjianhao"]').val(rowData.lingjianhao || '');
     $row.find('input[name="productName"]').val(rowData.h || '');
     $row.find('input[name="drawingNo"]').val(rowData.i || '');
     $row.find('input[name="unit"]').val(rowData.j || '');
@@ -2492,7 +2463,7 @@ function fillReturnRowData($row, rowData) {
     $row.find('input[name="unitPrice"]').val(rowData.m || '0');
     $row.find('input[name="amount"]').val(rowData.n || '0');
     $row.find('input[name="material"]').val(rowData.l || '');
-    $row.find('input[name="weight"]').val(rowData.aw || '');
+
     $row.find('input[name="remark"]').val(rowData.at || '');
 // 设置隐藏的原表id
     $row.data('original-id', rowData.id);  // 将原表id存储在data属性中
@@ -2696,6 +2667,7 @@ function fillReturnTable(data) {
                 <td>${index + 1}</td>
                 <td><input type="text" class="form-control form-control-sm" name="contractNo" value="${item.g || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="taskNo" value="${item.h || ''}"></td>
+                <td><input type="text" class="form-control form-control-sm" name="lingjianhao" value="${item.lingjianhao || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="productName" value="${item.i || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="drawingNo" value="${item.j || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="unit" value="${item.k || ''}"></td>
@@ -2703,7 +2675,7 @@ function fillReturnTable(data) {
                 <td><input type="number" class="form-control form-control-sm" name="unitPrice" value="${item.m || ''}"></td>
                 <td><input type="number" class="form-control form-control-sm" name="amount" value="${item.n || ''}" readonly></td>
                 <td><input type="text" class="form-control form-control-sm" name="material" value="${item.o || ''}"></td>
-                <td><input type="text" class="form-control form-control-sm" name="weight" value="${item.p || ''}"></td>
+               
                 <td><input type="date" class="form-control form-control-sm" name="returnDate" value="${item.w || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="returnReason" value="${item.q || ''}"></td>
                 <td><input type="text" class="form-control form-control-sm" name="remark" value="${item.u || ''}"></td>
@@ -2826,6 +2798,7 @@ function saveReturnOrderData() {
             q: $row.find('input[name="returnReason"]').val(),
             g: $row.find('input[name="contractNo"]').val(),
             h: $row.find('input[name="taskNo"]').val(),
+            lingjianhao: $row.find('input[name="lingjianhao"]').val(),
             i: $row.find('input[name="productName"]').val(),
             j: $row.find('input[name="drawingNo"]').val(),
             k: $row.find('input[name="unit"]').val(),
@@ -2833,7 +2806,7 @@ function saveReturnOrderData() {
             m: $row.find('input[name="unitPrice"]').val(),
             n: $row.find('input[name="amount"]').val(),
             o: $row.find('input[name="material"]').val(),
-            p: $row.find('input[name="weight"]').val(),
+
             w: $row.find('input[name="returnDate"]').val(),
             u: $row.find('input[name="remark"]').val(),
             v: $row.data('original-id') || ''  // 从data属性获取原表id
@@ -3042,6 +3015,7 @@ function clearReturnForm() {
         var $firstRow = $('#return-detail-table tbody tr:first');
         $firstRow.find('input[name="contractNo"]').val('');
         $firstRow.find('input[name="taskNo"]').val('');
+        $firstRow.find('input[name="lingjianhao"]').val('');
         $firstRow.find('input[name="productName"]').val('');
         $firstRow.find('input[name="drawingNo"]').val('');
         $firstRow.find('input[name="unit"]').val('');
@@ -3049,7 +3023,7 @@ function clearReturnForm() {
         $firstRow.find('input[name="unitPrice"]').val('0');
         $firstRow.find('input[name="amount"]').val('0');
         $firstRow.find('input[name="material"]').val('');
-        $firstRow.find('input[name="weight"]').val('');
+
         $firstRow.find('input[name="returnDate"]').val('');
         $firstRow.find('input[name="returnReason"]').val('');
         $firstRow.find('input[name="remark"]').val('');
@@ -4136,18 +4110,175 @@ function convertExcelData(jsonData) {
             var value = row[col];
 
             if (field && value !== undefined && value !== null && value !== '') {
-                // 简单处理：转换为字符串
-                record[field] = String(value).trim();
+                var strValue = String(value).trim();
+
+                // ====== 关键修改：跳过单价列 ======
+                if (isPriceColumn(col)) {
+                    console.log('跳过单价列', col, '字段', field, '，由计算函数设置');
+                    continue; // 跳过这个列，不设置值
+                }
+
+                // 特殊处理：如果这是工时列，尝试获取工序配置进行计算
+                if (isGongshiColumn(col)) {
+                    console.log('处理工时列', col, '字段', field, '值:', strValue);
+                    handleGongshiCalculation(col, record, strValue);
+                } else {
+                    record[field] = strValue;
+                }
             }
         }
 
         // 只有有数据的记录才添加
         if (Object.keys(record).length > 0) {
+            console.log('最终记录对象:', record);
             result.push(record);
         }
     }
 
+    console.log('转换完成，总共', result.length, '条记录');
     return result;
+}
+
+// 判断是否为工时列
+function isGongshiColumn(colIndex) {
+    // 工时列索引：12(P), 15(R), 18(T), 21(V), 23(X), 25(Z), 28(AB), 31(AD), 34(AF), 37(AH), 40(AJ), 43(AL)
+    var gongshiColumns = [12, 15, 18, 21, 23, 25, 28, 31, 34, 37, 40, 43];
+    return gongshiColumns.includes(colIndex);
+}
+
+function isPriceColumn(colIndex) {
+    // 单价列索引：13(Q), 16(S), 19(U), 22(W), 24(Y), 26(AA), 29(AC), 32(AE), 35(AG), 38(AI), 41(AK), 44(AM)
+    var priceColumns = [13, 16, 19, 22, 24, 26, 29, 32, 35, 38, 41, 44];
+    return priceColumns.includes(colIndex);
+}
+
+// 处理工时计算
+function handleGongshiCalculation(colIndex, record, gongshiValue) {
+    try {
+        // 获取对应的工序名称
+        var gongxuName = getGongxuNameByExcelColumn(colIndex);
+
+        if (!gongxuName) {
+            console.log('未找到列索引', colIndex, '对应的工序名称');
+            // 即使没有找到工序名称，也要设置工时字段（使用原始值）
+            var gongshiField = excelToDbMapping[colIndex];
+            if (gongshiField) {
+                record[gongshiField] = gongshiValue;
+            }
+            return;
+        }
+
+        // 查找工序配置中的num值
+        var gongxuNum = findGongxuNumByName(gongxuName);
+
+        if (gongxuNum === null) {
+            console.log('未找到工序', gongxuName, '的配置数据');
+            // 没有找到配置，工时字段使用原始值
+            var gongshiField = excelToDbMapping[colIndex];
+            if (gongshiField) {
+                record[gongshiField] = gongshiValue;
+            }
+            return;
+        }
+
+        // 解析工时值
+        var gongshiNum = parseFloat(gongshiValue);
+        if (isNaN(gongshiNum)) {
+            console.log('工时值无效:', gongshiValue);
+            // 工时值无效，工时字段使用原始字符串
+            var gongshiField = excelToDbMapping[colIndex];
+            if (gongshiField) {
+                record[gongshiField] = gongshiValue;
+            }
+            return;
+        }
+
+        // ====== 关键：工时字段保持Excel原始值 ======
+        var gongshiField = excelToDbMapping[colIndex];
+        if (gongshiField) {
+            record[gongshiField] = gongshiNum.toString();
+        }
+
+        // ====== 关键：单价字段使用计算值 ======
+        // 计算单价 = 工时值 × 工序配置num值
+        var calculatedPrice = gongshiNum * gongxuNum;
+
+        var priceField = getPriceFieldByGongshiColumn(colIndex);
+        if (priceField) {
+            record[priceField] = calculatedPrice.toString();
+            console.log('计算完成:', gongxuName,
+                'Excel工时=', gongshiNum,
+                '配置值=', gongxuNum,
+                '计算单价=', calculatedPrice,
+                '设置字段:', priceField, '=', calculatedPrice);
+        }
+
+    } catch (error) {
+        console.error('处理工时计算时出错:', error);
+    }
+}
+
+// 根据工时列索引获取对应的单价字段
+function getPriceFieldByGongshiColumn(gongshiCol) {
+    // 工时列到单价列的映射
+    var gongshiToPriceMap = {
+        12: 'p',   // 铣工时 → 铣单价 (Q列)
+        15: 'r',   // 车工时 → 车单价 (S列)
+        18: 't',   // 钳工时 → 钳单价 (U列)
+        21: 'v',   // 整件外委工时 → 整件外委单位 (W列)
+        23: 'x',   // 外委工时 → 外委单价 (Y列)
+        25: 'z',   // 镗工时 → 镗单价 (AA列)
+        28: 'ab',  // 割工时 → 割单价 (AC列)
+        31: 'ad',  // 磨工时 → 磨单价 (AE列)
+        34: 'af',  // 数控铣工时 → 数控铣单价 (AG列)
+        37: 'ah',  // 立车 → 立车单价 (AI列)
+        40: 'aj',  // 电火花 → 电火花单价 (AK列)
+        43: 'al'   // 中走丝 → 中走丝单价 (AM列)
+    };
+
+    return gongshiToPriceMap[gongshiCol] || null;
+}
+
+// 根据工序名称查找对应的num值
+function findGongxuNumByName(name) {
+    if (!gongxuConfigData || gongxuConfigData.length === 0) {
+        console.warn('工序配置数据未加载');
+        return null;
+    }
+
+    // 查找name字段匹配的项
+    var config = gongxuConfigData.find(function(item) {
+        return item.name && item.name.toString().trim() === name.toString().trim();
+    });
+
+    if (config && config.num) {
+        var numValue = parseFloat(config.num);
+        return isNaN(numValue) ? null : numValue;
+    }
+
+    console.log('未找到工序配置:', name);
+    return null;
+}
+
+// 根据Excel列索引获取对应的工序名称
+function getGongxuNameByExcelColumn(colIndex) {
+    // 工时列到工序名称的映射
+    var columnToGongxu = {
+        12: '铣工时',    // P列
+        15: '车工时',    // R列
+        18: '钳工时',    // T列
+        21: '整件外委工时',
+        23: '外委工时',
+        25: '镗工时',
+        28: '割工时',
+        31: '磨工时',
+        34: '数控铣工时',
+        37: '立车',
+        40: '电火花',
+        43: '中走丝'
+    };
+
+    return columnToGongxu[colIndex] || null;
 }
 
 // 发送数据到服务器
@@ -4451,6 +4582,7 @@ function buildReturnOrderPrintContent() {
                     <td>${rowNumber++}</td>
                     <td>${contractNo}</td>
                     <td>${$row.find('input[name="taskNo"]').val() || ''}</td>
+                    <td>${$row.find('input[name="lingjianhao"]').val() || ''}</td>
                     <td>${$row.find('input[name="productName"]').val() || ''}</td>
                     <td>${$row.find('input[name="drawingNo"]').val() || ''}</td>
                     <td>${$row.find('input[name="unit"]').val() || ''}</td>
@@ -4458,7 +4590,7 @@ function buildReturnOrderPrintContent() {
                     <td>${parseFloat($row.find('input[name="unitPrice"]').val() || 0).toFixed(2)}</td>
                     <td>${parseFloat($row.find('input[name="amount"]').val() || 0).toFixed(2)}</td>
                     <td>${$row.find('input[name="material"]').val() || ''}</td>
-                    <td>${$row.find('input[name="weight"]').val() || ''}</td>
+       
                     <td>${$row.find('input[name="returnDate"]').val() || ''}</td>
                     <td>${$row.find('input[name="returnReason"]').val() || ''}</td>
                     <td>${$row.find('input[name="remark"]').val() || ''}</td>
@@ -4765,7 +4897,6 @@ function getTableColumnDefinitions() {
         { field: 'c', title: '业务单位', category: '基础信息', default: true },
         { field: 'd', title: '合同号', category: '基础信息', default: true },
         { field: 'e', title: '任务号', category: '基础信息', default: true },
-        { field: 'gongzuoling', title: '工作令', category: '基础信息', default: true },
         { field: 'lingjianhao', title: '零件号', category: '基础信息', default: false },
         { field: 'zhuangtai', title: '工艺规程状态', category: '状态', default: true },
         { field: 'g', title: '工序', category: '基础信息', default: false },
@@ -4775,11 +4906,7 @@ function getTableColumnDefinitions() {
         { field: 'k', title: '数量', category: '基础信息', default: true },
         { field: 'l', title: '材质', category: '基础信息', default: true },
         { field: 'av', title: '序合计', category: '财务', default: false },
-        { field: 'jiagongfei', title: '加工费', category: '财务', default: false },
-        { field: 'cailiaofei', title: '材料费', category: '财务', default: false },
-        { field: 'aw', title: '重量', category: '物理属性', default: false },
-        { field: 'ax', title: '工件尺寸', category: '物理属性', default: false },
-        { field: 'm', title: '单价元', category: '财务', default: true },
+        { field: 'm', title: '单价', category: '财务', default: true },
         { field: 'n', title: '合计金额', category: '财务', default: true },
         { field: 'o', title: '铣工时', category: '工时', default: false },
         { field: 'p', title: '铣单价', category: '财务', default: false },
@@ -5568,4 +5695,68 @@ function calculateSelectedRows() {
         console.error('计算过程中出错:', error);
         swal("计算异常", "计算过程中出现异常错误", "error");
     });
+}
+
+// 加载工序配置
+function loadGongxuConfig() {
+    $.ajax({
+        type: 'get',
+        url: '/gx/getAll',
+        success: function(res) {
+            console.log('工序配置响应:', res);
+            if (res.code == 200) {
+                // 保存工序配置数据到全局变量
+                gongxuConfigData = res.data || [];
+                console.log('工序配置数据已保存:', gongxuConfigData);
+            } else {
+                swal("加载失败", res.msg, "error");
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('加载工序配置失败:', error);
+            swal("加载失败", "网络错误，请重试", "error");
+        }
+    });
+}
+
+// 根据工序名称查找对应的num值
+function findGongxuNumByName(name) {
+    if (!gongxuConfigData || gongxuConfigData.length === 0) {
+        console.warn('工序配置数据未加载');
+        return null;
+    }
+
+    // 查找name字段匹配的项
+    var config = gongxuConfigData.find(function(item) {
+        return item.name && item.name.toString().trim() === name.toString().trim();
+    });
+
+    if (config && config.num) {
+        var numValue = parseFloat(config.num);
+        return isNaN(numValue) ? null : numValue;
+    }
+
+    console.log('未找到工序配置:', name);
+    return null;
+}
+
+// 根据Excel列索引获取对应的工序名称
+function getGongxuNameByExcelColumn(colIndex) {
+    // 工时列到工序名称的映射
+    var columnToGongxu = {
+        12: '铣工时',    // P列
+        15: '车工时',    // R列
+        18: '钳工时',    // T列
+        21: '整件外委工时',
+        23: '外委工时',
+        25: '镗工时',
+        28: '割工时',
+        31: '磨工时',
+        34: '数控铣工时',
+        37: '立车',
+        40: '电火花',
+        43: '中走丝'
+    };
+
+    return columnToGongxu[colIndex] || null;
 }

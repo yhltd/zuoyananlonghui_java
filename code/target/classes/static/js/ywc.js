@@ -1612,7 +1612,6 @@ function createExcelFile(data, filename) {
                 '合同号': item.d || '',
                 '任务号': item.e || '',
                 '零件号': item.lingjianhao || '',
-                '工作令': item.gongzuoling || '',
                 '对账状态': item.hetongzhuangtai || '',
                 '工序': item.g || '',
                 '名称': item.h || '',
@@ -1621,12 +1620,8 @@ function createExcelFile(data, filename) {
                 '数量': item.k || '',
                 '材质': item.l || '',
                 '出库单号': item.au || '',
-                '材料费': item.cailiaofei || '',
-                '加工费': item.jiagongfei || '',
                 '序合计': item.av || '',
-                '重量': item.aw || '',
-                '工件尺寸': item.ax || '',
-                '单价元': item.m || '',
+                '单价': item.m || '',
                 '合计金额': item.n || '',
                 '铣工时': item.o || '',
                 '铣单价': item.p || '',
@@ -1916,13 +1911,6 @@ function setTable(data) {
                 sortable: true,
                 width: 120,
                 class: 'editable'
-            },{
-                field: 'gongzuoling',
-                title: '工作令',
-                align: 'center',
-                sortable: true,
-                width: 120,
-                class: 'editable'
             }, {
                 field: 'hetongzhuangtai',
                 title: '对账状态',
@@ -1984,43 +1972,15 @@ function setTable(data) {
                 width: 120,
                 class: 'editable'
             },{
-                field: 'cailiaofei',
-                title: '材料费',
-                align: 'center',
-                sortable: true,
-                width: 120,
-                class: 'editable'
-            },{
-                field: 'jiagongfei',
-                title: '加工费',
-                align: 'center',
-                sortable: true,
-                width: 120,
-                class: 'editable'
-            },  {
                 field: 'av',
                 title: '序合计',
                 align: 'center',
                 sortable: true,
                 width: 100,
                 class: 'editable'
-            }, {
-                field: 'aw',
-                title: '重量',
-                align: 'center',
-                sortable: true,
-                width: 80,
-                class: 'editable'
-            }, {
-                field: 'ax',
-                title: '工件尺寸',
-                align: 'center',
-                sortable: true,
-                width: 120,
-                class: 'editable'
-            }, {
+            },{
                 field: 'm',
-                title: '单价元',
+                title: '单价',
                 align: 'center',
                 sortable: true,
                 width: 100,

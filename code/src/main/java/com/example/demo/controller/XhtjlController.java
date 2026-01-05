@@ -42,6 +42,9 @@ public class XhtjlController {
         if (StringUtils.isNotBlank(pageRequest.getD())) {
             queryWrapper.like("d", pageRequest.getD());
         }
+        if (StringUtils.isNotBlank(pageRequest.getI())) {
+            queryWrapper.like("i", pageRequest.getI());
+        }
 
         // 执行查询 - 通过Service调用
         Page<Map<String, Object>> result = xhtjlService.selectDistinctByDdhPage(page,queryWrapper);

@@ -38,5 +38,7 @@ public class Thjl {
     private String v;
     private String w;
     private String zhuangtai;
+    private String gongzuoling;
+    private String lingjianhao;
 
 }

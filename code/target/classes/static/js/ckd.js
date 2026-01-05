@@ -244,6 +244,13 @@ function bindReturnOrderEvents1() {
         printOutboundOrder();
     });
 
+    $('#print-triplicate-btn').off('click').on('click', function() {
+        var currentDate = getCurrentDate1();
+        $('#return-date1').val(currentDate);
+        console.log('已自动设置出库日期为:', currentDate);
+        printTriplicateOutboundOrder();
+    });
+
     // 新增：打印预览按钮点击事件
     $('#print-preview-btn').off('click').on('click', function() {
         showPrintPreview();
@@ -2408,4 +2415,527 @@ function loadPreparerHistoryToSelect() {
 
         console.log('已加载制单人历史记录:', history.length, '条');
     }
+}
+
+
+
+
+
+
+// ==================== 三联单打印函数（固定每份10行，使用原有格式） ====================
+function printTriplicateOutboundOrder() {
+    console.log('开始打印三联单（每页10行，原有格式）...');
+
+    // 验证必填字段
+    if (!$('#return-customer1').val() || $('#return-customer1').val().trim() === '') {
+        alert("请选择往来单位");
+        return;
+    }
+
+    if (!$('#return-no1').val() || $('#return-no1').val().trim() === '') {
+        alert("出库单号不能为空");
+        return;
+    }
+
+    // 先保存数据
+    // saveReturnOrder();
+
+    // 创建一个新窗口用于打印
+    var printWindow = window.open('', '_blank', 'width=1000,height=800');
+    printWindow.document.open();
+
+    // 计算合计数量和金额
+    var totals = calculateTotalAmount1();
+    var totalQuantity = totals.totalQuantity || 0;
+    var totalAmount = totals.totalAmount || 0;
+
+    // 获取选中的列
+    var selectedColumns = [];
+    var columnMap = {
+        '序号': { field: 'index', type: 'index' },
+        '合同号': { field: 'contractNo', input: 'contractNo' },
+        '任务号': { field: 'taskNo', input: 'taskNo' },
+        '零件号': { field: 'partNumber', input: 'partNumber' },
+        '工作令': { field: 'workOrder', input: 'workOrder' },
+        '加工工序': { field: 'gongxu', input: 'gongxu' },
+        '产品名称': { field: 'productName', input: 'productName' },
+        '图号': { field: 'drawingNo', input: 'drawingNo' },
+        '单位': { field: 'unit', input: 'unit' },
+        '数量': { field: 'quantity', input: 'quantity' },
+        '单价': { field: 'unitPrice', input: 'unitPrice' },
+        '金额': { field: 'amount', input: 'amount' },
+        '加工费': { field: 'processingFee', input: 'processingFee' },
+        '材料费': { field: 'materialFee', input: 'materialFee' },
+        '材质': { field: 'material', input: 'material' },
+        '重量': { field: 'weight', input: 'weight' },
+        '备注': { field: 'remark', input: 'remark' }
+    };
+
+    // 筛选选中的列
+    $.each(printColumnConfig, function(columnName, config) {
+        if (config.selected) {
+            selectedColumns.push({
+                name: columnName,
+                ...columnMap[columnName]
+            });
+        }
+    });
+
+    // 收集所有有效数据行
+    var allDataRows = [];
+    var calculatedTotalAmount = 0;
+    var calculatedTotalQuantity = 0;
+    var totalProcessingFee = 0;
+    var totalMaterialFee = 0;
+
+    $('#return-detail-table1 tbody tr').each(function() {
+        var $row = $(this);
+        var contractNo = $row.find('input[name="contractNo"]').val() || '';
+
+        if (contractNo.trim() !== '') {
+            var quantity = parseFloat($row.find('input[name="quantity"]').val()) || 0;
+            var amount = parseFloat($row.find('input[name="amount"]').val()) || 0;
+            var processingFee = parseFloat($row.find('input[name="processingFee"]').val()) || 0;
+            var materialFee = parseFloat($row.find('input[name="materialFee"]').val()) || 0;
+
+            calculatedTotalAmount += amount;
+            calculatedTotalQuantity += quantity;
+            totalProcessingFee += processingFee;
+            totalMaterialFee += materialFee;
+
+            allDataRows.push({
+                $row: $row,
+                quantity: quantity,
+                amount: amount,
+                processingFee: processingFee,
+                materialFee: materialFee
+            });
+        }
+    });
+
+    // 每页固定10行数据
+    var ROWS_PER_PAGE = 10;
+
+    // 分割数据为多页
+    var pages = [];
+    var totalDataRows = allDataRows.length;
+
+    if (totalDataRows === 0) {
+        pages.push({
+            dataRows: [],
+            pageNumber: 1,
+            totalPages: 1
+        });
+    } else {
+        var totalPages = Math.ceil(totalDataRows / ROWS_PER_PAGE);
+
+        for (var pageNum = 1; pageNum <= totalPages; pageNum++) {
+            var startIndex = (pageNum - 1) * ROWS_PER_PAGE;
+            var endIndex = Math.min(startIndex + ROWS_PER_PAGE, totalDataRows);
+            var pageDataRows = allDataRows.slice(startIndex, endIndex);
+
+            pages.push({
+                dataRows: pageDataRows,
+                pageNumber: pageNum,
+                totalPages: totalPages,
+                pageDataRowsCount: pageDataRows.length,
+                isLastPage: pageNum === totalPages
+            });
+        }
+    }
+
+    // 构建表头
+    var tableHeaders = '';
+    selectedColumns.forEach(function(column) {
+        tableHeaders += '<th>' + column.name + '</th>';
+    });
+
+    var chineseAmount = numberToChinese1(totalAmount);
+
+    // 费用合计行
+    var feeSummaryRow = '';
+    if (totalProcessingFee > 0 || totalMaterialFee > 0) {
+        feeSummaryRow = `
+            <div class="fee-summary" style="display: flex;justify-content: space-around;margin-bottom: 3mm;">
+                <div><strong>加工费合计：</strong>${totalProcessingFee.toFixed(2)} 元</div>
+                <div><strong>材料费合计：</strong>${totalMaterialFee.toFixed(2)} 元</div>
+                <div><strong>费用总计：</strong>${(totalProcessingFee + totalMaterialFee).toFixed(2)} 元</div>
+            </div>
+        `;
+    }
+
+    // ============ 构建打印内容 - 使用原有格式，只改纸张大小 ============
+    var printContent = `
+        <html>
+        <head>
+            <title>出库单三联单打印</title>
+            <style>
+                /* 核心修改：设置纸张大小为 240mm × 140mm */
+                @page {
+                    size: 240mm 140mm;
+                    margin: 1mm 2mm; /* 适当边距 */
+                }
+                
+                /* 原有打印样式保持不变 */
+                * {
+                    box-sizing: border-box;
+                }
+                
+                body {
+                    margin: 0;
+                    padding: 0;
+                    font-family: Arial, sans-serif;
+                    font-size: 12px; /* 稍微调小字体以适应小纸张 */
+                    color: black;
+                    width: 240mm;
+                    min-height: 140mm;
+                    margin: 0 auto;
+                    line-height: 1.2;
+                }
+                
+                .print-title {
+                    text-align: center;
+                    font-size: 16px; /* 标题稍小 */
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                }
+                
+                .print-info {
+                    margin-bottom: 8px;
+                }
+                
+                .print-info div {
+                    margin-bottom: 2px;
+                }
+                
+                .print-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 11px; /* 表格字体稍小 */
+                }
+                
+                .print-table th {
+                    border: 1px solid black;
+                    padding: 2px;
+                    text-align: center;
+                    background-color: white;
+                    font-weight: bold;
+                    font-size: 11px;
+                    height: 20px; /* 固定行高 */
+                }
+                
+                .print-table td {
+                    border: 1px solid black;
+                    padding: 2px;
+                    text-align: left;
+                    font-size: 11px;
+                    height: 18px; /* 固定行高 */
+                }
+                
+                .total-row {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 4px 0;
+                    margin-top: 4px;
+                    border-top: 1px solid black;
+                    font-size: 11px;
+                }
+                
+                .footer {
+                    border: 1px solid black;
+                    margin-top: 6px;
+                }
+                
+                .footer-top {
+                    display: flex;
+                    justify-content: space-between;
+                    border-bottom: 1px solid black;
+                    padding: 4px 0;
+                    font-size: 11px;
+                    padding-right: 150px;
+                }
+                
+                .footer-bottom {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 4px 0;
+                    font-size: 11px;
+                }
+                
+                .declaration {
+                    border: 1px solid black;
+                    padding: 3px;
+                    margin-top: 6px;
+                    font-size: 10px; /* 声明字体稍小 */
+                }
+                
+                .declaration div {
+                    margin-bottom: 2px;
+                }
+                
+                .declaration div:last-child {
+                    margin-bottom: 0;
+                }
+                
+                /* 分页控制 */
+                .page-break {
+                    page-break-after: always;
+                }
+                
+                /* 联标签 */
+                .copy-tag {
+                    position: absolute;
+                    top: 5mm;
+                    right: 5mm;
+                    font-size: 12px;
+                    font-weight: bold;
+                    color: #333;
+                    background: white;
+                    padding: 1px 6px;
+                    border: 1px solid #000;
+                }
+                
+                .page-container {
+                    position: relative;
+                    width: 240mm;
+                    min-height: 140mm;
+                    padding: 5mm;
+                }
+                
+                .page-info {
+                    text-align: right;
+                    font-size: 10px;
+                    color: #666;
+                    margin-bottom: 3px;
+                }
+                
+                /* 控制按钮 */
+                .print-controls {
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    z-index: 1000;
+                }
+                
+                @media print {
+                    .print-controls {
+                        display: none !important;
+                    }
+                }
+                
+                .print-btn {
+                    padding: 8px 16px;
+                    background: #2c5e9c;
+                    color: white;
+                    border: none;
+                    border-radius: 3px;
+                    cursor: pointer;
+                    margin-left: 8px;
+                }
+                
+                .print-btn:hover {
+                    background: #1d4a7c;
+                }
+                
+                /* 撕下线 */
+                .tear-line {
+                    text-align: center;
+                    color: #666;
+                    font-size: 11px;
+                    margin: 10px 0;
+                    border-bottom: 2px dashed #ccc;
+                    padding-bottom: 5px;
+                }
+                
+                @media print {
+                    .tear-line {
+                        display: none;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+    `;
+
+    // 生成表格行
+    function generateTableRows(pageData) {
+        var tableRows = '';
+
+        // 生成数据行
+        pageData.dataRows.forEach(function(data, index) {
+            tableRows += '<tr>';
+            selectedColumns.forEach(function(column) {
+                var cellContent = '';
+                if (column.type === 'index') {
+                    // 当前页的行序号（1-10）
+                    cellContent = index + 1;
+                } else {
+                    cellContent = data.$row.find('input[name="' + column.input + '"]').val() || '';
+                }
+                tableRows += '<td>' + cellContent + '</td>';
+            });
+            tableRows += '</tr>';
+        });
+
+        // 补充空白行以达到10行
+        var currentRows = pageData.dataRows.length;
+        if (currentRows < ROWS_PER_PAGE) {
+            var additionalRows = ROWS_PER_PAGE - currentRows;
+            for (var i = 0; i < additionalRows; i++) {
+                tableRows += '<tr>';
+                selectedColumns.forEach(function() {
+                    tableRows += '<td></td>';
+                });
+                tableRows += '</tr>';
+            }
+        }
+
+        return tableRows;
+    }
+
+    // 生成单页内容
+    function generatePageContent(pageData, copyTag, isFirstPage) {
+        var tableRows = generateTableRows(pageData);
+
+        // 页码信息
+        var pageInfo = pageData.totalPages > 1
+            ? `<div class="page-info">第 ${pageData.pageNumber} 页 / 共 ${pageData.totalPages} 页</div>`
+            : '';
+
+        // 标题
+        var title = isFirstPage
+            ? '成都龙辉机械设备制造有限公司出库单'
+            : '成都龙辉机械设备制造有限公司出库单';
+
+        var copyTagText = isFirstPage ? copyTag : copyTag + '';
+
+        return `
+            <div class="page-container">
+                <div class="copy-tag">${copyTagText}</div>
+                
+                <div class="print-title">${title}</div>
+                
+                <div class="print-info">
+                    <div><strong>往来单位：</strong>${$('#return-customer1').val() || ''}</div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <div><strong>出库单号：</strong>${$('#return-no1').val() || ''}</div>
+                        <div><strong>送货日期：</strong>${$('#return-date1').val() || ''}</div>
+                    </div>
+                </div>
+                
+                ${pageInfo}
+                
+                <table class="print-table">
+                    <thead>
+                        <tr>${tableHeaders}</tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+                
+                <div class="total-row">
+                    <div><strong>合计数量：</strong>${totalQuantity}</div>
+                    <div><strong>合计金额(大写)：</strong>${chineseAmount}</div>
+                    <div><strong>合计金额：</strong>${totalAmount.toFixed(2)} 元</div>
+                </div>
+                
+                ${feeSummaryRow}
+                
+                <div class="footer">
+                    <div class="footer-top">
+                        <div><strong>制单人：</strong>${$('#company-address1').val() || ''}</div>
+                        <div><strong>审核人：</strong>${$('#company-phone1').val() || ''}</div>
+                        <div><strong>送货人：</strong>${$('#songhuoren').val() || ''}</div>
+                        <div><strong>收货人：</strong>${$('#shouhuoren').val() || ''}</div>
+                    </div>
+                    <div class="footer-bottom">
+                        <div><strong>地址：</strong>四川省成都市新都区石板滩街道石木路588号</div>
+                        <div><strong>联系电话：</strong>13730601502</div>
+                    </div>
+                </div>
+                
+                <div class="declaration">
+                    <div><strong>声明：</strong></div>
+                    <div>1. 本销售单作为确立购销双方权利义务合同；</div>
+                    <div>2. 收货员当面校对产品材质、数量、规格、单价，如对本公司销售产品质量及数量有异议，请在十天内提出，逾期本公司概不负责；</div>
+                    <div>3. 本合同如发生纠纷，双方协商不能解决，如协商未果则在供方当地人民法院解决，届时产生的诉讼费、律师费、差旅费等均由违约方承担。本单最终解释权归我公司所有。</div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 生成一联完整内容
+    function generateCopyMultiPage(copyTag) {
+        var copyContent = '';
+
+        pages.forEach(function(page, pageIndex) {
+            var isFirstPage = (pageIndex === 0);
+            copyContent += generatePageContent(page, copyTag, isFirstPage);
+
+            if (!page.isLastPage && pageIndex < pages.length - 1) {
+                copyContent += '<div class="page-break"></div>';
+            }
+        });
+
+        return copyContent;
+    }
+
+    // 构建三联单完整内容
+    printContent += `
+        <!-- 第一联：存根联 -->
+        ${generateCopyMultiPage("存根联")}
+        
+        <div class="tear-line page-break">------------------------ 沿此线撕下 ------------------------</div>
+        
+        <!-- 第二联：财务联 -->
+        ${generateCopyMultiPage("财务联")}
+        
+        <div class="tear-line page-break">------------------------ 沿此线撕下 ------------------------</div>
+        
+        <!-- 第三联：客户联 -->
+        ${generateCopyMultiPage("客户联")}
+        
+        <div class="print-controls">
+            <button class="print-btn" onclick="window.print();">立即打印</button>
+            <button class="print-btn" onclick="window.close();">关闭窗口</button>
+        </div>
+    `;
+
+    printContent += `
+        </body>
+        </html>
+    `;
+
+    // 写入打印窗口
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+
+    // 延迟添加事件绑定
+    setTimeout(function() {
+        try {
+            var buttons = printWindow.document.querySelectorAll('.print-btn');
+            if (buttons[0]) {
+                buttons[0].onclick = function() {
+                    printWindow.print();
+                };
+            }
+            if (buttons[1]) {
+                buttons[1].onclick = function() {
+                    printWindow.close();
+                };
+            }
+
+            // 键盘快捷键
+            printWindow.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'p') {
+                    e.preventDefault();
+                    printWindow.print();
+                }
+                if (e.key === 'Escape') {
+                    printWindow.close();
+                }
+            });
+        } catch (e) {
+            console.error('绑定事件时出错:', e);
+        }
+    }, 100);
 }
