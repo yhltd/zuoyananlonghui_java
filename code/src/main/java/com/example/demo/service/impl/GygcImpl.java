@@ -99,6 +99,11 @@ public class GygcImpl extends ServiceImpl<GygcMapper, Gygc> implements GygcServi
     }
 
     @Override
+    public boolean deleteC(int C) {
+        return baseMapper.deleteC(C);
+    }
+
+    @Override
     public List<Gygc> getList() {  // 方法名必须一致
         return gygcMapper.getList();
     }

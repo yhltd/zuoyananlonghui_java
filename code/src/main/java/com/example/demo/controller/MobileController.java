@@ -713,7 +713,7 @@ public class MobileController {
             }
 
             // 获取当前时间
-            String completionTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+            String completionTime = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 
             // 调用service更新签名信息，传入id
             boolean success = bgdService.updateProcessSign(contractId, processName, employeeSign, completionTime, id);

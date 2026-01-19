@@ -4092,6 +4092,52 @@ $('#btn-analyze-file').on('click', function() {
     reader.readAsArrayBuffer(file);
 });
 
+// function convertExcelData(jsonData) {
+//     var result = [];
+//
+//     // 跳过表头（第一行）
+//     for (var i = 1; i < jsonData.length; i++) {
+//         var row = jsonData[i];
+//         if (!row || row.length === 0) continue;
+//
+//         var record = {};
+//
+//         // 根据预定义的映射转换数据
+//         for (var col = 0; col < row.length; col++) {
+//             if (col > 56) break; // 限制到BD列
+//
+//             var field = excelToDbMapping[col];
+//             var value = row[col];
+//
+//             if (field && value !== undefined && value !== null && value !== '') {
+//                 var strValue = String(value).trim();
+//
+//                 // ====== 关键修改：跳过单价列 ======
+//                 if (isPriceColumn(col)) {
+//                     console.log('跳过单价列', col, '字段', field, '，由计算函数设置');
+//                     continue; // 跳过这个列，不设置值
+//                 }
+//
+//                 // 特殊处理：如果这是工时列，尝试获取工序配置进行计算
+//                 if (isGongshiColumn(col)) {
+//                     console.log('处理工时列', col, '字段', field, '值:', strValue);
+//                     handleGongshiCalculation(col, record, strValue);
+//                 } else {
+//                     record[field] = strValue;
+//                 }
+//             }
+//         }
+//
+//         // 只有有数据的记录才添加
+//         if (Object.keys(record).length > 0) {
+//             console.log('最终记录对象:', record);
+//             result.push(record);
+//         }
+//     }
+//
+//     console.log('转换完成，总共', result.length, '条记录');
+//     return result;
+// }
 function convertExcelData(jsonData) {
     var result = [];
 
@@ -4128,6 +4174,35 @@ function convertExcelData(jsonData) {
             }
         }
 
+        // ============ 新增逻辑开始 ============
+        // 1. 计算所有单价值的和，替换单价字段(m)的导入值
+        var totalUnitPrice = calculateTotalUnitPrice(record);
+        if (totalUnitPrice > 0) {
+            record['m'] = totalUnitPrice.toString();
+        }
+
+        // 2. 计算单价乘以数量的结果，替换合计金额(n)的导入值
+        var quantity = parseFloat(record['k']) || 0;
+        if (quantity > 0 && totalUnitPrice > 0) {
+            var totalAmount = quantity * totalUnitPrice;
+            record['n'] = totalAmount.toString();
+        }
+
+        // 3. 计算铣工时(o)和车工时(q)乘以数量，分别替换铣(aq)和车(ar)字段的值
+        var millingHours = parseFloat(record['o']) || 0;
+        var turningHours = parseFloat(record['q']) || 0;
+
+        if (millingHours > 0 && quantity > 0) {
+            var millingTotal = millingHours * quantity;
+            record['aq'] = millingTotal.toString();
+        }
+
+        if (turningHours > 0 && quantity > 0) {
+            var turningTotal = turningHours * quantity;
+            record['ar'] = turningTotal.toString();
+        }
+        // ============ 新增逻辑结束 ============
+
         // 只有有数据的记录才添加
         if (Object.keys(record).length > 0) {
             console.log('最终记录对象:', record);
@@ -4137,6 +4212,36 @@ function convertExcelData(jsonData) {
 
     console.log('转换完成，总共', result.length, '条记录');
     return result;
+}
+
+// ============ 新增函数：计算所有单价值的和 ============
+function calculateTotalUnitPrice(record) {
+    var total = 0;
+
+    // 定义所有单价字段
+    var priceFields = [
+        'p',  // 铣单价
+        'r',  // 车单价
+        't',  // 钳单价
+        'v',  // 整件外委单位
+        'x',  // 外委单价
+        'z',  // 镗单价
+        'ab', // 割单价
+        'ad', // 磨单价
+        'af', // 数控铣单价
+        'ah', // 立车单价
+        'aj', // 电火花单价
+        'al'  // 中走丝单价
+    ];
+
+    // 累加所有单价字段的值
+    priceFields.forEach(function(field) {
+        var price = parseFloat(record[field]) || 0;
+        total += price;
+    });
+
+    console.log('计算单价值和: fields=', priceFields, 'total=', total);
+    return total;
 }
 
 // 判断是否为工时列
@@ -4218,6 +4323,92 @@ function handleGongshiCalculation(colIndex, record, gongshiValue) {
     }
 }
 
+// 处理工时计算
+// function handleGongshiCalculation(colIndex, record, gongshiValue) {
+//     try {
+//         // 获取对应的工序名称
+//         var gongxuName = getGongxuNameByExcelColumn(colIndex);
+//
+//         if (!gongxuName) {
+//             console.log('未找到列索引', colIndex, '对应的工序名称');
+//             // 即使没有找到工序名称，也要设置工时字段（使用原始值）
+//             var gongshiField = excelToDbMapping[colIndex];
+//             if (gongshiField) {
+//                 record[gongshiField] = gongshiValue;
+//             }
+//             return;
+//         }
+//
+//         // 查找工序配置中的num值
+//         var gongxuNum = findGongxuNumByName(gongxuName);
+//
+//         if (gongxuNum === null) {
+//             console.log('未找到工序', gongxuName, '的配置数据');
+//             // 没有找到配置，工时字段使用原始值
+//             var gongshiField = excelToDbMapping[colIndex];
+//             if (gongshiField) {
+//                 record[gongshiField] = gongshiValue;
+//             }
+//             return;
+//         }
+//
+//         // 解析工时值
+//         var gongshiNum = parseFloat(gongshiValue);
+//         if (isNaN(gongshiNum)) {
+//             console.log('工时值无效:', gongshiValue);
+//             // 工时值无效，工时字段使用原始字符串
+//             var gongshiField = excelToDbMapping[colIndex];
+//             if (gongshiField) {
+//                 record[gongshiField] = gongshiValue;
+//             }
+//             return;
+//         }
+//
+//         // ====== 关键：工时字段保持Excel原始值 ======
+//         var gongshiField = excelToDbMapping[colIndex];
+//         if (gongshiField) {
+//             record[gongshiField] = gongshiNum.toString();
+//         }
+//
+//         // ====== 关键：单价字段使用计算值 ======
+//         // 计算单价 = 工时值 × 工序配置num值
+//         var calculatedPrice = gongshiNum * gongxuNum;
+//
+//         var priceField = getPriceFieldByGongshiColumn(colIndex);
+//         if (priceField) {
+//             record[priceField] = calculatedPrice.toString();
+//             console.log('计算完成:', gongxuName,
+//                 'Excel工时=', gongshiNum,
+//                 '配置值=', gongxuNum,
+//                 '计算单价=', calculatedPrice,
+//                 '设置字段:', priceField, '=', calculatedPrice);
+//         }
+//
+//     } catch (error) {
+//         console.error('处理工时计算时出错:', error);
+//     }
+// }
+
+// 根据工时列索引获取对应的单价字段
+// function getPriceFieldByGongshiColumn(gongshiCol) {
+//     // 工时列到单价列的映射
+//     var gongshiToPriceMap = {
+//         12: 'p',   // 铣工时 → 铣单价 (Q列)
+//         15: 'r',   // 车工时 → 车单价 (S列)
+//         18: 't',   // 钳工时 → 钳单价 (U列)
+//         21: 'v',   // 整件外委工时 → 整件外委单位 (W列)
+//         23: 'x',   // 外委工时 → 外委单价 (Y列)
+//         25: 'z',   // 镗工时 → 镗单价 (AA列)
+//         28: 'ab',  // 割工时 → 割单价 (AC列)
+//         31: 'ad',  // 磨工时 → 磨单价 (AE列)
+//         34: 'af',  // 数控铣工时 → 数控铣单价 (AG列)
+//         37: 'ah',  // 立车 → 立车单价 (AI列)
+//         40: 'aj',  // 电火花 → 电火花单价 (AK列)
+//         43: 'al'   // 中走丝 → 中走丝单价 (AM列)
+//     };
+//
+//     return gongshiToPriceMap[gongshiCol] || null;
+// }
 // 根据工时列索引获取对应的单价字段
 function getPriceFieldByGongshiColumn(gongshiCol) {
     // 工时列到单价列的映射
@@ -4567,7 +4758,7 @@ function printReturnOrder() {
 
 
 function buildReturnOrderPrintContent() {
-    // 构建表格行
+    // 构建表格行 - 只保留指定字段
     var tableRows = '';
     var rowNumber = 1;
 
@@ -4590,10 +4781,8 @@ function buildReturnOrderPrintContent() {
                     <td>${parseFloat($row.find('input[name="unitPrice"]').val() || 0).toFixed(2)}</td>
                     <td>${parseFloat($row.find('input[name="amount"]').val() || 0).toFixed(2)}</td>
                     <td>${$row.find('input[name="material"]').val() || ''}</td>
-       
                     <td>${$row.find('input[name="returnDate"]').val() || ''}</td>
                     <td>${$row.find('input[name="returnReason"]').val() || ''}</td>
-                    <td>${$row.find('input[name="remark"]').val() || ''}</td>
                 </tr>
             `;
         }
@@ -4601,7 +4790,7 @@ function buildReturnOrderPrintContent() {
 
     // 如果没有数据
     if (tableRows === '') {
-        tableRows = '<tr><td colspan="14" style="text-align: center;">暂无退货明细</td></tr>';
+        tableRows = '<tr><td colspan="13" style="text-align: center;">暂无退货明细</td></tr>';
     }
 
     // 计算合计金额
@@ -4625,6 +4814,7 @@ function buildReturnOrderPrintContent() {
                         <th>序号</th>
                         <th>合同号</th>
                         <th>任务号</th>
+                        <th>零件号</th>
                         <th>产品名称</th>
                         <th>图号</th>
                         <th>单位</th>
@@ -4632,10 +4822,8 @@ function buildReturnOrderPrintContent() {
                         <th>单价</th>
                         <th>金额</th>
                         <th>材质</th>
-                        <th>重量</th>
                         <th>回厂日期</th>
                         <th>退货原因</th>
-                        <th>备注</th>
                     </tr>
                 </thead>
                 <tbody>

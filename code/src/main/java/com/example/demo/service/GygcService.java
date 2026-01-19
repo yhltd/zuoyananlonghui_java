@@ -37,5 +37,7 @@ public interface GygcService extends IService<Gygc> {
 
     boolean delete(List<Integer> idList);
 
+    boolean deleteC(int C);
+
     List<Gygc> getList();
 }

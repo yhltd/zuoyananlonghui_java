@@ -3881,15 +3881,14 @@ function buildReturnOrderPrintContent() {
 
     $('#return-detail-table tbody tr').each(function() {
         var $row = $(this);
-        var contractNo = $row.find('input[name="contractNo"]').val();
+        var gongzuoling = $row.find('input[name="gongzuoling"]').val();
 
         // 只显示有数据的行
-        if (contractNo && contractNo.trim() !== '') {
+        if (gongzuoling && gongzuoling.trim() !== '') {
             tableRows += `
                 <tr>
                     <td>${rowNumber++}</td>
-                    <td>${contractNo}</td>
-                    <td>${$row.find('input[name="gongzuoling"]').val() || ''}</td>
+                    <td>${gongzuoling || ''}</td>
                     <td>${$row.find('input[name="productName"]').val() || ''}</td>
                     <td>${$row.find('input[name="drawingNo"]').val() || ''}</td>
                     <td>${$row.find('input[name="unit"]').val() || ''}</td>
@@ -3899,7 +3898,6 @@ function buildReturnOrderPrintContent() {
                     <td>${$row.find('input[name="material"]').val() || ''}</td>
                     <td>${$row.find('input[name="returnDate"]').val() || ''}</td>
                     <td>${$row.find('input[name="returnReason"]').val() || ''}</td>
-                    <td>${$row.find('input[name="remark"]').val() || ''}</td>
                 </tr>
             `;
         }
@@ -3907,7 +3905,7 @@ function buildReturnOrderPrintContent() {
 
     // 如果没有数据
     if (tableRows === '') {
-        tableRows = '<tr><td colspan="14" style="text-align: center;">暂无退货明细</td></tr>';
+        tableRows = '<tr><td colspan="11" style="text-align: center;">暂无退货明细</td></tr>';
     }
 
     // 计算合计金额
@@ -3929,8 +3927,7 @@ function buildReturnOrderPrintContent() {
                 <thead>
                     <tr>
                         <th>序号</th>
-                        <th>合同号</th>
-                        <th>任务号</th>
+                        <th>工作令</th>
                         <th>产品名称</th>
                         <th>图号</th>
                         <th>单位</th>
@@ -3938,10 +3935,8 @@ function buildReturnOrderPrintContent() {
                         <th>单价</th>
                         <th>金额</th>
                         <th>材质</th>
-                        <th>重量</th>
                         <th>回厂日期</th>
                         <th>退货原因</th>
-                        <th>备注</th>
                     </tr>
                 </thead>
                 <tbody>

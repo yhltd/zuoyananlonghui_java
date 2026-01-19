@@ -38,6 +38,22 @@ public class GygcController {
         }
     }
 
+    @RequestMapping("/deletec")
+    public ResultInfo deleteC(int C, HttpSession session) {
+
+        try {
+            boolean list = gygcService.deleteC(C);
+            if(list){
+                return ResultInfo.success("获取成功", list);
+            }
+            return ResultInfo.error("失败!");
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("获取失败：{}", e.getMessage());
+            return ResultInfo.error("错误!");
+        }
+    }
+
 
     /**
      * 修改

@@ -233,9 +233,9 @@ function fillProcessHeader(data) {
     $('#business-unit').text(data.c || '');      // 业务单位
     $('#task-no').text(data.e || '');            // 任务号
     $('#process-status').text(data.f || '未创建'); // 工艺规程状态
-    $('#product-name').text(data.g || '');       // 零件名称
+    $('#product-name').text(data.h || '');       // 零件名称
     $('#drawing-no').text(data.i || '');         // 图号
-    $('#quantity').text(data.h || '');           // 数量
+    $('#quantity').text(data.k || '');           // 数量
     $('#material').text(data.l || '');           // 材质
     $('#contract-no').text(data.d || '');        // 合同号
 
@@ -514,164 +514,308 @@ style.textContent = `
 document.head.appendChild(style);
 
 
+// // 保存工艺规程数据
+// function saveProcessData() {
+//     // 获取上一个页面传过来的id
+//     const originalData = JSON.parse(sessionStorage.getItem('currentProcessData') || '{}');
+//     const previousPageId = originalData.id; // 上一个页面的id
+//
+//     // 收集表头基础数据 - 按照VBA字段映射
+//     const baseData = {
+//         c: previousPageId || '',                      // 合同ID
+//         d: $('#business-unit').text().trim(),         // 业务单位 - 从可编辑单元格获取
+//         e: $('#task-no').text().trim(),               // 任务号 - 从可编辑单元格获取
+//         f: $('#material').text().trim(),              // 材质 - 从可编辑单元格获取
+//         g: $('#product-name').text().trim(),          // 零件名称 - 从可编辑单元格获取
+//         h: $('#quantity').text().trim(),              // 数量 - 从可编辑单元格获取
+//         i: $('#drawing-no').text().trim(),            // 图号 - 从可编辑单元格获取
+//         // 签名和日期 - 从下拉框或文本获取
+//         q: getFieldValue('gyy'),                      // 工艺员
+//         r: $('#gyrq').val(),                          // 工艺员日期
+//         s: getFieldValue('jdy'),                      // 校对员
+//         t: $('#jdrq').val(),                          // 校对员日期
+//         u: getFieldValue('pzr'),                      // 批准人
+//         v: $('#pzrq').val()                           // 批准日期
+//     };
+//
+//     // 分离新增和修改的数据
+//     const insertData = [];  // 没有id的数据 → 新增
+//     const updateData = [];  // 有id的数据 → 修改
+//
+//     // 收集表格数据
+//     const rows = document.querySelectorAll('#processTable tbody tr');
+//
+//     rows.forEach((row, index) => {
+//         const cells = row.cells;
+//
+//         // 表格行字段 - 按照VBA字段映射
+//         const rowData = {
+//             j: cells[1].textContent || '', // D列 -> J (工序名称)
+//             k: cells[2].textContent || '', // E列 -> K (工序内容)
+//             l: cells[3].textContent || '', // I列 -> L (合计工时)
+//             m: cells[4].textContent || '', // J列 -> M (员工签名)
+//             n: cells[5].textContent || '', // K列 -> N (完工时间)
+//             o: cells[6].textContent || '', // L列 -> O (检验盖章)
+//             p: cells[7].textContent || ''  // M列 -> P (备注)
+//         };
+//
+//         // 只保存有数据的行（工序名称或工序内容不为空）
+//         if (rowData.j.trim() !== '' || rowData.k.trim() !== '') {
+//             const completeRecord = {
+//                 ...baseData,
+//                 ...rowData
+//             };
+//
+//             // 判断是否有id（对应VBA中的B列）
+//             if (row.dataset.id) {
+//                 // 有id → 修改
+//                 completeRecord.id = row.dataset.id;
+//                 updateData.push(completeRecord);
+//             } else {
+//                 // 没有id → 新增
+//                 insertData.push(completeRecord);
+//             }
+//         }
+//     });
+//
+//     console.log('新增数据:', insertData);
+//     console.log('修改数据:', updateData);
+//
+//     // 显示加载中
+//     const $btn = $('#saveBtn');
+//     const originalText = $btn.html();
+//     $btn.prop('disabled', true).html('<i class="bi bi-arrow-clockwise icon"></i>保存中...');
+//
+//     let completedRequests = 0;
+//     const totalRequests = (insertData.length > 0 ? 1 : 0) + (updateData.length > 0 ? 1 : 0);
+//     let hasError = false;
+//
+//     // 处理请求完成的回调
+//     function handleRequestComplete() {
+//         completedRequests++;
+//         if (completedRequests === totalRequests) {
+//             $btn.prop('disabled', false).html(originalText);
+//             if (!hasError) {
+//                 swal("保存成功", "工艺规程保存成功", "success");
+//                 // 如果是新增，更新sessionStorage中的id
+//                 if (insertData.length > 0 && !originalData.id) {
+//                     // 这里可以根据后端返回的数据更新id
+//                 }
+//             }
+//         }
+//     }
+//
+//
+//
+//
+// // 发送批量修改请求
+//     if (updateData.length > 0) {
+//         $.ajax({
+//             type: 'POST',
+//             url: '/gygc/updateBatch',
+//             data: JSON.stringify(updateData),  // 直接发送数组，不包装
+//             dataType: 'json',
+//             contentType: 'application/json;charset=utf-8',
+//             success: function(res) {
+//                 if (res.code == 200) {
+//                     console.log('批量修改成功:', updateData.length, '条');
+//                 } else {
+//                     swal("修改失败", res.msg || "批量修改数据失败", "error");
+//                     hasError = true;
+//                 }
+//                 handleRequestComplete();
+//             },
+//             error: function(xhr, status, error) {
+//                 swal("修改失败", "请求失败: " + error, "error");
+//                 hasError = true;
+//                 handleRequestComplete();
+//             }
+//         });
+//     }
+//
+// // 发送批量新增请求
+//     if (insertData.length > 0) {
+//         $.ajax({
+//             type: 'POST',
+//             url: '/gygc/addBatch',
+//             data: JSON.stringify(insertData),  // 直接发送数组，不包装
+//             dataType: 'json',
+//             contentType: 'application/json;charset=utf-8',
+//             success: function(res) {
+//                 if (res.code == 200) {
+//                     console.log('批量新增成功:', insertData.length, '条');
+//                 } else {
+//                     swal("新增失败", res.msg || "批量新增数据失败", "error");
+//                     hasError = true;
+//                 }
+//                 handleRequestComplete();
+//             },
+//             error: function(xhr, status, error) {
+//                 swal("新增失败", "请求失败: " + error, "error");
+//                 hasError = true;
+//                 handleRequestComplete();
+//             }
+//         });
+//     }
+//
+//     setTimeout(() => {
+//         saveAllProcessNamesToHistory();
+//     }, 1000);
+//     setTimeout(() => {
+//         saveAllProcessContentsToHistory();
+//     }, 1000);
+//
+//     // 如果没有数据需要保存
+//     if (totalRequests === 0) {
+//         $btn.prop('disabled', false).html(originalText);
+//         swal("保存失败", "没有有效的数据可以保存", "error");
+//     }
+//
+//
+// }
+
 // 保存工艺规程数据
 function saveProcessData() {
     // 获取上一个页面传过来的id
     const originalData = JSON.parse(sessionStorage.getItem('currentProcessData') || '{}');
-    const previousPageId = originalData.id; // 上一个页面的id
+    const previousPageId = originalData.id; // 合同ID
 
-    // 收集表头基础数据 - 按照VBA字段映射
-    const baseData = {
-        c: previousPageId || '',                      // 合同ID
-        d: $('#business-unit').text().trim(),         // 业务单位 - 从可编辑单元格获取
-        e: $('#task-no').text().trim(),               // 任务号 - 从可编辑单元格获取
-        f: $('#material').text().trim(),              // 材质 - 从可编辑单元格获取
-        g: $('#product-name').text().trim(),          // 零件名称 - 从可编辑单元格获取
-        h: $('#quantity').text().trim(),              // 数量 - 从可编辑单元格获取
-        i: $('#drawing-no').text().trim(),            // 图号 - 从可编辑单元格获取
-        // 签名和日期 - 从下拉框或文本获取
-        q: getFieldValue('gyy'),                      // 工艺员
-        r: $('#gyrq').val(),                          // 工艺员日期
-        s: getFieldValue('jdy'),                      // 校对员
-        t: $('#jdrq').val(),                          // 校对员日期
-        u: getFieldValue('pzr'),                      // 批准人
-        v: $('#pzrq').val()                           // 批准日期
-    };
-
-    // 分离新增和修改的数据
-    const insertData = [];  // 没有id的数据 → 新增
-    const updateData = [];  // 有id的数据 → 修改
-
-    // 收集表格数据
-    const rows = document.querySelectorAll('#processTable tbody tr');
-
-    rows.forEach((row, index) => {
-        const cells = row.cells;
-
-        // 表格行字段 - 按照VBA字段映射
-        const rowData = {
-            j: cells[1].textContent || '', // D列 -> J (工序名称)
-            k: cells[2].textContent || '', // E列 -> K (工序内容)
-            l: cells[3].textContent || '', // I列 -> L (合计工时)
-            m: cells[4].textContent || '', // J列 -> M (员工签名)
-            n: cells[5].textContent || '', // K列 -> N (完工时间)
-            o: cells[6].textContent || '', // L列 -> O (检验盖章)
-            p: cells[7].textContent || ''  // M列 -> P (备注)
-        };
-
-        // 只保存有数据的行（工序名称或工序内容不为空）
-        if (rowData.j.trim() !== '' || rowData.k.trim() !== '') {
-            const completeRecord = {
-                ...baseData,
-                ...rowData
-            };
-
-            // 判断是否有id（对应VBA中的B列）
-            if (row.dataset.id) {
-                // 有id → 修改
-                completeRecord.id = row.dataset.id;
-                updateData.push(completeRecord);
-            } else {
-                // 没有id → 新增
-                insertData.push(completeRecord);
-            }
-        }
+    // 先删除该合同下的所有旧数据
+    deleteOldData(previousPageId, function() {
+        // 删除成功后继续保存新数据
+        saveNewData();
     });
 
-    console.log('新增数据:', insertData);
-    console.log('修改数据:', updateData);
+    function saveNewData() {
+        // 收集表头基础数据 - 按照VBA字段映射
+        const baseData = {
+            c: previousPageId || '',                      // 合同ID
+            d: $('#business-unit').text().trim(),         // 业务单位 - 从可编辑单元格获取
+            e: $('#task-no').text().trim(),               // 任务号 - 从可编辑单元格获取
+            f: $('#material').text().trim(),              // 材质 - 从可编辑单元格获取
+            g: $('#product-name').text().trim(),          // 零件名称 - 从可编辑单元格获取
+            h: $('#quantity').text().trim(),              // 数量 - 从可编辑单元格获取
+            i: $('#drawing-no').text().trim(),            // 图号 - 从可编辑单元格获取
+            // 签名和日期 - 从下拉框或文本获取
+            q: getFieldValue('gyy'),                      // 工艺员
+            r: $('#gyrq').val(),                          // 工艺员日期
+            s: getFieldValue('jdy'),                      // 校对员
+            t: $('#jdrq').val(),                          // 校对员日期
+            u: getFieldValue('pzr'),                      // 批准人
+            v: $('#pzrq').val()                           // 批准日期
+        };
 
-    // 显示加载中
-    const $btn = $('#saveBtn');
-    const originalText = $btn.html();
-    $btn.prop('disabled', true).html('<i class="bi bi-arrow-clockwise icon"></i>保存中...');
+        // 收集表格数据 - 所有数据都作为新增处理
+        const insertData = [];  // 所有数据都新增
 
-    let completedRequests = 0;
-    const totalRequests = (insertData.length > 0 ? 1 : 0) + (updateData.length > 0 ? 1 : 0);
-    let hasError = false;
+        // 收集表格数据
+        const rows = document.querySelectorAll('#processTable tbody tr');
 
-    // 处理请求完成的回调
-    function handleRequestComplete() {
-        completedRequests++;
-        if (completedRequests === totalRequests) {
-            $btn.prop('disabled', false).html(originalText);
-            if (!hasError) {
-                swal("保存成功", "工艺规程保存成功", "success");
-                // 如果是新增，更新sessionStorage中的id
-                if (insertData.length > 0 && !originalData.id) {
-                    // 这里可以根据后端返回的数据更新id
-                }
-            }
-        }
-    }
+        rows.forEach((row, index) => {
+            const cells = row.cells;
 
+            // 表格行字段 - 按照VBA字段映射
+            const rowData = {
+                j: cells[1].textContent || '', // D列 -> J (工序名称)
+                k: cells[2].textContent || '', // E列 -> K (工序内容)
+                l: cells[3].textContent || '', // I列 -> L (合计工时)
+                m: cells[4].textContent || '', // J列 -> M (员工签名)
+                n: cells[5].textContent || '', // K列 -> N (完工时间)
+                o: cells[6].textContent || '', // L列 -> O (检验盖章)
+                p: cells[7].textContent || ''  // M列 -> P (备注)
+            };
 
+            // 只保存有数据的行（工序名称或工序内容不为空）
+            if (rowData.j.trim() !== '' || rowData.k.trim() !== '') {
+                const completeRecord = {
+                    ...baseData,
+                    ...rowData
+                };
 
-
-// 发送批量修改请求
-    if (updateData.length > 0) {
-        $.ajax({
-            type: 'POST',
-            url: '/gygc/updateBatch',
-            data: JSON.stringify(updateData),  // 直接发送数组，不包装
-            dataType: 'json',
-            contentType: 'application/json;charset=utf-8',
-            success: function(res) {
-                if (res.code == 200) {
-                    console.log('批量修改成功:', updateData.length, '条');
-                } else {
-                    swal("修改失败", res.msg || "批量修改数据失败", "error");
-                    hasError = true;
-                }
-                handleRequestComplete();
-            },
-            error: function(xhr, status, error) {
-                swal("修改失败", "请求失败: " + error, "error");
-                hasError = true;
-                handleRequestComplete();
+                // 所有数据都作为新增
+                insertData.push(completeRecord);
             }
         });
-    }
 
-// 发送批量新增请求
-    if (insertData.length > 0) {
+        console.log('新增数据:', insertData);
+
+        if (insertData.length === 0) {
+            swal("保存完成", "没有需要保存的数据", "info");
+            $('#saveBtn').prop('disabled', false).html('保存');
+            return;
+        }
+
+        // 显示加载中
+        const $btn = $('#saveBtn');
+        const originalText = $btn.html();
+        $btn.prop('disabled', true).html('<i class="bi bi-arrow-clockwise icon"></i>保存中...');
+
+        // 发送批量新增请求
         $.ajax({
             type: 'POST',
             url: '/gygc/addBatch',
-            data: JSON.stringify(insertData),  // 直接发送数组，不包装
+            data: JSON.stringify(insertData),
             dataType: 'json',
             contentType: 'application/json;charset=utf-8',
             success: function(res) {
+                $btn.prop('disabled', false).html(originalText);
                 if (res.code == 200) {
                     console.log('批量新增成功:', insertData.length, '条');
+                    swal("保存成功", "工艺规程保存成功", "success");
+
+                    // 更新sessionStorage中的id
+                    if (!originalData.id && res.data && res.data.length > 0) {
+                        // 这里可以根据后端返回的数据更新id
+                        console.log('保存后的数据:', res.data);
+                    }
+
+                    // 保存历史记录
+                    setTimeout(() => {
+                        saveAllProcessNamesToHistory();
+                        saveAllProcessContentsToHistory();
+                    }, 1000);
+
                 } else {
                     swal("新增失败", res.msg || "批量新增数据失败", "error");
-                    hasError = true;
                 }
-                handleRequestComplete();
             },
             error: function(xhr, status, error) {
+                $btn.prop('disabled', false).html(originalText);
                 swal("新增失败", "请求失败: " + error, "error");
-                hasError = true;
-                handleRequestComplete();
             }
         });
     }
+}
 
-    setTimeout(() => {
-        saveAllProcessNamesToHistory();
-    }, 1000);
-    setTimeout(() => {
-        saveAllProcessContentsToHistory();
-    }, 1000);
-
-    // 如果没有数据需要保存
-    if (totalRequests === 0) {
-        $btn.prop('disabled', false).html(originalText);
-        swal("保存失败", "没有有效的数据可以保存", "error");
+// 删除旧数据函数
+function deleteOldData(contractId, callback) {
+    if (!contractId) {
+        console.log('没有合同ID，跳过删除');
+        callback();
+        return;
     }
 
+    console.log('开始删除合同ID为', contractId, '的旧数据');
 
+    $.ajax({
+        type: 'POST',
+        url: '/gygc/deletec',
+        data: { C: contractId },
+        dataType: 'json',
+        success: function(res) {
+            if (res.code == 200) {
+                console.log('删除旧数据成功');
+                callback();
+            } else {
+                callback();
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('删除请求失败:', error);
+            swal("删除失败", "请求失败: " + error, "error");
+            $('#saveBtn').prop('disabled', false).html('保存');
+        }
+    });
 }
 
 // 新增函数：获取字段值（兼容下拉框和文本）
@@ -1725,7 +1869,7 @@ function generatePrintContent(qrCodeImageBase64, htid) {
     });
 
     // 4. 分页处理：每页24行数据（注意：这里已经是双倍行数了）
-    const rowsPerPage = 10;
+    const rowsPerPage = 12;
     const totalPages = Math.ceil(tableRows.length / rowsPerPage);
     const printPages = [];
 
@@ -1983,13 +2127,13 @@ function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureDa
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
-        .col-1 { width: 4%; }
-        .col-2 { width: 7%; }
+        .col-1 { width: 3%; }
+        .col-2 { width: 8.8%; }
         .col-3 { width: 37%; }
-        .col-4 { width: 7%; }
-        .col-5 { width: 10%; }
-        .col-6 { width: 15%; }
-        .col-7 { width: 10%; }
+        .col-4 { width: 6%; }
+        .col-5 { width: 6%; }
+        .col-6 { width: 7%; }
+        .col-7 { width: 8.3%; }
         .col-8 { width: 10%; }
         
         /* 签名行 */
