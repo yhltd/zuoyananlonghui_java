@@ -58,13 +58,13 @@ public interface LcdMapper extends BaseMapper<Lcd> {
             ")",
             ", RankedProcess AS (",
             "    SELECT ",
-            "        gp.id, gp.C, gp.J, gp.K, gp.M, gp.D,",
+            "        gp.id, gp.C, gp.J, gp.K, gp.M, gp.D, gp.L,",
             "        ROW_NUMBER() OVER (PARTITION BY gp.C ORDER BY gp.id ASC) as rn",
             "    FROM gongyi_guicheng gp",
             "    INNER JOIN UncompletedContracts uc ON gp.C = CAST(uc.id AS NVARCHAR(50))",
             "    WHERE (ISNULL(gp.M, '') = '' OR gp.M = '')",
             ")",
-            "SELECT id, C, J, K, M, D",
+            "SELECT id, C, J, K, M, D,L",
             "FROM RankedProcess",
             "WHERE rn = 1"
     })
@@ -121,4 +121,20 @@ public interface LcdMapper extends BaseMapper<Lcd> {
             "WHERE C = #{contractId} " +
             "ORDER BY id") // 可以根据需要排序
     List<Lcd> selectDetailByContractId(@Param("contractId") String contractId);
+    @Select("WITH UncompletedContracts AS ( " +
+            "  SELECT DISTINCT hj.id " +
+            "  FROM hetong_jilu hj " +
+            "  LEFT JOIN tuihuo t ON hj.id = t.id " +
+            "  WHERE ISNULL(hj.hetong_zhuangtai, '') = '' " +
+            "    AND hj.zhuangtai = '未完成' " +
+            "    AND t.id IS NULL " +
+            ") " +
+            ", RankedProcess AS ( " +
+            "  SELECT gp.id, gp.C, gp.J, gp.K, gp.M, gp.D, gp.L, gp.N" +
+            "  FROM gongyi_guicheng gp " +
+            "  INNER JOIN UncompletedContracts uc ON gp.C = CAST(uc.id AS NVARCHAR(50)) " +
+            "  WHERE 1=1 " +
+            ") " +
+            "SELECT id, C, J, K, M, D, L, N FROM RankedProcess")
+    List<Lcd> selectAllProcessesForSummary();
 }

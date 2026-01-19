@@ -23,4 +23,8 @@ public interface LcdService extends IService<Lcd>{
     List<Integer> getUncompletedHetongIds(String additionalWhere);
 
     List<Lcd> getDetailByContractId(String contractId);
+
+    List<Lcd> getAllProcessesForSummary();
+
+    List<Lcd> getProcessesByContractId(String contractId);
 }

@@ -92,6 +92,10 @@
     <i class="bi bi-file-earmark-check me-2"></i>
     当前页：流程单
 </div>
+<div class="page-indicator" id="huizong" style="margin-top: 10px; margin-left: 10px;">
+    <i class="bi bi-file-earmark-check me-2"></i>
+    汇总工时
+</div>
 <div class="main-container">
 
 
@@ -130,7 +134,70 @@
         </div>
     </div>
 </div>
+<!-- 汇总工时弹窗 -->
+<div class="modal fade" id="summaryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-calculator me-2"></i>
+                    工时汇总统计
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- 添加搜索框 -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                            </div>
+                            <input type="text" class="form-control" id="processSearch"
+                                   placeholder="搜索工序名称...">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="button" id="searchBtn">
+                                    查询
+                                </button>
+                                <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                                    清除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <small class="text-muted" id="searchResultInfo"></small>
+                    </div>
+                </div>
 
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="summaryTable">
+                        <thead class="thead-light">
+                        <tr>
+                            <th>工序名称</th>
+                            <th>总工时(小时)</th>
+                            <th>已完成工时(小时)</th>
+                            <th>剩余工时(小时)</th>
+                            <th>完成进度</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- 数据将通过JavaScript动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="refreshSummary">刷新数据</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
 <script>
@@ -165,7 +232,399 @@
             localStorage.setItem('workReportInstructionsRead', 'true');
             console.log('用户已确认阅读使用说明');
         });
-    });
+        console.log('加载工时');
+        $('#huizong').on('click', function() {
+            getWorkHourSummary();
+        });
 
+        // 绑定刷新汇总数据按钮事件
+        $(document).on('click', '#refreshSummary', function() {
+            getWorkHourSummary();
+        });
+        $('#searchBtn').on('click', function() {
+            performSearch();
+        });
+
+        // 搜索框回车事件
+        $('#processSearch').on('keypress', function(e) {
+            if (e.which === 13) { // 回车键
+                performSearch();
+                e.preventDefault(); // 防止表单提交
+            }
+        });
+
+        // 清除搜索按钮事件
+        $('#clearSearch').on('click', function() {
+            clearSearch();
+        });
+
+        // 弹窗显示时初始化
+        $('#summaryModal').on('shown.bs.modal', function() {
+            // 如果有数据，显示所有数据
+            if (originalSummaryData.length > 0) {
+                showWorkHourSummary(originalSummaryData, false);
+            }
+            // 焦点放在搜索框
+            $('#processSearch').focus().select();
+        });
+
+        // 弹窗关闭时清空搜索框
+        $('#summaryModal').on('hidden.bs.modal', function() {
+            $('#processSearch').val('');
+        });
+    });
+    let originalSummaryData = [];
+    let currentFilteredData = [];
+    function getWorkHourSummary() {
+        console.log("开始获取所有工序数据...");
+
+        swal({
+            title: "正在获取数据...",
+            text: "请稍候，正在统计所有工序的工时信息",
+            icon: "info",
+            button: false,
+            closeOnClickOutside: false,
+            closeOnEsc: false
+        });
+
+        // 调用新接口
+        $ajax({
+            type: 'post',
+            url: '/lcd/getAllProcessesForSummary',
+            data: {}
+        }, false, '', function(res) {
+            swal.close();
+
+            console.log("接口返回:", res);
+
+            if (res.code == 200 && res.data) {
+                console.log("获取到", res.data.length, "条工序数据");
+
+                if (res.data.length > 0) {
+                    calculateWorkHourSummary(res.data);
+                } else {
+                    swal({
+                        title: "提示",
+                        text: "没有获取到工序数据",
+                        icon: "info",
+                        button: "确定"
+                    });
+                }
+            } else {
+                swal({
+                    title: "错误",
+                    text: "获取数据失败: " + (res.message || "未知错误"),
+                    icon: "error",
+                    button: "确定"
+                });
+            }
+        }, function(error) {
+            swal.close();
+            swal({
+                title: "错误",
+                text: "请求失败: " + error,
+                icon: "error",
+                button: "确定"
+            });
+        });
+    }
+
+    function calculateWorkHourSummary(tableData) {
+        console.log("开始计算汇总，数据量:", tableData.length);
+
+        // 调试：打印第一条数据的所有字段
+        if (tableData.length > 0) {
+            console.log("第一条数据的所有字段:", tableData[0]);
+            console.log("字段名列表:", Object.keys(tableData[0]));
+            console.log("工序名称字段值 (j):", tableData[0].j);
+            console.log("工序名称字段值 (J):", tableData[0].J);
+        }
+
+        let processMap = new Map();
+        let totalHours = 0;
+        let completedHours = 0;
+        let totalProcesses = 0;
+        let completedProcesses = 0;
+        let nFieldData = []; // 记录N字段数据用于调试
+
+        // 统计所有数据
+        tableData.forEach((item, index) => {
+            // 尝试多种方式获取工序名称
+            let processName = item.j || item.J || item.processName || '未知工序';
+
+            // 调试前几条数据
+            if (index < 3) {
+                console.log(`数据${index}: 工序名称=${processName}, j字段=${item.j}, J字段=${item.J}`);
+            }
+
+            let workHours = parseFloat(item.l || item.L) || 0; // 工时
+            let nField = item.n || item.N; // N字段（完成时间）
+            let mField = item.m || item.M; // M字段（员工签名）
+
+            // 判断是否完成 - 使用N字段（完成时间）
+            let isCompleted = false;
+
+            if (nField !== undefined && nField !== null && nField !== '') {
+                // 检查N字段是否为空
+                let finishTime = nField.toString().trim();
+                isCompleted = finishTime !== '' &&
+                    finishTime !== 'null' &&
+                    finishTime !== 'undefined';
+
+                // 调试信息
+                if (index < 5 && isCompleted) {
+                    console.log(`数据${index}: N字段有值="${finishTime}", 标记为完成`);
+                }
+            }
+
+            // 备选判断：如果N字段没有，再检查M字段
+            if (!isCompleted && mField) {
+                let workerSign = mField.toString().trim();
+                isCompleted = workerSign !== '' &&
+                    workerSign !== 'null' &&
+                    workerSign !== 'undefined' &&
+                    workerSign !== '未完成';
+            }
+
+            // 如果工序名称不是"未知工序"，才进行统计
+            if (processName !== '未知工序') {
+                totalProcesses++;
+                totalHours += workHours;
+
+                if (isCompleted) {
+                    completedProcesses++;
+                    completedHours += workHours;
+                }
+
+                // 按工序名称分组统计
+                if (!processMap.has(processName)) {
+                    processMap.set(processName, {
+                        processName: processName, // 添加这个属性
+                        totalHours: 0,
+                        completedHours: 0,
+                        processCount: 0,
+                        completedCount: 0,
+                        hasNField: 0, // 记录有N字段的数量
+                        sampleNFields: [] // 记录N字段样例
+                    });
+                }
+
+                let summary = processMap.get(processName);
+                summary.totalHours += workHours;
+                summary.processCount += 1;
+
+                // 记录N字段信息
+                if (nField && nField.toString().trim() !== '') {
+                    summary.hasNField++;
+                    if (summary.sampleNFields.length < 3) {
+                        summary.sampleNFields.push(nField);
+                    }
+                }
+
+                if (isCompleted) {
+                    summary.completedHours += workHours;
+                    summary.completedCount += 1;
+                }
+            }
+        });
+
+        console.log(`统计结果: 总工序数=${totalProcesses}, 总工时=${totalHours.toFixed(2)}, 完成工序数=${completedProcesses}, 完成工时=${completedHours.toFixed(2)}`);
+        console.log("统计到工序种类数:", processMap.size);
+
+        // 转换为数组
+        let summaryData = Array.from(processMap.values()).map(item => {
+            let remainingHours = item.totalHours - item.completedHours;
+            let completionRate = item.totalHours > 0 ?
+                Math.round((item.completedHours / item.totalHours) * 100) : 0;
+
+            return {
+                processName: item.processName, // 使用保存的processName
+                totalHours: parseFloat(item.totalHours.toFixed(2)),
+                completedHours: parseFloat(item.completedHours.toFixed(2)),
+                remainingHours: parseFloat(remainingHours.toFixed(2)),
+                completionRate: completionRate,
+                processCount: item.processCount,
+                completedCount: item.completedCount,
+                hasNField: item.hasNField,
+                nFieldRate: item.processCount > 0 ? Math.round((item.hasNField / item.processCount) * 100) : 0,
+                sampleNFields: item.sampleNFields
+            };
+        });
+
+// 按总工时从高到低排序
+        summaryData.sort((a, b) => b.totalHours - a.totalHours);
+
+        console.log("汇总数据前5条:", summaryData.slice(0, 5));
+
+// 修改这一行，添加true参数表示初始加载
+        showWorkHourSummary(summaryData, true);
+    }
+
+    // 简化显示函数
+    function showWorkHourSummary(data, isInitialLoad = true) {
+        console.log("显示汇总，工序种类数:", data.length);
+
+        // 保存数据
+        if (isInitialLoad) {
+            originalSummaryData = data;
+            currentFilteredData = data;
+        } else {
+            currentFilteredData = data;
+        }
+
+        // 清空表格内容
+        $('#summaryTable tbody').empty();
+
+        // 更新搜索结果信息
+        updateSearchResultInfo(data.length, originalSummaryData.length);
+
+        if (data.length === 0) {
+            $('#summaryTable tbody').append(`
+            <tr>
+                <td colspan="5" class="text-center py-4">${isInitialLoad ? '暂无数据' : '未找到匹配的工序'}</td>
+            </tr>
+        `);
+        } else {
+            // 遍历数据并添加到表格
+            data.forEach(item => {
+                let progressClass = item.completionRate === 100 ? 'bg-success' :
+                    item.completionRate >= 70 ? 'bg-info' :
+                        item.completionRate >= 30 ? 'bg-warning' : 'bg-danger';
+
+                let processInfo = item.processCount > 1 ? ` <small class="text-muted">(${item.processCount}个工序)</small>` : '';
+
+                $('#summaryTable tbody').append(`
+                <tr>
+                    <td>
+                        <strong>${item.processName || '未知工序'}</strong>
+                        ${processInfo}
+                    </td>
+                    <td class="text-end">${item.totalHours.toFixed(1)}</td>
+                    <td class="text-end text-success">${item.completedHours.toFixed(1)}</td>
+                    <td class="text-end text-danger">${item.remainingHours.toFixed(1)}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="progress flex-grow-1" style="height: 20px;">
+                                <div class="progress-bar ${progressClass}"
+                                     role="progressbar"
+                                     style="width: ${item.completionRate}%;"
+                                     aria-valuenow="${item.completionRate}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <span class="ms-2" style="min-width: 40px;">${item.completionRate}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `);
+            });
+            if (isInitialLoad) {
+                $('#summaryModal').modal('show');
+            }
+        }
+    }
+    // // 显示工时汇总弹窗
+    // function showWorkHourSummary(data) {
+    //     // 清空表格内容
+    //     $('#summaryTable tbody').empty();
+    //
+    //     if (data.length === 0) {
+    //         $('#summaryTable tbody').append(`
+    //         <tr>
+    //             <td colspan="5" class="text-center py-4">暂无数据</td>
+    //         </tr>
+    //     `);
+    //     } else {
+    //         // 遍历数据并添加到表格
+    //         data.forEach(item => {
+    //             let progressClass = item.completionRate === 100 ? 'bg-success' :
+    //                 item.completionRate >= 70 ? 'bg-info' :
+    //                     item.completionRate >= 30 ? 'bg-warning' : 'bg-danger';
+    //
+    //             $('#summaryTable tbody').append(`
+    //             <tr>
+    //                 <td><strong>${item.processName || '未知工序'}</strong></td>
+    //                 <td class="text-end">${item.totalHours.toFixed(1)}</td>
+    //                 <td class="text-end text-success">${item.completedHours.toFixed(1)}</td>
+    //                 <td class="text-end text-danger">${item.remainingHours.toFixed(1)}</td>
+    //                 <td>
+    //                     <div class="d-flex align-items-center">
+    //                         <div class="progress flex-grow-1" style="height: 20px;">
+    //                             <div class="progress-bar ${progressClass}"
+    //                                  role="progressbar"
+    //                                  style="width: ${item.completionRate}%;"
+    //                                  aria-valuenow="${item.completionRate}"
+    //                                  aria-valuemin="0"
+    //                                  aria-valuemax="100">
+    //                             </div>
+    //                         </div>
+    //                         <span class="ms-2" style="min-width: 40px;">${item.completionRate}%</span>
+    //                     </div>
+    //                 </td>
+    //             </tr>
+    //         `);
+    //         });
+    //     }
+    //
+    //     // 显示弹窗
+    //     $('#summaryModal').modal('show');
+    // }
+    function updateSearchResultInfo(filteredCount, totalCount) {
+        if (filteredCount === totalCount) {
+            $('#searchResultInfo').text(`共 ${totalCount} 条记录`);
+        } else {
+            $('#searchResultInfo').html(`显示 ${filteredCount} 条 <span class="text-muted">(共 ${totalCount} 条)</span>`);
+        }
+    }
+
+    // 搜索功能
+    function filterProcessData(searchText) {
+        if (!searchText || searchText.trim() === '') {
+            // 如果搜索框为空，显示所有数据
+            showWorkHourSummary(originalSummaryData);
+            return;
+        }
+
+        const searchTerm = searchText.trim().toLowerCase();
+
+        // 过滤数据
+        const filteredData = originalSummaryData.filter(item => {
+            const processName = (item.processName || '').toLowerCase();
+            return processName.includes(searchTerm);
+        });
+
+        // 显示过滤后的数据
+        showWorkHourSummary(filteredData);
+
+        // 更新搜索结果信息
+        updateSearchResultInfo(filteredData.length, originalSummaryData.length);
+    }
+    function performSearch() {
+        const searchText = $('#processSearch').val().trim();
+
+        if (!searchText) {
+            // 如果搜索框为空，显示所有数据
+            showWorkHourSummary(originalSummaryData, false);
+            return;
+        }
+
+        const searchTerm = searchText.toLowerCase();
+
+        // 过滤数据
+        const filteredData = originalSummaryData.filter(item => {
+            const processName = (item.processName || '').toLowerCase();
+            return processName.includes(searchTerm);
+        });
+
+        // 显示过滤后的数据
+        showWorkHourSummary(filteredData, false);
+    }
+
+    // 清除搜索
+    function clearSearch() {
+        $('#processSearch').val('');
+        showWorkHourSummary(originalSummaryData, false);
+    }
 </script>
 </html>

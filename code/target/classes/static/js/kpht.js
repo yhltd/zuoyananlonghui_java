@@ -307,7 +307,7 @@ function createSelectEditor($cell, originalValue, field, rowId, tableData, rowIn
                     // 更新本地数据
                     tableData[rowIndex][field] = newValue;
                     // 注释掉这行，避免重新加载表格中断编辑状态
-                    getList();
+                    // getList();
                 } else {
                     $cell.text(originalValue);
                     swal("更新失败", res.msg, "error");
@@ -374,7 +374,7 @@ function createInputEditor($cell, originalValue, field, rowId, tableData, rowInd
                     $cell.text(newValue);
                     // 更新本地数据
                     tableData[rowIndex][field] = newValue;
-                    getList();
+                    // getList();
                 } else {
                     $cell.text(originalValue);
                     swal("更新失败", res.msg, "error");
@@ -1184,7 +1184,7 @@ function createInputEditor($cell, originalValue, field, rowId, tableData, rowInd
                     $cell.text(newValue);
                     // 更新本地数据
                     tableData[rowIndex][field] = newValue;
-                    getList();
+                    // getList();
                 } else {
                     $cell.text(originalValue);
                     swal("更新失败", res.msg, "error");

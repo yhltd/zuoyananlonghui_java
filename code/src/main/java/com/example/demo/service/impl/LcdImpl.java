@@ -52,4 +52,23 @@ public class LcdImpl extends ServiceImpl<LcdMapper, Lcd> implements LcdService {
     public List<Lcd> getDetailByContractId(String contractId){
         return baseMapper.selectDetailByContractId(contractId);
     }
+    @Override
+    public List<Lcd> getAllProcessesForSummary() {
+        try {
+            // 调用Mapper中的新方法
+            return baseMapper.selectAllProcessesForSummary();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("获取所有工序数据失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 根据合同ID获取所有工序
+     */
+    @Override
+    public List<Lcd> getProcessesByContractId(String contractId) {
+        // 复用已有的 getDetailByContractId 方法
+        return getDetailByContractId(contractId);
+    }
 }

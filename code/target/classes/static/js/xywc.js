@@ -444,7 +444,7 @@ function createSelectEditor($cell, originalValue, field, rowId, tableData, rowIn
                     // 更新本地数据
                     tableData[rowIndex][field] = newValue;
                     // 重新加载当前页数据
-                    getList(currentPage);
+                    // getList(currentPage);
                 } else {
                     $cell.text(originalValue);
                     swal("更新失败", res.msg, "error");
@@ -512,7 +512,7 @@ function createInputEditor($cell, originalValue, field, rowId, tableData, rowInd
                     // 更新本地数据
                     tableData[rowIndex][field] = newValue;
                     // 重新加载当前页数据
-                    getList(currentPage);
+                    // getList(currentPage);
                 } else {
                     $cell.text(originalValue);
                     swal("更新失败", res.msg, "error");
