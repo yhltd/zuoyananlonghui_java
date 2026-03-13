@@ -40,7 +40,8 @@ function getList(page, size, searchParams) {
             C: searchParams.C || '',
             zhuangtai:searchParams.zhuangtai|| '',// 订单号（后端需要但前端没有，传空）
             D:searchParams.D|| '',
-            I:searchParams.I|| ''
+            I:searchParams.I|| '',
+            H:searchParams.H|| ''
         }),
         dataType: 'json'
     }, false, '', function (res) {
@@ -2518,6 +2519,7 @@ function getSearchParams() {
         zhuangtai: $('#department').val() || '',
         D: $('#hth').val() || '',
         I: $('#tuhao').val() || '',
+        H: $('#mingcheng').val() || '',
     };
 }
 

@@ -51,6 +51,10 @@ public class XkphtController {
             queryWrapper.like("hetong_zhuangtai", pageRequest.getHetongzhuangtai());
         }
 
+        if (StringUtils.isNotBlank(pageRequest.getH())) {
+            queryWrapper.like("h", pageRequest.getH());
+        }
+
         // 执行查询 - 通过Service调用
         Page<Map<String, Object>> result = kphtService.selectDistinctByDdhPage(page,queryWrapper);
 

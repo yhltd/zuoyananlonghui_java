@@ -15,6 +15,8 @@ public class PageRequest {
     private String E;
     @JsonProperty("I")
     private String I;
+    @JsonProperty("H")
+    private String H;
     private String zhuangtai;
     private String hetongzhuangtai;
     @JsonProperty("AS")

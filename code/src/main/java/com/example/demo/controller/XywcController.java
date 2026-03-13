@@ -45,6 +45,7 @@ public class XywcController {
             String hetongZhuangtai = (String) params.get("hetongZhuangtai");
             String hetongHao = (String) params.get("hetongHao");
             String renwuHao = (String) params.get("renwuHao");
+            String H = (String) params.get("H");
 
             // 创建分页请求对象
             YwcPageRequest request = new YwcPageRequest();
@@ -63,6 +64,10 @@ public class XywcController {
             }
             if (renwuHao != null && !renwuHao.trim().isEmpty()) {
                 request.setRenwuHao(renwuHao.trim());
+            }
+
+            if (H != null && !H.trim().isEmpty()) {
+                request.setH(H.trim());
             }
 
             // 调用服务层方法

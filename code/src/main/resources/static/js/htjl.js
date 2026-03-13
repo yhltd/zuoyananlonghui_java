@@ -44,7 +44,8 @@ function getList(page, size, searchParams) {
             AS:searchParams.AS||'',
             D:searchParams.D||'',
             E:searchParams.E||'',
-            I:searchParams.I||''
+            I:searchParams.I||'',
+            H:searchParams.H||''
         }),
         dataType: 'json'
     }, false, '', function (res) {
@@ -394,9 +395,10 @@ $(function () {
         $('#name').val("");
         $('#department').val("");
         $('#dengjiyuan').val("");
-        $('#hth').val("");       // input元素清空
-        $('#renwuhao').val("");  // input元素清空
-        $('#tuhao').val("");     // input元素清空
+        $('#hth').val("");
+        $('#renwuhao').val("");
+        $('#tuhao').val("");
+        $('#mingcheng').val("");
         getList();
 
         swal("刷新成功", "已显示所有数据", "success");
@@ -2983,7 +2985,8 @@ function getSearchParams() {
         AS: $('#dengjiyuan').val() || '',  // 登记员（下拉）
         D: $('#hth').val() || '',    // 合同号（改为手动输入）
         E: $('#renwuhao').val() || '',  // 任务号（改为手动输入）
-        I: $('#tuhao').val() || '',   // 图号（改为手动输入）
+        I: $('#tuhao').val() || '',
+        H: $('#mingcheng').val() || '',
     };
 }
 

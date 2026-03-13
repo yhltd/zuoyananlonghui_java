@@ -43,6 +43,9 @@ public class XywcImpl extends ServiceImpl<XywcMapper, Ywc> implements XywcServic
             if (StringUtils.isNotBlank(request.getHetongHao())) {
                 wrapper.like(Ywc::getD, request.getHetongHao());  // 合同状态
             }
+            if (StringUtils.isNotBlank(request.getH())) {
+                wrapper.like(Ywc::getH, request.getH());  // 合同状态
+            }
 
             // 注意：不在wrapper中添加排序，使用SQL中的ROW_NUMBER排序
 

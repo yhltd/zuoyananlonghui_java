@@ -41,6 +41,7 @@ public class YwcController {
             String hetongHao = (String) params.get("hetongHao");
             String renwuHao = (String) params.get("renwuHao");
             String tuhao = (String) params.get("tuhao");
+            String H = (String) params.get("H");
 
             // 创建分页请求对象
             YwcPageRequest request = new YwcPageRequest();
@@ -62,6 +63,10 @@ public class YwcController {
             }
             if (tuhao != null && !tuhao.trim().isEmpty()) {
                 request.setTuhao(tuhao.trim());
+            }
+
+            if (H != null && !H.trim().isEmpty()) {
+                request.setH(H.trim());
             }
 
             // 调用服务层方法

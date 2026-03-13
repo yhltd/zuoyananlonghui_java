@@ -27,6 +27,7 @@ function getList(page, options = {}) {
     var hetongZhuangtai = $('#hetongZhuangtai').val() || '';
     var hetongHao = $('#hetonghao').val() || '';
     var renwuHao = $('#renwuHao').val() || '';
+    var H = $('#mingcheng').val() || '';
 
     // 构建查询参数
     var params = {
@@ -39,6 +40,7 @@ function getList(page, options = {}) {
     if (hetongZhuangtai) params.hetongZhuangtai = hetongZhuangtai;
     if (hetongHao) params.hetongHao = hetongHao;
     if (renwuHao) params.renwuHao = renwuHao;
+    if (H) params.H = H;
 
     $.ajax({
         type: 'post',
@@ -185,6 +187,7 @@ $(function () {
         $('#hetongZhuangtai').val('');
         $('#hetonghao').val('');
         $('#renwuHao').val('');
+        $('#mingcheng').val('');
         currentPage = 1;
         getList();
     });
@@ -196,6 +199,7 @@ $(function () {
         $('#hetongZhuangtai').val('');
         $('#hetonghao').val('');
         $('#renwuHao').val('');
+        $('#mingcheng').val('');
         getList();
         swal("刷新成功", "已显示所有数据", "success");
     });

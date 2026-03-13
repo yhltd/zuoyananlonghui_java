@@ -19,6 +19,7 @@ function getList(page, size, searchParams) {
             pageSize: pageSize,
             C: searchParams.C || '',
             hetongzhuangtai: searchParams.hetongzhuangtai || '',// 订单号（后端需要但前端没有，传空）
+            H: searchParams.H || '',
         }),
         dataType: 'json'
     }, false, '', function (res) {
@@ -93,6 +94,7 @@ $(function () {
 
     //刷新
     $("#refresh-btn").click(function () {
+        $('#mingcheng').val('');
         getList();
         swal("刷新成功", "已显示所有数据", "success");
     });
@@ -824,6 +826,7 @@ function getSearchParams() {
     return {
         C: $('#name').val() || '',    // 订单号
         hetongzhuangtai: $('#hetongZhuangtai').val() || '',    // 订单号
+        H: $('#mingcheng').val() || '',
     };
 }
 

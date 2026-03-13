@@ -66,6 +66,9 @@ public class YwcImpl extends ServiceImpl<YwcMapper, Ywc> implements YwcService {
             if (StringUtils.isNotBlank(request.getTuhao())) {
                 wrapper.like(Ywc::getI, request.getTuhao());  // 合同状态
             }
+            if (StringUtils.isNotBlank(request.getH())) {
+                wrapper.like(Ywc::getH, request.getH());  // 合同状态
+            }
 
             // 注意：不在wrapper中添加排序，使用SQL中的ROW_NUMBER排序
 

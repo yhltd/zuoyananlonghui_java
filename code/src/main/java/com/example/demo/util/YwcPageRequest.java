@@ -14,4 +14,5 @@ public class YwcPageRequest {
     private String hetongHao;  // 合同号（对应 D 字段）
     private String renwuHao;  // 任务号（对应 E 字段）
     private String tuhao;  // 任务号（对应 E 字段）
+    private String H;
 }
