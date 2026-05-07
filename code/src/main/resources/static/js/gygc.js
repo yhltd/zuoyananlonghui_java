@@ -613,17 +613,14 @@ function saveProcessData() {
                     console.log('批量新增成功:', insertData.length, '条');
                     swal("保存成功", "工艺规程保存成功", "success");
 
+                    // 保存历史记录到本地存储
+                    saveAllProcessNamesToHistory();
+                    saveAllProcessContentsToHistory();
+
                     // 更新sessionStorage中的id
                     if (!originalData.id && res.data && res.data.length > 0) {
-                        // 这里可以根据后端返回的数据更新id
                         console.log('保存后的数据:', res.data);
                     }
-
-                    // 保存历史记录
-                    setTimeout(() => {
-                        saveAllProcessNamesToHistory();
-                        saveAllProcessContentsToHistory();
-                    }, 1000);
 
                 } else {
                     swal("新增失败", res.msg || "批量新增数据失败", "error");
@@ -2213,18 +2210,12 @@ function initProcessNameMemory() {
 
     // 监听输入事件 - 工序名称（第2列）
     $(document).on('blur', '#processTable tbody td.col-2', function() {
-        const processName = $(this).text().trim();
-        if (processName) {
-            saveProcessNameToHistory(processName);
-        }
+        // 禁用 blur 时自动保存
     });
 
     // 新增：监听工序内容（第3列）的blur事件
     $(document).on('blur', '#processTable tbody td.col-3', function() {
-        const processContent = $(this).text().trim();
-        if (processContent) {
-            saveProcessContentToHistoryEnhanced(processContent);
-        }
+        // 禁用 blur 时自动保存
     });
 
     console.log('工序名称记忆功能初始化完成');
@@ -2571,7 +2562,7 @@ function saveAllProcessNamesToHistory() {
 
     // 保存每个工序名称
     processNames.forEach(name => {
-        // saveProcessNameToHistory(name);
+        saveProcessNameToHistory(name);
     });
 }
 
@@ -2596,9 +2587,9 @@ function initProcessContentWithDropdown() {
         showProcessContentSuggestions(this);
     });
 
-    // 监听工序内容输入事件，实时保存
+    // 监听工序内容输入事件，禁用实时保存
     $(document).on('input', '#processTable tbody td.col-3', function() {
-        saveProcessContentInput(this);
+        // 禁用实时保存功能
     });
 
     // 初始化绑定所有现有的工序内容单元格
@@ -2672,15 +2663,10 @@ function updateProcessContentDatalist() {
     updateProcessContentBindings();
 }
 
-// 保存工序内容输入
+// 保存工序内容输入（禁用实时保存）
 function saveProcessContentInput(cell) {
-    const processContent = cell.textContent.trim();
-    if (processContent) {
-        clearTimeout(window.processContentSaveTimer);
-        window.processContentSaveTimer = setTimeout(() => {
-            saveProcessContentToHistory(processContent);
-        }, 500);
-    }
+    // 禁用实时保存功能已禁用，改为在保存按钮触发时统一处理
+    return;
 }
 
 // 保存上一次选择的人名
