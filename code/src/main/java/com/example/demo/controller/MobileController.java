@@ -584,18 +584,17 @@ public class MobileController {
             response.setContentType("text/html;charset=UTF-8");
             response.setCharacterEncoding("UTF-8");
 
-            PrintWriter out = response.getWriter();
-            out.write(getMobileContractHtml(contractId));
-            out.flush();
-            out.close();
-
-            System.out.println("=== 移动端页面成功返回 ===");
-            System.out.println("合同ID: " + contractId);
-
+            // 使用 try-with-resources 确保资源释放
+            try (PrintWriter out = response.getWriter()) {
+                out.write(getMobileContractHtml(contractId));
+                out.flush();
+                System.out.println("=== 移动端页面成功返回 ===");
+                System.out.println("合同ID: " + contractId);
+            }
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("=== 移动端页面返回失败 ===");
-            System.out.println("错误: " + e.getMessage());
+            System.err.println("=== 移动端页面返回失败 ===");
+            System.err.println("错误: " + e.getMessage());
         }
     }
 
@@ -612,7 +611,7 @@ public class MobileController {
             List<Map<String, Object>> contractDetails = bgdService.getContractDetails(contractId);
 
             if (contractDetails == null || contractDetails.isEmpty()) {
-                System.out.println("未找到合同数据");
+                System.err.println("未找到合同数据");
                 Map<String, Object> errorResult = new HashMap<>();
                 errorResult.put("success", false);
                 errorResult.put("message", "未找到合同ID: " + contractId + " 对应的数据");
@@ -629,7 +628,7 @@ public class MobileController {
 
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("获取合同数据异常: " + e.getMessage());
+            System.err.println("获取合同数据异常: contractId=" + contractId + ", 错误=" + e.getMessage());
             Map<String, Object> errorResult = new HashMap<>();
             errorResult.put("success", false);
             errorResult.put("message", "系统错误: " + e.getMessage());
@@ -641,7 +640,10 @@ public class MobileController {
      * 构建合同数据
      */
     private Map<String, Object> buildContractData(String contractId, List<Map<String, Object>> contractDetails) {
-        // 基本信息（从第一条记录获取）
+        if (contractDetails == null || contractDetails.isEmpty()) {
+            throw new IllegalArgumentException("合同详情数据为空");
+        }
+
         Map<String, Object> firstProcess = contractDetails.get(0);
 
         Map<String, Object> basicInfo = new HashMap<>();
