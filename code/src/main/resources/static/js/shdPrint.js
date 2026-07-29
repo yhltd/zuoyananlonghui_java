@@ -322,6 +322,15 @@ $(function () {
     // this_kuan = $('table').width();
     //打印
     $('#print-btn').click(function () {
+        var size = $('#print-size').val();
+        var styleId = 'print-size-style';
+        if (size === 'A5') {
+            $('body').addClass('print-a5');
+            if ($('#' + styleId).length === 0) {
+                $('<style id="' + styleId + '"> @page { size: A5 landscape; } </style>').appendTo('head');
+            }
+        }
+
         var msg = confirm("确认要打印吗？");
         if (msg) {
             $ajax({
@@ -334,20 +343,15 @@ $(function () {
                 contentType: 'application/json;charset=utf-8'
             })
 
-            // $('table').width(this_kuan)
-            // $('.table-div').width(this_kuan)
             $('#select-btn').hide();
             $('#print-btn').hide();
             $('#dqy').hide();
             $('#sfyjlab').hide();
             $('#sfyj').hide();
-            // var newstr = window.document.getElementById("div").innerHTML;
-            // var oldstr = window.document.body.innerHTML;
-            // document.body.innerHTML = newstr;
             window.print();
-            // document.body.innerHTML = oldstr;
-            // window.location.reload();
-            // return false;
+
+            $('body').removeClass('print-a5');
+            $('#' + styleId).remove();
         } else {
             $ajax({
                 type: 'post',

@@ -1077,6 +1077,15 @@
         @page {
             size: auto;
         }
+        @media print {
+            body.print-a5 {
+                zoom: 0.7;
+                font-size: 12px;
+            }
+            body.print-a5 .table-div {
+                margin-top: 12mm !important;
+            }
+        }
     </style>
 </head>
 
@@ -1179,6 +1188,12 @@
     <!--            ok-->
     <!--        </button>-->
     <!--    </div>-->
+    <div class="col-md-3 mb-2">
+        <select id="print-size" type="text" class="form-control" placeholder="打印尺寸" autocomplete="off">
+            <option value="A4">打印尺寸: A4</option>
+            <option value="A5">打印尺寸: A5</option>
+        </select>
+    </div>
     <div class="col-md-3 mb-2">
         <select id="sfhs" type="text" class="form-control" placeholder="是否含税" autocomplete="off">
             <option value="">--请选择是否含税--</option>

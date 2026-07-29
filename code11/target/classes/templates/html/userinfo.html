@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>账号管理</title>
+    <link rel="shortcut icon" href="#"/>
+    <script>
+        // 在login.js之前定义setTable
+        function setTable(data) {
+            // setTable函数实现...
+        }
+    </script>
+
+    <script type="text/javascript" src="../js/Jquery.js"></script>
+    <script type="text/javascript" src="../js/jquerysession.js"></script>
+
+    <link rel="stylesheet" href="../bootstrap-4.5.0-dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../bootstrap-4.5.0-dist/icons/bootstrap-icons.css">
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap.min.js"></script>
+
+    <!--bootstrap-table-->
+    <link rel="stylesheet" href="../bootstrap-4.5.0-dist/css/bootstrap-table.css">
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table.js"></script>
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table-zh-CN.min.js"></script>
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/colResizable-1.6.js"></script>
+    <script type="text/javascript" src="../bootstrap-4.5.0-dist/js/bootstrap-table-resizable.js"></script>
+
+    <link rel="stylesheet" href="../css/sweetalert.css">
+    <script type="text/javascript" src="../js/sweetalert-dev.js"></script>
+
+    <link rel="stylesheet" href="../css/main.css">
+    <script type="text/javascript" src="../js/main.js"></script>
+    <script type="text/javascript" src="../js/login.js"></script>
+    <link rel="stylesheet" href="../css/new.css">
+
+
+    <style>
+        .page-indicator {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .page-indicator:hover {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: #0d6efd;
+            transform: translateY(-1px);
+        }
+
+        .modal-body h6 {
+            color: #495057;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-body ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-body ul li {
+            margin-bottom: 0.3rem;
+        }
+    </style>
+
+</head>
+
+<body>
+<!-- 顶部导航栏 -->
+<div class="top-header">
+    <div class="header-content">
+        <div class="logo-section">
+            <i class="bi bi-person-badge-fill logo-icon"></i>
+            <span class="system-title">信息管理系统</span>
+        </div>
+
+        <div class="time-display">
+            <i class="bi bi-clock"></i>
+            <span id="now_time"></span>
+        </div>
+
+        <div class="user-info">
+            <i class="bi bi-person-circle"></i>
+            您好 <span class="user-name" id="dlm"></span>，欢迎登录！
+        </div>
+
+        <div class="nav-icons">
+            <div class="nav-icon">
+                <a href="http://localhost:9093/index.html" target="_top" class="dropdown-item-custom">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="main-container">
+    <!-- 搜索区域 - 单行布局 -->
+    <div class="search-section">
+        <div class="search-toolbar">
+            <!-- 搜索字段 -->
+            <div class="search-field">
+                <label for="name" class="form-label-custom">姓名</label>
+                <input id="name" type="text" class="form-control form-control-custom" placeholder="请输入姓名" autocomplete="off">
+            </div>
+
+            <!-- 查询按钮 -->
+            <div>
+                <label class="form-label-custom invisible">查询</label>
+                <button id="select-btn" class="btn btn-custom btn-primary-custom">
+                    <i class="bi bi-search me-2"></i>
+                    查询
+                </button>
+            </div>
+
+            <!-- 工具栏按钮 -->
+            <div class="toolbar-buttons">
+                <button id="refresh-btn" class="btn btn-custom btn-primary-custom">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    刷新
+                </button>
+
+                <button id="add-btn" class="btn btn-custom btn-primary-custom">
+                    <i class="bi bi-plus-square"></i>
+                    新增
+                </button>
+
+                <button id="update-btn" class="btn btn-custom btn-primary-custom">
+                    <i class="bi bi-pencil-square"></i>
+                    修改
+                </button>
+
+                <button id="delete-btn" class="btn btn-custom btn-danger-custom">
+                    <i class="bi bi-trash"></i>
+                    删除
+                </button>
+
+                <!-- 当前页面指示器 -->
+                <div class="page-indicator" id="pageIndicator">
+                    <i class="bi bi-file-earmark-check me-2"></i>
+                    当前页：账号管理
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="table-container">
+        <div class="table-header">
+            <i class="bi bi-table me-2"></i>
+            账号数据列表
+        </div>
+        <div class="table-responsive">
+            <table id="userTable" class="gradient-table">
+                <!-- 表格内容将通过JavaScript动态生成 -->
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 模态框部分 -->
+<div id="add-modal" class="modal fade modal-custom" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">新增账号</div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <form id="add-form" class="needs-validation">
+                    <div class="row justify-content-evenly">
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-name" class="form-label-custom">姓名</label>
+                                <input id="add-name" name="name" type="text" class="form-control form-control-custom" autocomplete="off">
+                                <div class="invalid-feedback">
+                                    请输入姓名！
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-username" class="form-label-custom">账号</label>
+                                <input id="add-username" name="username" type="text" class="form-control form-control-custom" autocomplete="off">
+                                <div class="invalid-feedback">
+                                    请输入账号！
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-password" class="form-label-custom">密码</label>
+                                <input id="add-password" name="password" type="password" class="form-control form-control-custom" autocomplete="off">
+                                <div class="invalid-feedback">
+                                    请输入密码！
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="add-power" class="form-label-custom">权限</label>
+                                <select id="add-power" name="power" class="form-control form-control-custom" autocomplete="off">
+                                    <option value="管理员">管理员</option>
+                                    <option value="用户">用户</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    请选择权限！
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="border-top" style="padding: 15px;display: flex">
+                <button id="add-submit-btn" type="button" class="btn btn-custom btn-success-custom">
+                    <i class="bi bi-arrow-bar-up "></i>
+                    提交
+                </button>
+                <button id="add-close-btn" type="button" class="btn btn-custom btn-danger-custom left-margin">
+                    <i class="bi bi-x-circle "></i>
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="update-modal" class="modal fade modal-custom" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">编辑账号</div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="update-form" class="needs-validation">
+                    <div class="form-group">
+                        <input id="id" name="id" type="hidden">
+                    </div>
+
+                    <div class="row justify-content-evenly">
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="update-name" class="form-label-custom">姓名</label>
+                                <input id="update-name" name="name" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="update-username" class="form-label-custom">账号</label>
+                                <input id="update-username" name="username" type="text" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="update-password" class="form-label-custom">密码</label>
+                                <input id="update-password" name="password" type="password" class="form-control form-control-custom" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="update-power" class="form-label-custom">权限</label>
+                                <select id="update-power" name="power" class="form-control form-control-custom" autocomplete="off">
+                                    <option value="管理员">管理员</option>
+                                    <option value="用户">用户</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="border-top" style="padding: 15px;display: flex">
+                <button id="update-submit-btn" type="button" class="btn btn-custom btn-success-custom">
+                    <i class="bi bi-arrow-bar-up"></i>
+                    提交
+                </button>
+                <button id="update-close-btn" type="button" class="btn btn-custom btn-danger-custom left-margin">
+                    <i class="bi bi-x-circle"></i>
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="delete-modal" class="modal fade modal-custom" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">提示</div>
+            </div>
+            <div id="delete-modal-body" class="modal-body">
+                确定删除该账号吗？
+            </div>
+            <div class="border-top" style="padding: 15px;">
+                <button id="delete-submit-btn" type="button" class="btn btn-custom btn-danger-custom">
+                    <i class="bi bi-arrow-bar-up icon"></i>
+                    确定
+                </button>
+                <button id="delete-close-btn" type="button" class="btn btn-custom btn-light-custom left-margin">
+                    <i class="bi bi-x-circle icon"></i>
+                    取消
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 使用说明弹窗 -->
+<div class="modal fade" id="instructionsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-info-circle me-2"></i>
+                    账号管理使用说明
+                </h5>
+            </div>
+            <div class="modal-body">
+                <h6><i class="bi bi-1-circle me-2"></i>基本操作</h6>
+                <ul>
+                    <li>单击单元格，浅蓝色背景为选中行，点击删除按钮可删除对应信息</li>
+                    <li>点击新增修改按钮，可在弹窗中编辑内容</li>
+                </ul>
+
+                <h6><i class="bi bi-2-circle me-2"></i>注意事项</h6>
+                <ul>
+                    <li>账号，密码不要有完全重复的值</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 更新时间显示
+    function updateTime() {
+        const now = new Date();
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        document.getElementById('now_time').textContent = now.toLocaleDateString('zh-CN', options);
+    }
+
+    // 初始更新时间并设置定时器
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // 模拟登录用户名显示
+    document.getElementById('dlm').textContent = "管理员";
+
+
+    $(document).ready(function() {
+        // 点击页面指示器显示使用说明弹窗
+        $('#pageIndicator').on('click', function() {
+            $('#instructionsModal').modal('show');
+        });
+
+        // 已阅读按钮点击事件
+        $('#confirmReadBtn').on('click', function() {
+            $('#instructionsModal').modal('hide');
+            localStorage.setItem('workReportInstructionsRead', 'true');
+            console.log('用户已确认阅读使用说明');
+        });
+    });
+</script>
+</body>
+</html>

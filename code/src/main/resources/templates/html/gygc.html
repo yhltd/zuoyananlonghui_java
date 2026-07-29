@@ -185,25 +185,46 @@
 
         /* 修复打印样式 */
         @media print {
+            @page {
+                size: A5 landscape;
+                margin: 0; /* 彻底由CSS控制，避免浏览器默认边距干扰 */
+            }
             body {
-                margin: 0;
-                padding: 0;
-                background-color: white;
+                margin: 0 !important;
+                padding: 0 !important;
+                background-color: white !important;
+                width: 100% !important;
             }
             .container {
-                box-shadow: none;
-                padding: 10px;
-                max-width: 100%;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 auto !important;
+                max-width: 100% !important;
+                width: 100% !important; /* 改回 100% 以配合 @page 的 margin */
+                border: none !important;
             }
-            .controls, button {
-                display: none;
+            .controls, button, .page-indicator {
+                display: none !important;
             }
-            /* 确保表格边框在打印时可见 */
-            table, th, td {
+            /* 确保表格边框在打印时可见并铺满 */
+            table {
+                width: 100% !important;
+                table-layout: fixed !important;
+                border-collapse: collapse !important;
+                border: 2px solid #000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            th, td {
                 border: 1px solid #000 !important;
                 -webkit-print-color-adjust: exact;
                 color-adjust: exact;
+                padding: 4px !important;
+                height: 35px !important; /* 强制行高，确保即使无内容也保留空间 */
             }
+
+
+
 
             .print-qrcode-container {
                 display: block !important;
@@ -337,6 +358,13 @@
         <button id="addRow">+ 添加工序行</button>
         <button id="baocun">+ 保存</button>
         <button id="queryBtn">🔍 查询</button>
+        <div style="display: flex; align-items: center; gap: 10px; margin-right: 10px;">
+            <span style="font-size: 14px; color: #666;">打印尺寸:</span>
+            <select id="printSize" style="padding: 6px; border-radius: 3px; border: 1px solid #ccc; font-size: 14px;">
+                <option value="A4" selected>A4 (标准)</option>
+                <option value="A5">A5 (半页)</option>
+            </select>
+        </div>
         <button id="printBtn">🖨️ 打印表格</button>
     </div>
 
@@ -372,7 +400,7 @@
             <th class="col-8">备注</th>
         </tr>
         </thead>
-        <tbody>
+        <tbody id="processTableBody">
         <tr>
             <td class="col-1">1</td>
             <!-- 修复：只有一个工序名称单元格 -->

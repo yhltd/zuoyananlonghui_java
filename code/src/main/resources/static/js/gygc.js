@@ -96,7 +96,8 @@ $(document).ready(function() {
     });
 
     document.getElementById('printBtn').addEventListener('click', function() {
-        printWithQRCode();
+        const selectedSize = document.getElementById('printSize').value;
+        printWithQRCode(selectedSize);
        saveProcessData();
     });
 
@@ -1240,7 +1241,7 @@ function loadDropdownData() {
 
 
 // 打印函数
-function printWithQRCode() {
+function printWithQRCode(selectedSize = 'A4') {
     // 直接从全局变量获取htid
     const htid = window.currentHtid;
 
@@ -1251,7 +1252,7 @@ function printWithQRCode() {
 
     swal({
         title: "准备打印",
-        text: "正在生成打印页面...",
+        text: `正在生成 ${selectedSize} 打印页面...`,
         icon: "info",
         buttons: false,
         closeOnClickOutside: false
@@ -1265,7 +1266,7 @@ function printWithQRCode() {
     }, false, '', function(res) {
         if (res.code == 200 && res.data?.qrCodeImage) {
             // 构建打印页面的HTML内容
-            const printContent = generatePrintContent(res.data.qrCodeImage, htid);
+            const printContent = generatePrintContent(res.data.qrCodeImage, htid, selectedSize);
 
             // 打开新的打印窗口并写入内容
             const printWindow = window.open('', '_blank', 'width=900,height=600');
@@ -1285,7 +1286,7 @@ function printWithQRCode() {
         } else {
             swal.close();
             // 如果没有二维码，也生成普通打印页面
-            const printContent = generatePrintContent(null, htid);
+            const printContent = generatePrintContent(null, htid, selectedSize);
             const printWindow = window.open('', '_blank', 'width=900,height=600');
             printWindow.document.write(printContent);
             printWindow.document.close();
@@ -1659,7 +1660,7 @@ function printWithQRCode() {
 // }
 
 // 生成打印页面内容的函数（分页版）
-function generatePrintContent(qrCodeImageBase64, htid) {
+function generatePrintContent(qrCodeImageBase64, htid, selectedSize) {
     // 1. 收集所有当前页面显示的表格数据（包括表头和工序行）
     const headerData = {
         businessUnit: $('#business-unit').text().trim(),
@@ -1715,8 +1716,14 @@ function generatePrintContent(qrCodeImageBase64, htid) {
         }
     });
 
-    // 4. 分页处理：每页24行数据（注意：这里已经是双倍行数了）
-    const rowsPerPage = 12;
+    // 4. 分页处理：根据纸张尺寸动态决定每页行数
+    let rowsPerPage = 12; // 默认
+    if (selectedSize === 'A4') {
+        rowsPerPage = 22; // A4竖版增加行数至 22 以铺满页面 (原16 + 追加6)
+    } else if (selectedSize === 'A5') {
+        rowsPerPage = 6;  // A5横版：每页保留 3 组数据+空白行 (共6行)
+    }
+
     const totalPages = Math.ceil(tableRows.length / rowsPerPage);
     const printPages = [];
 
@@ -1751,7 +1758,7 @@ function generatePrintContent(qrCodeImageBase64, htid) {
         const endIndex = Math.min(startIndex + rowsPerPage, tableRows.length);
         const pageRows = tableRows.slice(startIndex, endIndex);
 
-        // 如果最后一页不足24行，补充空白行
+        // 如果最后一页不足rowsPerPage行，补充空白行
         if (pageIndex === totalPages - 1 && pageRows.length < rowsPerPage) {
             const remainingRows = rowsPerPage - pageRows.length;
             for (let i = 0; i < remainingRows; i++) {
@@ -1780,20 +1787,21 @@ function generatePrintContent(qrCodeImageBase64, htid) {
         printPages.push(pageInfo);
     }
 
-    // 5. 生成分页的HTML内容
+    // 5. 生成分页的HTML内容 - 传入 selectedSize
     const printContent = generatePagedPrintHTML(
         qrCodeImageBase64,
         htid,
         headerData,
         signatureData,
-        printPages
+        printPages,
+        selectedSize
     );
 
     return printContent;
 }
 
 // 生成分页的打印HTML
-function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureData, printPages) {
+function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureData, printPages, selectedSize) {
     // 生成每个页面的HTML
     const pageHTMLs = printPages.map(pageInfo => {
         return generateSinglePageHTML(
@@ -1819,37 +1827,38 @@ function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureDa
             box-sizing: border-box;
             font-family: "SimSun", "宋体", serif;
         }
-        
+
         body {
             background-color: white !important;
             color: black !important;
         }
-        
+
         /* 打印分页控制 */
         .print-page {
-            width: 210mm; /* A4宽度 */
-            min-height: 297mm; /* A4高度 */
-            max-height: 297mm; /* 防止溢出 */
-            padding: 10mm;
+            width: ${selectedSize === 'A4' ? '210mm' : '210mm'}; /* A5横版宽度也是210mm左右 */
+            min-height: ${selectedSize === 'A4' ? '297mm' : '148mm'};
+            max-height: ${selectedSize === 'A4' ? '297mm' : '148mm'};
+            padding: ${selectedSize === 'A5' ? '15mm 7mm' : '10mm'}; /* 还原 A5 顶部边距为 15mm，保证标题不动 */
             margin: 0 auto;
             position: relative;
             background: white;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            justify-content: flex-start; /* 改为顶部对齐，由padding控制边距，确保打印位置稳定 */
         }
-        
+
         .print-page:not(:last-child) {
             page-break-after: always;
         }
-        
+
         /* 打印专用样式 */
         @media print {
             @page {
-                size: auto; 
+                size: ${selectedSize === 'A4' ? 'A4 portrait' : 'A5 landscape'};
                 margin: 15mm;
             }
-            
+
             body {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
@@ -1860,7 +1869,7 @@ function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureDa
                 padding: 0 !important;
                 margin: 0 !important;
             }
-            
+
             .print-page {
                 width: auto !important;
                 min-height: auto !important;
@@ -1871,23 +1880,23 @@ function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureDa
                 page-break-inside: avoid;
                 break-inside: avoid;
             }
-            
+
             /* 确保表格不跨页断裂 */
             .process-table {
                 page-break-inside: auto;
             }
-            
+
             .process-table tr {
                 min-height: 11mm; /* 表格行最小高度 */
                 height: auto;
             }
-            
+
             .process-table td {
                 page-break-inside: avoid;
                 page-break-before: auto;
             }
         }
-        
+
         /* 二维码容器 */
         .qrcode-container {
             position: absolute;
@@ -1905,19 +1914,19 @@ function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureDa
         }
         .qrcode-container p {
             font-size: 10pt;
-            margin-top: 2mm;
-            padding-top: 1mm;
+            margin-top: ${selectedSize === 'A5' ? '0mm' : '2mm'};
+            padding-top: ${selectedSize === 'A5' ? '1mm' : '1mm'};
         }
-        
+
         /* 主标题 */
         .main-title {
             font-size: 18pt;
             font-weight: bold;
             text-align: center;
-            margin: 10mm auto 5mm auto;
+            margin: ${selectedSize === 'A4' ? '10mm auto 5mm auto' : '5mm auto 2mm auto'};
             width: 100%;
         }
-        
+
         /* 页码信息 */
         .page-number {
             position: absolute;
@@ -1926,13 +1935,13 @@ function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureDa
             font-size: 10pt;
             color: #666;
         }
-        
+
         /* 信息表头 */
         .info-header {
             width: 100%;
             border-collapse: collapse;
             border: 1.5px solid #000;
-            margin-top: 10mm;
+            margin-top: ${selectedSize === 'A4' ? '10mm' : (selectedSize === 'A5' ? '17mm' : '5mm')};
         }
         .info-header th, .info-header td {
             border: 1px solid #000;
@@ -1952,7 +1961,7 @@ function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureDa
             font-weight: normal;
             font-size: 11px;
         }
-        
+
         /* 工序表格 */
         .process-table {
             width: 100%;
@@ -1964,7 +1973,7 @@ function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureDa
             padding: 1mm 0.5mm;
             text-align: center;
             font-size: 10pt;
-            height: 9mm;
+            height: ${selectedSize === 'A4' ? '9mm' : '8mm'}; /* A5行高调整为 8mm */
             background-color: white !important;
             page-break-inside: avoid;
             font-size: 11px;
@@ -1982,7 +1991,7 @@ function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureDa
         .col-6 { width: 7%; }
         .col-7 { width: 8.3%; }
         .col-8 { width: 10%; }
-        
+
         /* 签名行 */
         .signature-row {
             width: 100%;
@@ -2014,17 +2023,17 @@ function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureDa
             color: #333;
             flex-shrink: 0;
         }
-        
+
         /* 内容区域，留出签名行的空间 */
         .content-area {
             overflow: hidden;
         }
-        
+
         /* 空白行样式 */
         .blank-row {
             height: 5mm;
         }
-        
+
         /* 打印控制 - 屏幕显示时可见 */
         @media screen {
             .print-controls {
@@ -2057,12 +2066,12 @@ function generatePagedPrintHTML(qrCodeImageBase64, htid, headerData, signatureDa
 </head>
 <body>
     ${pageHTMLs.join('')}
-    
+
     <div class="print-controls">
         <button class="print-btn" onclick="window.print();">立即打印</button>
         <button class="print-btn" onclick="window.close();" style="margin-left:10px;">关闭窗口</button>
     </div>
-    
+
     <script>
         window.onload = function() {
             console.log('打印页面加载完成，共 ${printPages.length} 页');

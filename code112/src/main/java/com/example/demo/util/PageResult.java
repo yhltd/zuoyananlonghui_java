@@ -1,0 +1,18 @@
+package com.example.demo.util;
+
+import lombok.Data;
+
+import java.util.List;
+
+@Data
+public class PageResult<T> {
+    private List<T> list;
+    private Long total;
+    private Long pages;
+
+    public PageResult(List<T> list, Long total, Long pages) {
+        this.list = list;
+        this.total = total;
+        this.pages = pages;
+    }
+}
